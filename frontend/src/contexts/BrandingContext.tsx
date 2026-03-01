@@ -21,7 +21,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     const [appFavicon, setAppFavicon] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
+    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api').replace('/api', '');
 
     const formatUrl = (url: string | null) => {
         if (!url) return null;
