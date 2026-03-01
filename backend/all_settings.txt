@@ -1,0 +1,26 @@
+[app_logo]: https://www.uew.edu.gh/themes/custom/pinaman/images/logos/logo-default.png
+[app_logo_secondary]: /uploads/brand/logo-1771842771144.png
+[app_name]: UCC Dues Management
+[available_academic_years]: 2023/2024, 2024/2025
+[available_programmes]: BSc. Graphics Design,BSc. Advertisement,BSc. Multimedia,BSc. Animation,Dip. Graphic Design,Dip. Advertisement,Dip. Multimedia,Dip. Animation
+[current_academic_year]: 2026/2027
+[dashboard_animations]: true
+[email_from]: no-reply@ucc.edu.gh
+[email_host]: smtp-relay.brevo.com
+[email_pass]: A3bt4KdrDVnF6g2f
+[email_port]: 587
+[email_user]: a300f8001@smtp-brevo.com
+[navbar_glassmorphism]: true
+[paystack_public_key]: pk_live_01da3c91b71c2cd3e714c2301e8953507545bb55
+[paystack_secret_key]: sk_live_e77f0d03ca9367e35738c73125934af4d39ac00e
+[primary_color]: #0B3C5D
+[registration_status]: open
+[secondary_color]: #F2A900
+[sms_api_key]: SWIFTPIA2025
+[sms_bulk_template_default]: Hello {name} ({id_no}), this is a reminder from UCC Dept regarding your outstanding dues. Please check your dashboard.
+[sms_payment_template]: Hello {name} ({id_no}), your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}
+[sms_provider]: gonlinesites
+[sms_receipt_template]: Hello {name}, your payment of GH₵{amount} for {due} has been received. Receipt: {receipt_no}. Index: {id_no}
+[sms_sender_id]: DiM Project
+[ui_border_radius]: 1rem
+[ui_font_family]: 'Outfit', sans-serif
