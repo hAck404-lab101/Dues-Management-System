@@ -1,8 +1,4 @@
 {
   "/not-found": "app/not-found.js",
-  "/admin/login/page": "app/admin/login/page.js",
-  "/admin/dashboard/page": "app/admin/dashboard/page.js",
-  "/admin/settings/page": "app/admin/settings/page.js",
-  "/admin/payments/page": "app/admin/payments/page.js",
-  "/student/profile/page": "app/student/profile/page.js"
+  "/page": "app/page.js"
 }
