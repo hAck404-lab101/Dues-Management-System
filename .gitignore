@@ -12,6 +12,8 @@ node_modules/
 /.next
 /out
 
+/backend/all_settings.txt
+
 # Environment variables
 .env
 .env.local
