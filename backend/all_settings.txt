@@ -12,7 +12,6 @@
 [email_user]: a300f8001@smtp-brevo.com
 [navbar_glassmorphism]: true
 [paystack_public_key]: pk_live_01da3c91b71c2cd3e714c2301e8953507545bb55
-[paystack_secret_key]: sk_live_e77f0d03ca9367e35738c73125934af4d39ac00e
 [primary_color]: #0B3C5D
 [registration_status]: open
 [secondary_color]: #F2A900
