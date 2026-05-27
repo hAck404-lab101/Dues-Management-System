@@ -15,20 +15,24 @@ app.use(helmet());
 // CORS setup
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  'https://dues-management-system-phi.vercel.app',
+  'https://uewdept.org',
+  'https://www.uewdept.org',
   'http://localhost:3000',
   'http://localhost:5173'
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin, like Postman or direct API calls
+    // Allow requests with no origin, like Postman, curl, or direct browser API visits
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error('Not allowed by CORS'));
+    console.log('Blocked by CORS:', origin);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true
 }));
