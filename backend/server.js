@@ -1,4 +1,5 @@
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -10,13 +11,69 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+
+// CORS setup
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://localhost:5173'
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin, like Postman or direct API calls
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'HTU Dues Management System API is running',
+    status: 'online',
+    health: '/health',
+    api: '/api'
+  });
+});
+
+// API info route
+app.get('/api', (req, res) => {
+  res.json({
+    success: true,
+    message: 'HTU Dues Management System API',
+    availableRoutes: {
+      auth: '/api/auth',
+      students: '/api/students',
+      dues: '/api/dues',
+      payments: '/api/payments',
+      receipts: '/api/receipts',
+      dashboard: '/api/dashboard',
+      reports: '/api/reports',
+      admin: '/api/admin',
+      settings: '/api/settings'
+    }
+  });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    status: 'ok',
+    message: 'HTU Dues Management System API is healthy'
+  });
+});
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -24,9 +81,10 @@ app.use('/receipts', express.static(path.join(__dirname, 'receipts')));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100
 });
+
 app.use('/api/', limiter);
 
 // Routes
@@ -40,14 +98,10 @@ app.use('/api/reports', require('./src/routes/reports'));
 app.use('/api/admin', require('./src/routes/admin'));
 app.use('/api/settings', require('./src/routes/settings'));
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'HTU Dues Management System API' });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
@@ -59,7 +113,8 @@ app.use((err, req, res, next) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
+    path: req.originalUrl
   });
 });
 
@@ -70,6 +125,7 @@ pool.getConnection()
   .then((connection) => {
     console.log('Database connected successfully');
     connection.release();
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
