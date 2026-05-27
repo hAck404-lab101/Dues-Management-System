@@ -8,6 +8,7 @@ const path = require('path');
 const { pool } = require('./src/config/database');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
