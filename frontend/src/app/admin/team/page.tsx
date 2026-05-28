@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { GroupIcon } from '@/components/Icons';
 
 const ROLES = ['admin', 'treasurer', 'financial_secretary', 'president', 'staff'];
 
@@ -96,7 +97,10 @@ export default function TeamManagementPage() {
             <div className="max-w-5xl mx-auto space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-bold text-primary">👥 Executive Team</h2>
+                        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <span className="w-6 h-6"><GroupIcon /></span>
+                            <span>Executive Team</span>
+                        </h2>
                         <p className="text-sm text-gray-500">Manage admin and staff access roles.</p>
                     </div>
                     <button onClick={openCreate} className="btn-primary">+ Add Member</button>

@@ -1,4 +1,4 @@
-// File: C:\Users\Hp\Documents\BBB\SOZO 2\LivingS\frontend\src\app\page.tsx
+// File: C:\Users\USER\Desktop\Sozo\Dues 2.0\Dues-Management-System-1\frontend\src\app\page.tsx
 import * as entry from '../../../src/app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { ExclamationIcon, CardIcon, SmsIcon } from '@/components/Icons';
 
 export default function MakePaymentPage() {
   const router = useRouter();
@@ -140,8 +141,8 @@ export default function MakePaymentPage() {
   if (error || (!due && !loading && dueId)) {
     return (
       <Layout title="Error">
-        <div className="max-w-2xl mx-auto text-center py-20 card">
-          <div className="text-5xl mb-4">⚠️</div>
+        <div className="max-w-2xl mx-auto text-center py-20 card flex flex-col items-center justify-center">
+          <div className="w-16 h-16 text-yellow-500 mb-4"><ExclamationIcon /></div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">{error || 'Something went wrong'}</h2>
           <p className="text-gray-600 mb-8">We couldn't retrieve the due information. Please try again or contact support.</p>
           <button onClick={() => router.push('/student/dashboard')} className="btn-primary px-8">Return to Dashboard</button>
@@ -203,7 +204,9 @@ export default function MakePaymentPage() {
             <div className="card overflow-hidden">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex gap-4 items-center">
-                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl">💳</div>
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center p-3">
+                    <CardIcon />
+                  </div>
                   <div>
                     <h3 className="font-bold text-xl">Online Checkout</h3>
                     <p className="text-sm text-gray-500">Fast & Instant Verification</p>
@@ -258,7 +261,9 @@ export default function MakePaymentPage() {
             {/* MANUAL OPTION */}
             <div className="card">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xl">📱</div>
+                <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center p-3">
+                  <SmsIcon />
+                </div>
                 <div>
                   <h3 className="font-bold text-xl">Offline / Manual Deposit</h3>
                   <p className="text-sm text-gray-500">For MoMo Transfer or Bank Deposit</p>

@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { ImportIcon, DownloadIcon, FolderIcon, PencilIcon, ExclamationIcon } from '@/components/Icons';
 
 const LEVELS = ['100', '200', '300', '400'];
 const CSV_TEMPLATE = `indexNumber,fullName,email,level,programme,academicYear,phoneNumber
@@ -118,11 +119,15 @@ export default function BulkImportPage() {
                 {/* Header */}
                 <div className="card p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold text-primary">📥 Bulk Student Import</h2>
+                        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <span className="w-6 h-6"><ImportIcon /></span>
+                            <span>Bulk Student Import</span>
+                        </h2>
                         <p className="text-gray-500 text-sm mt-1">Import multiple students at once using a CSV file. Default password will be the student's index number.</p>
                     </div>
-                    <button onClick={downloadTemplate} className="btn-outline text-sm shrink-0">
-                        ⬇️ Download Template
+                    <button onClick={downloadTemplate} className="btn-outline text-sm shrink-0 flex items-center gap-2">
+                        <span className="w-4 h-4"><DownloadIcon /></span>
+                        <span>Download Template</span>
                     </button>
                 </div>
 
@@ -152,15 +157,25 @@ export default function BulkImportPage() {
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
                     {(['csv', 'manual'] as const).map(t => (
                         <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${tab === t ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                            {t === 'csv' ? '📁 Upload CSV' : '✏️ Paste Data'}
+                            {t === 'csv' ? (
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-4 h-4"><FolderIcon /></span>
+                                    <span>Upload CSV</span>
+                                </span>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <span className="w-4 h-4"><PencilIcon /></span>
+                                    <span>Paste Data</span>
+                                </span>
+                            )}
                         </button>
                     ))}
                 </div>
 
                 {tab === 'csv' ? (
                     <div className="card p-6">
-                        <label className="block border-2 border-dashed border-gray-200 hover:border-primary rounded-xl p-10 text-center cursor-pointer transition-colors" onClick={() => fileRef.current?.click()}>
-                            <div className="text-5xl mb-3">📂</div>
+                        <label className="block border-2 border-dashed border-gray-200 hover:border-primary rounded-xl p-10 text-center cursor-pointer transition-colors flex flex-col items-center justify-center" onClick={() => fileRef.current?.click()}>
+                            <div className="w-16 h-16 text-gray-400 mb-3"><FolderIcon /></div>
                             <p className="text-gray-600 font-medium">Click to select a CSV file</p>
                             <p className="text-gray-400 text-sm mt-1">or drag and drop here</p>
                             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
@@ -253,7 +268,10 @@ export default function BulkImportPage() {
                                 <p className="text-sm font-medium text-gray-700 mb-2">Skipped reasons:</p>
                                 <ul className="space-y-1">
                                     {result.errors.map((e: string, i: number) => (
-                                        <li key={i} className="text-xs text-yellow-800 bg-yellow-100 px-3 py-1 rounded">⚠️ {e}</li>
+                                        <li key={i} className="text-xs text-yellow-800 bg-yellow-100 px-3 py-1 rounded flex items-center gap-2">
+                                            <span className="w-4 h-4 text-yellow-600"><ExclamationIcon /></span>
+                                            <span>{e}</span>
+                                        </li>
                                     ))}
                                 </ul>
                             </div>

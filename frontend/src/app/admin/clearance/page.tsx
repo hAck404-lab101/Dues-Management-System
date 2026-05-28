@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { AcademicCapIcon, CheckCircleIcon, XCircleIcon, DownloadIcon } from '@/components/Icons';
 
 interface ClearanceData {
     student: any;
@@ -90,7 +91,10 @@ export default function ClearancePage() {
 
                 {/* Search */}
                 <div className="card p-6 space-y-4">
-                    <h2 className="text-xl font-bold text-primary">🎓 Student Clearance Certificate</h2>
+                    <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                        <span className="w-6 h-6"><AcademicCapIcon /></span>
+                        <span>Student Clearance Certificate</span>
+                    </h2>
                     <p className="text-sm text-gray-500">Search for a student to view and download their clearance certificate.</p>
                     <div className="relative">
                         <input
@@ -131,7 +135,13 @@ export default function ClearancePage() {
                     <>
                         {/* Status Banner */}
                         <div className={`card p-6 text-center border-2 ${clearance.isFullyCleared ? 'border-green-500 bg-green-50' : 'border-red-400 bg-red-50'}`}>
-                            <div className="text-5xl mb-3">{clearance.isFullyCleared ? '✅' : '❌'}</div>
+                            <div className="w-16 h-16 mx-auto mb-3">
+                                {clearance.isFullyCleared ? (
+                                    <CheckCircleIcon className="text-green-500 w-full h-full" />
+                                ) : (
+                                    <XCircleIcon className="text-red-500 w-full h-full" />
+                                )}
+                            </div>
                             <h3 className={`text-2xl font-extrabold ${clearance.isFullyCleared ? 'text-green-700' : 'text-red-700'}`}>
                                 {clearance.isFullyCleared ? 'CLEARED' : 'NOT CLEARED'}
                             </h3>
@@ -192,8 +202,18 @@ export default function ClearancePage() {
                                                 <td className="py-3 px-4 text-green-600">GH₵{d.total_paid.toFixed(2)}</td>
                                                 <td className="py-3 px-4 text-red-600">GH₵{d.balance.toFixed(2)}</td>
                                                 <td className="py-3 px-4">
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${d.cleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
-                                                        {d.cleared ? '✓ Cleared' : '✗ Outstanding'}
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${d.cleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+                                                        {d.cleared ? (
+                                                            <>
+                                                                <span className="w-3.5 h-3.5"><CheckCircleIcon /></span>
+                                                                <span>Cleared</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="w-3.5 h-3.5"><XCircleIcon /></span>
+                                                                <span>Outstanding</span>
+                                                            </>
+                                                        )}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -205,9 +225,10 @@ export default function ClearancePage() {
 
                         {/* Download Button */}
                         <div className="flex gap-3">
-                            <button onClick={downloadPDF} disabled={downloadingPDF} className="btn-primary flex-1">
-                                {downloadingPDF ? 'Generating PDF...' : '⬇️ Download Clearance Certificate (PDF)'}
-                            </button>
+                             <button onClick={downloadPDF} disabled={downloadingPDF} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                                 <span className="w-5 h-5"><DownloadIcon /></span>
+                                 <span>{downloadingPDF ? 'Generating PDF...' : 'Download Clearance Certificate (PDF)'}</span>
+                             </button>
                         </div>
                     </>
                 )}

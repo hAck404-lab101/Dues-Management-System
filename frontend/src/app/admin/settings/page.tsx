@@ -7,6 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBranding } from '@/contexts/BrandingContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import {
+    SettingsIcon, GlobeIcon, PaletteIcon, WrenchIcon, AcademicCapIcon,
+    DocumentTextIcon, CashIcon, CardIcon, LandmarkIcon, TrendingUpIcon,
+    EnvelopeIcon, SmsIcon, ShieldIcon, LockClosedIcon, ImageIcon
+} from '@/components/Icons';
 
 interface Setting {
     value: string;
@@ -23,46 +28,46 @@ const SETTING_GROUPS = [
     {
         id: 'system',
         name: 'System Settings',
-        icon: '⚙️',
+        icon: SettingsIcon,
         subcategories: [
-            { id: 'sys_general', name: 'General', icon: '🌍' },
-            { id: 'sys_appearance', name: 'Appearance', icon: '🎨' },
-            { id: 'sys_maintenance', name: 'Maintenance', icon: '🧨' }
+            { id: 'sys_general', name: 'General', icon: GlobeIcon },
+            { id: 'sys_appearance', name: 'Appearance', icon: PaletteIcon },
+            { id: 'sys_maintenance', name: 'Maintenance', icon: WrenchIcon }
         ]
     },
     {
         id: 'portal',
         name: 'Student Portal',
-        icon: '🎓',
+        icon: AcademicCapIcon,
         subcategories: [
-            { id: 'portal', name: 'Portal Management', icon: '📑' }
+            { id: 'portal', name: 'Portal Management', icon: DocumentTextIcon }
         ]
     },
     {
         id: 'payments',
         name: 'Payment Settings',
-        icon: '💰',
+        icon: CashIcon,
         subcategories: [
-            { id: 'pay_paystack', name: 'Paystack Gateway', icon: '💳' },
-            { id: 'pay_manual', name: 'Manual Payments', icon: '🏦' },
-            { id: 'pay_charges', name: 'Service Charges', icon: '📈' }
+            { id: 'pay_paystack', name: 'Paystack Gateway', icon: CardIcon },
+            { id: 'pay_manual', name: 'Manual Payments', icon: LandmarkIcon },
+            { id: 'pay_charges', name: 'Service Charges', icon: TrendingUpIcon }
         ]
     },
     {
         id: 'communication',
         name: 'Communication',
-        icon: '✉️',
+        icon: EnvelopeIcon,
         subcategories: [
-            { id: 'comm_sms', name: 'Bulk SMS', icon: '📱' },
-            { id: 'comm_email', name: 'Email Settings', icon: '📧' }
+            { id: 'comm_sms', name: 'Bulk SMS', icon: SmsIcon },
+            { id: 'comm_email', name: 'Email Settings', icon: EnvelopeIcon }
         ]
     },
     {
         id: 'security',
         name: 'Security & Access',
-        icon: '🛡️',
+        icon: ShieldIcon,
         subcategories: [
-            { id: 'security', name: 'Security Policy', icon: '🔐' }
+            { id: 'security', name: 'Security Policy', icon: LockClosedIcon }
         ]
     }
 ];
@@ -187,7 +192,7 @@ export default function AdminSettingsPage() {
                         {val ? (
                             <img src={val.startsWith('/') ? `${API_BASE}${val}` : val} className="w-full h-full object-contain p-1" alt="Preview" />
                         ) : (
-                            <span className="text-xl opacity-20">🖼️</span>
+                            <span className="w-6 h-6 text-gray-400 opacity-50"><ImageIcon /></span>
                         )}
                     </div>
                     <div className="flex-1 space-y-2">
@@ -419,7 +424,7 @@ export default function AdminSettingsPage() {
                     {SETTING_GROUPS.map((group: any) => (
                         <div key={group.id} className="card p-4">
                             <h3 className="flex items-center gap-2 px-2 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                <span>{group.icon}</span> {group.name}
+                                <span className="w-4 h-4"><group.icon /></span> {group.name}
                             </h3>
                             <div className="space-y-1">
                                 {group.subcategories.map((sub: any) => (
@@ -431,7 +436,7 @@ export default function AdminSettingsPage() {
                                             : 'text-gray-600 hover:bg-gray-50'
                                             }`}
                                     >
-                                        <span className="text-base">{sub.icon}</span>
+                                        <span className="w-5 h-5"><sub.icon /></span>
                                         <span>{sub.name}</span>
                                     </button>
                                 ))}

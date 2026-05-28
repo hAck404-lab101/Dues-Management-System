@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { ChartIcon, CheckCircleIcon, ExclamationIcon, DownloadIcon, SparklesIcon } from '@/components/Icons';
 
 type Tab = 'revenue' | 'paid' | 'defaulters';
 
@@ -102,10 +103,10 @@ export default function AdminReportsPage() {
     }
   };
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'revenue', label: '📊 Revenue Report' },
-    { key: 'paid', label: '✅ Paid Students' },
-    { key: 'defaulters', label: '⚠️ Defaulters' },
+  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'revenue', label: 'Revenue Report', icon: <ChartIcon /> },
+    { key: 'paid', label: 'Paid Students', icon: <CheckCircleIcon /> },
+    { key: 'defaulters', label: 'Defaulters', icon: <ExclamationIcon /> },
   ];
 
   return (
@@ -116,9 +117,10 @@ export default function AdminReportsPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.key ? 'bg-primary text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
+            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${tab === t.key ? 'bg-primary text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}
           >
-            {t.label}
+            <span className="w-4 h-4">{t.icon}</span>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
@@ -151,8 +153,14 @@ export default function AdminReportsPage() {
         </div>
         <div className="flex gap-3 mt-4">
           <button onClick={handleFetch} className="btn-primary px-6">Apply Filters</button>
-          <button onClick={exportCSV} className="btn-outline px-6">⬇ CSV</button>
-          <button onClick={exportPDF} className="btn-secondary px-6">⬇ PDF</button>
+          <button onClick={exportCSV} className="btn-outline px-6 flex items-center gap-1.5">
+            <span className="w-4 h-4"><DownloadIcon /></span>
+            <span>CSV</span>
+          </button>
+          <button onClick={exportPDF} className="btn-secondary px-6 flex items-center gap-1.5">
+            <span className="w-4 h-4"><DownloadIcon /></span>
+            <span>PDF</span>
+          </button>
         </div>
       </div>
 
@@ -239,7 +247,12 @@ export default function AdminReportsPage() {
 
             {tab === 'defaulters' && (
               <>
-                {defaultersData.length === 0 ? <EmptyState msg="No defaulters found — great news! 🎉" /> : (
+                {defaultersData.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-gray-500">
+                    <div className="w-12 h-12 text-green-500 mb-3"><SparklesIcon /></div>
+                    <p className="font-semibold text-base">No defaulters found — great news!</p>
+                  </div>
+                ) : (
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b bg-gray-50 text-left">

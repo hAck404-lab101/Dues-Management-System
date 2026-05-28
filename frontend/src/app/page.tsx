@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import { useBranding } from '@/contexts/BrandingContext'
+import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon } from '@/components/Icons'
 
 export default function Home() {
   const { appName } = useBranding();
@@ -35,48 +36,48 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-primary text-center mb-12">Features</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="card text-center hover:shadow-lg transition-shadow">
-              <div className="text-5xl mb-4">💳</div>
+            <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+              <div className="w-12 h-12 text-primary mb-4"><CardIcon /></div>
               <h3 className="text-2xl font-bold text-primary mb-3">Secure Payments</h3>
               <p className="text-gray-600">
                 Make secure online payments using Paystack. Support for MTN MoMo, Vodafone Cash, AirtelTigo, and Bank Cards.
               </p>
             </div>
 
-            <div className="card text-center hover:shadow-lg transition-shadow">
-              <div className="text-5xl mb-4">📊</div>
+            <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+              <div className="w-12 h-12 text-primary mb-4"><ChartIcon /></div>
               <h3 className="text-2xl font-bold text-primary mb-3">Track Dues</h3>
               <p className="text-gray-600">
                 View all your assigned dues, payment history, and outstanding balances in one convenient dashboard.
               </p>
             </div>
 
-            <div className="card text-center hover:shadow-lg transition-shadow">
-              <div className="text-5xl mb-4">🧾</div>
+            <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+              <div className="w-12 h-12 text-primary mb-4"><ReceiptIcon /></div>
               <h3 className="text-2xl font-bold text-primary mb-3">Digital Receipts</h3>
               <p className="text-gray-600">
                 Automatic receipt generation with QR codes. Download and print your receipts anytime.
               </p>
             </div>
 
-            <div className="card text-center hover:shadow-lg transition-shadow">
-              <div className="text-5xl mb-4">📱</div>
+            <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+              <div className="w-12 h-12 text-primary mb-4"><SmsIcon /></div>
               <h3 className="text-2xl font-bold text-primary mb-3">Mobile Friendly</h3>
               <p className="text-gray-600">
                 Responsive design that works seamlessly on all devices - desktop, tablet, and mobile.
               </p>
             </div>
 
-            <div className="card text-center hover:shadow-lg transition-shadow">
-              <div className="text-5xl mb-4">⏱️</div>
+            <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+              <div className="w-12 h-12 text-primary mb-4"><ClockIcon /></div>
               <h3 className="text-2xl font-bold text-primary mb-3">Real-time Updates</h3>
               <p className="text-gray-600">
                 Get instant notifications about payment confirmations, new dues, and payment reminders.
               </p>
             </div>
 
-            <div className="card text-center hover:shadow-lg transition-shadow">
-              <div className="text-5xl mb-4">🔒</div>
+            <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+              <div className="w-12 h-12 text-primary mb-4"><ShieldIcon /></div>
               <h3 className="text-2xl font-bold text-primary mb-3">Secure & Transparent</h3>
               <p className="text-gray-600">
                 All transactions are securely processed and recorded. Complete audit trail for all activities.
