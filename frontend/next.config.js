@@ -7,6 +7,10 @@ const API_URL =
 const nextConfig = {
   reactStrictMode: true,
 
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
+
   images: {
     domains: [
       'localhost',
