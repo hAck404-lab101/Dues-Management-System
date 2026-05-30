@@ -14,6 +14,26 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Academic years table
+CREATE TABLE IF NOT EXISTS academic_years (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(20) UNIQUE NOT NULL,
+    is_active BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Programmes table
+CREATE TABLE IF NOT EXISTS programmes (
+    id CHAR(36) PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    code VARCHAR(50),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Users table (for authentication)
 -- Students table
 CREATE TABLE IF NOT EXISTS students (
     id CHAR(36) PRIMARY KEY,
@@ -38,6 +58,7 @@ CREATE TABLE IF NOT EXISTS dues (
     amount DECIMAL(10, 2) NOT NULL,
     academic_year VARCHAR(20) NOT NULL,
     deadline DATE,
+    late_fee DECIMAL(10, 2) DEFAULT 0.00,
     description TEXT,
     is_active BOOLEAN DEFAULT true,
     created_by CHAR(36),
@@ -54,7 +75,9 @@ CREATE TABLE IF NOT EXISTS due_assignments (
     level INT,
     programme VARCHAR(255),
     amount DECIMAL(10, 2) NOT NULL,
+    status ENUM('unpaid', 'partial', 'paid') DEFAULT 'unpaid',
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY unique_assignment (due_id, student_id),
     FOREIGN KEY (due_id) REFERENCES dues(id) ON DELETE CASCADE,
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
@@ -66,6 +89,7 @@ CREATE TABLE IF NOT EXISTS payments (
     student_id CHAR(36) NOT NULL,
     due_id CHAR(36) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
+    service_fee DECIMAL(10, 2) DEFAULT 0.00,
     payment_method ENUM('paystack', 'mtn_momo', 'vodafone_cash', 'airteltigo', 'bank_transfer', 'cash', 'other') NOT NULL,
     payment_type ENUM('online', 'manual') NOT NULL,
     status ENUM('pending', 'approved', 'rejected', 'completed') NOT NULL DEFAULT 'pending',
@@ -104,6 +128,17 @@ CREATE TABLE IF NOT EXISTS receipts (
     FOREIGN KEY (issued_by) REFERENCES users(id)
 );
 
+-- Settings table used by payment, portal, branding, SMS and email settings
+CREATE TABLE IF NOT EXISTS settings (
+    id CHAR(36) PRIMARY KEY,
+    `key` VARCHAR(100) UNIQUE NOT NULL,
+    `value` TEXT,
+    category VARCHAR(100) NOT NULL DEFAULT 'sys_general',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Audit logs table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id CHAR(36) PRIMARY KEY,
@@ -131,7 +166,37 @@ CREATE TABLE IF NOT EXISTS email_notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so we'll handle errors)
+-- Backward-compatible schema upgrades for existing databases
+ALTER TABLE dues ADD COLUMN late_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER deadline;
+ALTER TABLE payments ADD COLUMN service_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER amount;
+ALTER TABLE due_assignments ADD COLUMN status ENUM('unpaid', 'partial', 'paid') DEFAULT 'unpaid' AFTER amount;
+ALTER TABLE due_assignments ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER assigned_at;
+
+-- Default system settings
+INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
+(UUID(), 'payment_service_fee', '0', 'pay_charges', 'Extra service fee added to online payments'),
+(UUID(), 'paystack_public_key', '', 'pay_paystack', 'Paystack public key for frontend checkout'),
+(UUID(), 'paystack_secret_key', '', 'pay_paystack', 'Encrypted Paystack secret key'),
+(UUID(), 'paystack_webhook_secret', '', 'pay_paystack', 'Encrypted Paystack webhook secret'),
+(UUID(), 'manual_payment_enabled', 'true', 'pay_manual', 'Allow students to upload manual payment proof'),
+(UUID(), 'manual_payment_bank_name', '', 'pay_manual', 'Bank or MoMo name for manual payments'),
+(UUID(), 'manual_payment_account_name', '', 'pay_manual', 'Account name for manual payments'),
+(UUID(), 'manual_payment_account_number', '', 'pay_manual', 'Account number or MoMo number for manual payments'),
+(UUID(), 'student_registration_open', 'true', 'portal', 'Allow students to register from the portal'),
+(UUID(), 'active_academic_year', '', 'portal', 'Current academic year'),
+(UUID(), 'sms_api_key', '', 'notifications', 'Encrypted SMS provider API key'),
+(UUID(), 'sms_sender_id', 'HTU DUES', 'notifications', 'SMS sender ID'),
+(UUID(), 'sms_payment_template', 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}', 'notifications', 'Payment SMS template'),
+(UUID(), 'email_host', '', 'email', 'SMTP host'),
+(UUID(), 'email_port', '587', 'email', 'SMTP port'),
+(UUID(), 'email_user', '', 'email', 'SMTP username'),
+(UUID(), 'email_pass', '', 'email', 'Encrypted SMTP password'),
+(UUID(), 'app_name', 'HTU Dues Management System', 'sys_general', 'Application name'),
+(UUID(), 'app_logo', '', 'sys_appearance', 'Primary app logo'),
+(UUID(), 'app_logo_secondary', '', 'sys_appearance', 'Secondary app logo'),
+(UUID(), 'app_favicon', '', 'sys_appearance', 'Application favicon');
+
+-- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so migrate.js skips duplicate errors)
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_student_id ON users(student_id);
 CREATE INDEX idx_students_student_id ON students(student_id);
@@ -142,6 +207,7 @@ CREATE INDEX idx_dues_academic_year ON dues(academic_year);
 CREATE INDEX idx_dues_active ON dues(is_active);
 CREATE INDEX idx_due_assignments_due_id ON due_assignments(due_id);
 CREATE INDEX idx_due_assignments_student_id ON due_assignments(student_id);
+CREATE INDEX idx_due_assignments_status ON due_assignments(status);
 CREATE INDEX idx_payments_student_id ON payments(student_id);
 CREATE INDEX idx_payments_due_id ON payments(due_id);
 CREATE INDEX idx_payments_status ON payments(status);
