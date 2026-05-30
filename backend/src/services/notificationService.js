@@ -3,8 +3,9 @@ const nodemailer = require('nodemailer');
 const { query } = require('../config/database');
 const { decrypt } = require('../utils/encryption');
 
-const getSettingsByCategory = async (category) => {
-    const { rows } = await query('SELECT `key`, `value` FROM settings WHERE category = ?', [category]);
+const getSettingsByCategories = async (categories) => {
+    const placeholders = categories.map(() => '?').join(',');
+    const { rows } = await query(`SELECT \`key\`, \`value\` FROM settings WHERE category IN (${placeholders})`, categories);
     const settings = {};
     const sensitiveKeys = ['sms_api_key', 'email_pass', 'email_api_key', 'paystack_secret_key'];
 
@@ -14,21 +15,41 @@ const getSettingsByCategory = async (category) => {
     return settings;
 };
 
+const getSettingsByCategory = async (category) => {
+    const fallbackMap = {
+        comm_sms: ['comm_sms', 'notifications'],
+        notifications: ['notifications', 'comm_sms'],
+        comm_email: ['comm_email', 'email'],
+        email: ['email', 'comm_email']
+    };
+
+    return getSettingsByCategories(fallbackMap[category] || [category]);
+};
+
 exports.sendSMS = async (phoneNumber, message) => {
     try {
+        if (!phoneNumber || !message) return false;
+
         const settings = await getSettingsByCategory('comm_sms');
         const { sms_provider = 'arkesel', sms_api_key, sms_sender_id } = settings;
 
-        if (!sms_api_key) return false;
+        if (!sms_api_key) {
+            console.warn('SMS not sent: missing sms_api_key setting');
+            return false;
+        }
 
         const formattedPhone = phoneNumber.replace(/[^0-9]/g, '').replace(/^0/, '233');
         const finalPhone = formattedPhone.startsWith('233') ? formattedPhone : '233' + formattedPhone;
+
+        if (sms_provider && sms_provider.toLowerCase() !== 'arkesel') {
+            console.warn(`SMS provider ${sms_provider} is not implemented yet. Falling back to Arkesel format.`);
+        }
 
         const params = {
             action: 'send-sms',
             api_key: sms_api_key,
             to: finalPhone,
-            from: sms_sender_id || 'UCC Dues',
+            from: sms_sender_id || 'HTU Dues',
             sms: message
         };
 
@@ -42,6 +63,8 @@ exports.sendSMS = async (phoneNumber, message) => {
 
 exports.sendEmail = async (to, subject, text, html, attachments = []) => {
     try {
+        if (!to || !subject) return false;
+
         const settings = await getSettingsByCategory('comm_email');
         const { email_host, email_port, email_user, email_pass, email_from, email_from_name } = settings;
 
@@ -55,7 +78,7 @@ exports.sendEmail = async (to, subject, text, html, attachments = []) => {
         });
 
         const info = await transporter.sendMail({
-            from: `"${email_from_name || 'UCC Dues'}" <${email_from || email_user}>`,
+            from: `"${email_from_name || 'HTU Dues'}" <${email_from || email_user}>`,
             to,
             subject,
             text,
