@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS programmes (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Users table (for authentication)
 -- Students table
 CREATE TABLE IF NOT EXISTS students (
     id CHAR(36) PRIMARY KEY,
@@ -184,17 +183,25 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'manual_payment_account_number', '', 'pay_manual', 'Account number or MoMo number for manual payments'),
 (UUID(), 'student_registration_open', 'true', 'portal', 'Allow students to register from the portal'),
 (UUID(), 'active_academic_year', '', 'portal', 'Current academic year'),
-(UUID(), 'sms_api_key', '', 'notifications', 'Encrypted SMS provider API key'),
-(UUID(), 'sms_sender_id', 'HTU DUES', 'notifications', 'SMS sender ID'),
-(UUID(), 'sms_payment_template', 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}', 'notifications', 'Payment SMS template'),
-(UUID(), 'email_host', '', 'email', 'SMTP host'),
-(UUID(), 'email_port', '587', 'email', 'SMTP port'),
-(UUID(), 'email_user', '', 'email', 'SMTP username'),
-(UUID(), 'email_pass', '', 'email', 'Encrypted SMTP password'),
+(UUID(), 'sms_provider', 'arkesel', 'comm_sms', 'SMS provider name'),
+(UUID(), 'sms_api_key', '', 'comm_sms', 'Encrypted SMS provider API key'),
+(UUID(), 'sms_sender_id', 'HTU DUES', 'comm_sms', 'SMS sender ID'),
+(UUID(), 'sms_payment_template', 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}', 'comm_sms', 'Payment SMS template'),
+(UUID(), 'sms_credentials_template', 'Hello {name}, your student portal login has been reset. Login ID: {login}. Temporary password: {password}. Please change it after login.', 'comm_sms', 'Student credential reset SMS template'),
+(UUID(), 'email_host', '', 'comm_email', 'SMTP host'),
+(UUID(), 'email_port', '587', 'comm_email', 'SMTP port'),
+(UUID(), 'email_user', '', 'comm_email', 'SMTP username'),
+(UUID(), 'email_pass', '', 'comm_email', 'Encrypted SMTP password'),
+(UUID(), 'email_from', '', 'comm_email', 'Email sender address'),
+(UUID(), 'email_from_name', 'HTU Dues Management', 'comm_email', 'Email sender display name'),
 (UUID(), 'app_name', 'HTU Dues Management System', 'sys_general', 'Application name'),
 (UUID(), 'app_logo', '', 'sys_appearance', 'Primary app logo'),
 (UUID(), 'app_logo_secondary', '', 'sys_appearance', 'Secondary app logo'),
 (UUID(), 'app_favicon', '', 'sys_appearance', 'Application favicon');
+
+-- Compatibility update for databases that already inserted these settings under older categories
+UPDATE settings SET category = 'comm_sms' WHERE `key` IN ('sms_provider', 'sms_api_key', 'sms_sender_id', 'sms_payment_template', 'sms_credentials_template');
+UPDATE settings SET category = 'comm_email' WHERE `key` IN ('email_host', 'email_port', 'email_user', 'email_pass', 'email_from', 'email_from_name');
 
 -- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so migrate.js skips duplicate errors)
 CREATE INDEX idx_users_email ON users(email);
