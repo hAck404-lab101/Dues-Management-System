@@ -66,7 +66,8 @@ app.get('/api', (req, res) => {
       dashboard: '/api/dashboard',
       reports: '/api/reports',
       admin: '/api/admin',
-      settings: '/api/settings'
+      settings: '/api/settings',
+      features: '/api/features'
     }
   });
 });
@@ -102,6 +103,7 @@ app.use('/api/dashboard', require('./src/routes/dashboard'));
 app.use('/api/reports', require('./src/routes/reports'));
 app.use('/api/admin', require('./src/routes/admin'));
 app.use('/api/settings', require('./src/routes/settings'));
+app.use('/api/features', require('./src/routes/featurePack'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
