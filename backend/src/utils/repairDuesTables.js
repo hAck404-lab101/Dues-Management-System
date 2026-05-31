@@ -18,7 +18,7 @@ const repairDuesTables = async (connection) => {
     }
   };
 
-  console.log('Checking dues tables...');
+  console.log('Checking dues and notification tables...');
 
   await exec('Ensure dues table exists', `
     CREATE TABLE IF NOT EXISTS dues (
@@ -87,7 +87,30 @@ const repairDuesTables = async (connection) => {
 
   await exec('Ensure payments.service_fee exists', 'ALTER TABLE payments ADD COLUMN service_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER amount');
 
-  console.log('Dues tables check completed.');
+  await exec('Ensure sms_logs table exists', `
+    CREATE TABLE IF NOT EXISTS sms_logs (
+      id CHAR(36) PRIMARY KEY,
+      recipient_phone VARCHAR(30) NOT NULL,
+      message TEXT NOT NULL,
+      message_type VARCHAR(80) DEFAULT 'general',
+      provider VARCHAR(80),
+      sender_id VARCHAR(80),
+      status ENUM('sent', 'failed') NOT NULL,
+      provider_response TEXT,
+      related_type VARCHAR(80),
+      related_id CHAR(36),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await exec('Ensure sms_logs.message_type exists', 'ALTER TABLE sms_logs ADD COLUMN message_type VARCHAR(80) DEFAULT \'general\' AFTER message');
+  await exec('Ensure sms_logs.provider exists', 'ALTER TABLE sms_logs ADD COLUMN provider VARCHAR(80) AFTER message_type');
+  await exec('Ensure sms_logs.sender_id exists', 'ALTER TABLE sms_logs ADD COLUMN sender_id VARCHAR(80) AFTER provider');
+  await exec('Ensure sms_logs.related_type exists', 'ALTER TABLE sms_logs ADD COLUMN related_type VARCHAR(80) AFTER provider_response');
+  await exec('Ensure sms_logs.related_id exists', 'ALTER TABLE sms_logs ADD COLUMN related_id CHAR(36) AFTER related_type');
+  await exec('Ensure sms_logs.created_at index exists', 'ALTER TABLE sms_logs ADD INDEX idx_sms_logs_created_at (created_at)');
+  await exec('Ensure sms_logs_status index exists', 'ALTER TABLE sms_logs ADD INDEX idx_sms_logs_status (status)');
+
+  console.log('Dues and notification tables check completed.');
 };
 
 module.exports = { repairDuesTables };
