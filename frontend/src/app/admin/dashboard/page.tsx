@@ -91,7 +91,7 @@ export default function AdminDashboard() {
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-sm font-medium opacity-80 uppercase tracking-wider">Expected Revenue</h3>
-              <p className="text-3xl font-extrabold mt-2">GHS {Number(data.summary.expectedRevenue).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
+              <p className="text-3xl font-extrabold mt-2">GHS {Number(data.summary.expectedRevenue).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
             </div>
             <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
               <LandmarkIcon />
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-sm font-medium opacity-80 uppercase tracking-wider">Amount Collected</h3>
-              <p className="text-3xl font-extrabold mt-2">GHS {Number(data.summary.amountCollected).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
+              <p className="text-3xl font-extrabold mt-2">GHS {Number(data.summary.amountCollected).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
             </div>
             <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
               <WalletIcon />
@@ -115,7 +115,7 @@ export default function AdminDashboard() {
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-sm font-medium opacity-80 uppercase tracking-wider">Outstanding Balance</h3>
-              <p className="text-3xl font-extrabold mt-2">GHS {Number(data.summary.outstandingBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
+              <p className="text-3xl font-extrabold mt-2">GHS {Number(data.summary.outstandingBalance).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</p>
             </div>
             <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
               <CardIcon />
@@ -215,4 +215,3 @@ export default function AdminDashboard() {
     </Layout>
   );
 }
-

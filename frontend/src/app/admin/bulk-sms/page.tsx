@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { ChartIcon, EnvelopeIcon, SendIcon, ExclamationIcon, CheckCircleIcon } from '@/components/Icons';
+import { ChartIcon, EnvelopeIcon, SendIcon, ExclamationIcon, CheckCircleIcon, UsersIcon } from '@/components/Icons';
 
 export default function BulkSMSPage() {
     const router = useRouter();
@@ -33,8 +33,8 @@ export default function BulkSMSPage() {
         api.get('/settings/public').then(res => {
             if (res.data.success) {
                 const s = res.data.data;
-                if (s.available_academic_years) setAvailableYears(s.available_academic_years.split(',').map((y: string) => y.trim()));
-                if (s.available_programmes) setAvailableProgs(s.available_programmes.split(',').map((p: string) => p.trim()));
+                if (s.available_academic_years) setAvailableYears(s.available_academic_years.split(',').map((y: string) => y.trim()).filter(Boolean));
+                if (s.available_programmes) setAvailableProgs(s.available_programmes.split(',').map((p: string) => p.trim()).filter(Boolean));
             }
         });
     }, []);
@@ -85,8 +85,6 @@ export default function BulkSMSPage() {
     return (
         <Layout title="Bulk SMS">
             <div className="max-w-3xl mx-auto space-y-6">
-
-                {/* Header */}
                 <div className="card p-6">
                     <h2 className="text-xl font-bold text-primary flex items-center gap-2">
                         <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,9 +95,11 @@ export default function BulkSMSPage() {
                     <p className="text-sm text-gray-500 mt-1">Send an announcement or reminder to a group of students. Use <code className="bg-gray-100 px-1 rounded">{'{name}'}</code> and <code className="bg-gray-100 px-1 rounded">{'{id_no}'}</code> for personalization.</p>
                 </div>
 
-                {/* Filters */}
                 <div className="card p-6 space-y-4">
-                    <h3 className="font-semibold text-gray-700">🎯 Target Recipients</h3>
+                    <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                        <span className="w-5 h-5 text-primary"><UsersIcon /></span>
+                        <span>Target Recipients</span>
+                    </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="label">Level (optional)</label>
@@ -151,7 +151,6 @@ export default function BulkSMSPage() {
                     )}
                 </div>
 
-                {/* Message */}
                 <div className="card p-6 space-y-4">
                     <div className="flex justify-between items-center">
                         <h3 className="font-semibold text-gray-700 flex items-center gap-2">
@@ -162,7 +161,7 @@ export default function BulkSMSPage() {
                     </div>
                     <textarea
                         className="input-field h-32 resize-none font-sans"
-                        placeholder="Dear {name}, your payment for dues is due. Please pay your balance to avoid penalties. – UCC Dept"
+                        placeholder="Dear {name}, your dues payment is due. Please pay your balance before the deadline."
                         value={form.message}
                         onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                     />
@@ -179,7 +178,6 @@ export default function BulkSMSPage() {
                     </button>
                 </div>
 
-                {/* Result */}
                 {result && (
                     <div className="card p-6 border-l-4 border-green-500 bg-green-50">
                         <h3 className="font-bold mb-3 flex items-center gap-2">

@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { HomeIcon, WalletIcon, ReceiptIcon, LockClosedIcon } from '@/components/Icons';
 
 export default function StudentProfilePage() {
     const router = useRouter();
@@ -97,11 +98,16 @@ export default function StudentProfilePage() {
         );
     }
 
+    const quickLinks = [
+        { href: '/student/dashboard', icon: <HomeIcon />, label: 'Dashboard' },
+        { href: '/student/payments', icon: <WalletIcon />, label: 'My Payments' },
+        { href: '/student/receipts', icon: <ReceiptIcon />, label: 'My Receipts' },
+    ];
+
     return (
         <Layout title="My Profile">
             <div className="max-w-2xl mx-auto space-y-6">
 
-                {/* Avatar Card */}
                 <div className="card flex items-center gap-5">
                     <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold shrink-0">
                         {profile.full_name.charAt(0).toUpperCase()}
@@ -115,7 +121,6 @@ export default function StudentProfilePage() {
                     </div>
                 </div>
 
-                {/* Details Card */}
                 <div className="card">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-bold text-primary">Student Details</h3>
@@ -153,9 +158,11 @@ export default function StudentProfilePage() {
                     )}
                 </div>
 
-                {/* Change Password Card */}
                 <div className="card">
-                    <h3 className="text-lg font-bold text-primary mb-5">🔐 Change Password</h3>
+                    <h3 className="text-lg font-bold text-primary mb-5 flex items-center gap-2">
+                        <span className="w-5 h-5"><LockClosedIcon /></span>
+                        Change Password
+                    </h3>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                         <div>
                             <label className="label">Current Password *</label>
@@ -175,15 +182,10 @@ export default function StudentProfilePage() {
                     </form>
                 </div>
 
-                {/* Quick Links */}
                 <div className="grid grid-cols-3 gap-4">
-                    {[
-                        { href: '/student/dashboard', emoji: '🏠', label: 'Dashboard' },
-                        { href: '/student/payments', emoji: '💳', label: 'My Payments' },
-                        { href: '/student/receipts', emoji: '🧾', label: 'My Receipts' },
-                    ].map(link => (
+                    {quickLinks.map(link => (
                         <a key={link.href} href={link.href} className="card text-center hover:border-primary hover:shadow-md transition-all cursor-pointer group border border-transparent">
-                            <div className="text-3xl mb-2">{link.emoji}</div>
+                            <div className="w-8 h-8 mx-auto mb-2 text-primary group-hover:scale-110 transition-transform">{link.icon}</div>
                             <p className="text-sm font-medium text-gray-700 group-hover:text-primary">{link.label}</p>
                         </a>
                     ))}

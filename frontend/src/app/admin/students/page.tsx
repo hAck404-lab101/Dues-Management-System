@@ -41,13 +41,15 @@ export default function AdminStudentsPage() {
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
+  const [resetStudent, setResetStudent] = useState<Student | null>(null);
+  const [resetPassword, setResetPassword] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [availableProgrammes, setAvailableProgrammes] = useState<string[]>([]);
   const [availableAcademicYears, setAvailableAcademicYears] = useState<string[]>([]);
 
-  // Selection state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function AdminStudentsPage() {
         setStudents(res.data.data);
         setTotalPages(res.data.pagination.pages || 1);
         setTotal(res.data.pagination.total || 0);
-        setSelectedIds([]); // Reset selection on page change or filter
+        setSelectedIds([]);
       }
     } catch {
       toast.error('Failed to load students');
@@ -177,6 +179,26 @@ export default function AdminStudentsPage() {
     }
   };
 
+  const handleResetCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetStudent) return;
+
+    setSubmitting(true);
+    try {
+      const payload = resetPassword.trim() ? { password: resetPassword.trim() } : {};
+      const res = await api.patch(`/students/${resetStudent.id}/reset-credentials`, payload);
+      toast.success(res.data?.message || 'Student login reset and sent by SMS');
+      setShowResetModal(false);
+      setResetStudent(null);
+      setResetPassword('');
+      fetchStudents();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to reset login credentials');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const toggleSelectAll = () => {
     if (selectedIds.length === students.length) {
       setSelectedIds([]);
@@ -197,10 +219,15 @@ export default function AdminStudentsPage() {
     setShowEditModal(true);
   };
 
+  const openReset = (s: Student) => {
+    setResetStudent(s);
+    setResetPassword('');
+    setShowResetModal(true);
+  };
+
   return (
     <>
       <Layout title="Manage Students">
-        {/* Toolbar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6 items-start sm:items-center justify-between">
           <div className="flex gap-3 flex-wrap items-center">
             <input
@@ -232,7 +259,6 @@ export default function AdminStudentsPage() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="card overflow-x-auto">
           {loadingData ? (
             <div className="space-y-3 p-2">
@@ -275,7 +301,10 @@ export default function AdminStudentsPage() {
                       />
                     </td>
                     <td className="py-3 px-3 font-mono">{s.student_id}</td>
-                    <td className="py-3 px-3 font-medium">{s.full_name}</td>
+                    <td className="py-3 px-3 font-medium">
+                      <div>{s.full_name}</div>
+                      <div className="text-xs text-gray-400">{s.phone_number || 'No phone number'}</div>
+                    </td>
                     <td className="py-3 px-3 text-gray-600">{s.email}</td>
                     <td className="py-3 px-3">Lvl {s.level}</td>
                     <td className="py-3 px-3 max-w-[160px] truncate">{s.programme}</td>
@@ -285,8 +314,16 @@ export default function AdminStudentsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-3">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <button onClick={() => openEdit(s)} className="text-xs btn-outline px-2 py-1">Edit</button>
+                        <button
+                          onClick={() => openReset(s)}
+                          className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium disabled:opacity-40"
+                          disabled={!s.phone_number}
+                          title={s.phone_number ? 'Send new login details by SMS' : 'Add a phone number first'}
+                        >
+                          Reset Login
+                        </button>
                         <button
                           onClick={() => handleToggleActive(s)}
                           className={`text-xs px-2 py-1 rounded border font-medium transition-colors ${s.is_active ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'}`}
@@ -307,7 +344,6 @@ export default function AdminStudentsPage() {
             </table>
           )}
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-4 pb-2">
               <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">← Prev</button>
@@ -318,7 +354,6 @@ export default function AdminStudentsPage() {
         </div>
       </Layout>
 
-      {/* Modals outside Layout for absolute viewport coverage */}
       {showAddModal && (
         <Modal title="Add New Student" onClose={() => setShowAddModal(false)}>
           <form onSubmit={handleAdd} className="space-y-3">
@@ -410,11 +445,43 @@ export default function AdminStudentsPage() {
           </form>
         </Modal>
       )}
+
+      {showResetModal && resetStudent && (
+        <Modal title={`Reset Login: ${resetStudent.full_name}`} onClose={() => { setShowResetModal(false); setResetStudent(null); setResetPassword(''); }}>
+          <form onSubmit={handleResetCredentials} className="space-y-4">
+            <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-blue-900">
+              <p className="font-semibold mb-1">This will reset the student's portal login.</p>
+              <p>Login ID: <span className="font-mono font-bold">{resetStudent.student_id}</span></p>
+              <p>SMS will be sent to: <span className="font-semibold">{resetStudent.phone_number || 'No phone number'}</span></p>
+            </div>
+
+            <FormField
+              label="Temporary Password (optional)"
+              type="text"
+              value={resetPassword}
+              onChange={setResetPassword}
+              placeholder="Leave empty to auto-generate"
+            />
+
+            <p className="text-xs text-gray-500">
+              Leave the password field empty if you want the system to generate a secure temporary password automatically.
+            </p>
+
+            <div className="flex gap-3 pt-2">
+              <button type="submit" disabled={submitting || !resetStudent.phone_number} className="btn-primary flex-1">
+                {submitting ? 'Sending SMS…' : 'Reset & Send SMS'}
+              </button>
+              <button type="button" onClick={() => { setShowResetModal(false); setResetStudent(null); setResetPassword(''); }} className="btn-outline flex-1">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </>
   );
 }
 
-/* ─── Helpers ─── */
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
     document.body.style.overflow = 'hidden';

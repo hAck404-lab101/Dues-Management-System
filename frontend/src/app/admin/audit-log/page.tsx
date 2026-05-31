@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { ShieldIcon } from '@/components/Icons';
 
 const ACTION_COLORS: Record<string, string> = {
     CREATE_STUDENT: 'bg-green-100 text-green-800',
@@ -17,6 +18,7 @@ const ACTION_COLORS: Record<string, string> = {
     RESEND_SMS: 'bg-purple-100 text-purple-800',
     BULK_IMPORT_STUDENTS: 'bg-indigo-100 text-indigo-800',
     BULK_SMS: 'bg-purple-100 text-purple-800',
+    RESET_STUDENT_CREDENTIALS: 'bg-orange-100 text-orange-800',
 };
 
 export default function AuditLogPage() {
@@ -55,16 +57,17 @@ export default function AuditLogPage() {
 
     useEffect(() => { if (user && user.role !== 'student') fetchLogs(); }, [user, fetchLogs]);
 
-    const ACTIONS = ['CREATE_STUDENT', 'UPDATE_STUDENT', 'ACTIVATE_STUDENT', 'DEACTIVATE_STUDENT', 'APPROVE_PAYMENT', 'REJECT_PAYMENT', 'RESEND_SMS', 'BULK_IMPORT_STUDENTS', 'BULK_SMS'];
+    const ACTIONS = ['CREATE_STUDENT', 'UPDATE_STUDENT', 'ACTIVATE_STUDENT', 'DEACTIVATE_STUDENT', 'APPROVE_PAYMENT', 'REJECT_PAYMENT', 'RESEND_SMS', 'BULK_IMPORT_STUDENTS', 'BULK_SMS', 'RESET_STUDENT_CREDENTIALS'];
 
     return (
         <Layout title="Audit Log">
             <div className="space-y-5">
-
-                {/* Header + Filter */}
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-bold text-primary">🔍 Audit Log</h2>
+                        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                            <span className="w-5 h-5"><ShieldIcon /></span>
+                            <span>Audit Log</span>
+                        </h2>
                         <p className="text-sm text-gray-500">{total} total events recorded</p>
                     </div>
                     <select
@@ -77,7 +80,6 @@ export default function AuditLogPage() {
                     </select>
                 </div>
 
-                {/* Table */}
                 <div className="card overflow-x-auto">
                     {loadingData ? (
                         <div className="space-y-3 p-4">{[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />)}</div>
@@ -96,8 +98,8 @@ export default function AuditLogPage() {
                             </thead>
                             <tbody>
                                 {logs.map(log => (
-                                    <>
-                                        <tr key={log.id} className="border-b hover:bg-gray-50 transition-colors">
+                                    <Fragment key={log.id}>
+                                        <tr className="border-b hover:bg-gray-50 transition-colors">
                                             <td className="py-3 px-4 text-gray-500 text-xs whitespace-nowrap">
                                                 {new Date(log.created_at).toLocaleString('en-GH', { dateStyle: 'short', timeStyle: 'short' })}
                                             </td>
@@ -120,15 +122,18 @@ export default function AuditLogPage() {
                                                 {(log.new_values || log.old_values) && (
                                                     <button
                                                         onClick={() => setExpanded(expanded === log.id ? null : log.id)}
-                                                        className="text-xs text-primary hover:underline"
+                                                        className="text-xs text-primary hover:underline inline-flex items-center gap-1"
                                                     >
-                                                        {expanded === log.id ? 'Hide ▲' : 'View ▼'}
+                                                        <span>{expanded === log.id ? 'Hide' : 'View'}</span>
+                                                        <svg className={`w-3 h-3 transition-transform ${expanded === log.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
                                                     </button>
                                                 )}
                                             </td>
                                         </tr>
                                         {expanded === log.id && (
-                                            <tr key={`${log.id}-detail`} className="bg-gray-50">
+                                            <tr className="bg-gray-50">
                                                 <td colSpan={5} className="px-4 py-3">
                                                     <pre className="text-xs text-gray-600 overflow-x-auto bg-white p-3 rounded-lg border">
                                                         {JSON.stringify(log.new_values ? (typeof log.new_values === 'string' ? JSON.parse(log.new_values) : log.new_values) : {}, null, 2)}
@@ -136,18 +141,17 @@ export default function AuditLogPage() {
                                                 </td>
                                             </tr>
                                         )}
-                                    </>
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>
                     )}
 
-                    {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex justify-center gap-2 p-4 border-t">
-                            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">← Prev</button>
+                            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">Prev</button>
                             <span className="text-sm text-gray-600 px-2 py-1">Page {page} of {totalPages}</span>
-                            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">Next →</button>
+                            <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">Next</button>
                         </div>
                     )}
                 </div>
