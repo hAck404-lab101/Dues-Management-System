@@ -14,8 +14,10 @@ interface BrandingContextType {
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
 
+const DEFAULT_APP_NAME = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'Dues Management System';
+
 export function BrandingProvider({ children }: { children: React.ReactNode }) {
-    const [appName, setAppName] = useState('UCC Dues');
+    const [appName, setAppName] = useState(DEFAULT_APP_NAME);
     const [appLogo, setAppLogo] = useState<string | null>(null);
     const [appLogoSecondary, setAppLogoSecondary] = useState<string | null>(null);
     const [appFavicon, setAppFavicon] = useState<string | null>(null);
@@ -33,20 +35,18 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
             const res = await api.get('/settings/public');
             if (res.data.success) {
                 const { app_name, app_logo, app_logo_secondary, app_favicon } = res.data.data;
+                const configuredName = app_name?.trim() || DEFAULT_APP_NAME;
 
-                if (app_name) {
-                    setAppName(app_name);
-                    if (typeof document !== 'undefined') document.title = app_name;
-                }
+                setAppName(configuredName);
+                if (typeof document !== 'undefined') document.title = configuredName;
 
-                if (app_logo) setAppLogo(formatUrl(app_logo));
-                if (app_logo_secondary) setAppLogoSecondary(formatUrl(app_logo_secondary));
+                setAppLogo(app_logo ? formatUrl(app_logo) : null);
+                setAppLogoSecondary(app_logo_secondary ? formatUrl(app_logo_secondary) : null);
 
                 if (app_favicon) {
                     const fullFavicon = formatUrl(app_favicon);
                     setAppFavicon(fullFavicon);
 
-                    // Update favicon in DOM
                     if (typeof document !== 'undefined' && fullFavicon) {
                         const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
                         if (link) {
@@ -58,10 +58,13 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
                             document.head.appendChild(newLink);
                         }
                     }
+                } else {
+                    setAppFavicon(null);
                 }
             }
         } catch (error) {
             console.error('Failed to load branding:', error);
+            if (typeof document !== 'undefined') document.title = DEFAULT_APP_NAME;
         } finally {
             setLoading(false);
         }
