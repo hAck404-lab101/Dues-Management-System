@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import {
   HomeIcon, WalletIcon, ReceiptIcon, ProfileIcon, ChartIcon, UsersIcon,
   LandmarkIcon, CardIcon, FileChartIcon, SettingsIcon, ImportIcon,
-  CertificateIcon, SmsIcon, ShieldIcon, GroupIcon
+  CertificateIcon, SmsIcon, ShieldIcon, GroupIcon, LockClosedIcon
 } from '@/components/Icons';
 
 export default function Navbar() {
@@ -110,10 +110,11 @@ export default function Navbar() {
                     <NavDropdown
                       label="System"
                       icon={<SettingsIcon />}
-                      active={pathname.includes('/admin/bulk-sms') || pathname.includes('/admin/audit-log') || pathname.includes('/admin/team') || pathname.includes('/admin/settings')}
+                      active={pathname.includes('/admin/bulk-sms') || pathname.includes('/admin/audit-log') || pathname.includes('/admin/team') || pathname.includes('/admin/settings') || pathname.includes('/admin/security')}
                     >
                       <DropdownItem href="/admin/bulk-sms" icon={<SmsIcon />} label="Bulk SMS" active={pathname === '/admin/bulk-sms'} />
                       <DropdownItem href="/admin/audit-log" icon={<ShieldIcon />} label="Audit Log" active={pathname === '/admin/audit-log'} />
+                      <DropdownItem href="/admin/security" icon={<LockClosedIcon />} label="Account Security" active={pathname === '/admin/security'} />
                       {user?.role === 'admin' && <DropdownItem href="/admin/team" icon={<GroupIcon />} label="Team" active={pathname === '/admin/team'} />}
                       <DropdownItem href="/admin/settings" icon={<SettingsIcon />} label="Settings" active={pathname === '/admin/settings'} />
                     </NavDropdown>
@@ -204,6 +205,7 @@ export default function Navbar() {
                   <MobileNavHeader label="System Tools" />
                   <MobileNavItem href="/admin/bulk-sms" label="Bulk SMS" icon={<SmsIcon />} />
                   <MobileNavItem href="/admin/audit-log" label="Audit Log" icon={<ShieldIcon />} />
+                  <MobileNavItem href="/admin/security" label="Account Security" icon={<LockClosedIcon />} />
                   {user?.role === 'admin' && <MobileNavItem href="/admin/team" label="Team" icon={<GroupIcon />} />}
                   <MobileNavItem href="/admin/settings" label="Settings" icon={<SettingsIcon />} />
                 </>
@@ -297,4 +299,3 @@ function MobileNavHeader({ label }: { label: string }) {
     </div>
   );
 }
-
