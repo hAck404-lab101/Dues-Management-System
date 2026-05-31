@@ -4,6 +4,15 @@ const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const { body } = require('express-validator');
 
+const strongPassword = (fieldName = 'password') =>
+  body(fieldName)
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters')
+    .matches(/[A-Za-z]/)
+    .withMessage('Password must include at least one letter')
+    .matches(/[0-9]/)
+    .withMessage('Password must include at least one number');
+
 // Validation middleware - accept either email or indexNumber
 const loginValidation = [
   body('password').notEmpty().withMessage('Password is required'),
@@ -19,11 +28,11 @@ const loginValidation = [
 ];
 
 const registerValidation = [
-  body('indexNumber').notEmpty().withMessage('Index number is required'),
-  body('fullName').notEmpty().withMessage('Full name is required'),
-  body('phoneNumber').notEmpty().withMessage('Phone number is required'),
+  body('indexNumber').trim().notEmpty().withMessage('Index number is required'),
+  body('fullName').trim().notEmpty().withMessage('Full name is required'),
+  body('phoneNumber').trim().notEmpty().withMessage('Phone number is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  strongPassword('password')
 ];
 
 const forgotPasswordValidation = [
@@ -36,13 +45,18 @@ const forgotPasswordValidation = [
 ];
 
 const verifyOTPValidation = [
-  body('identity').notEmpty().withMessage('Identity is required'),
-  body('otp').isLength({ min: 4, max: 6 }).withMessage('Invalid OTP format')
+  body('identity').trim().notEmpty().withMessage('Identity is required'),
+  body('otp').trim().isLength({ min: 4, max: 6 }).withMessage('Invalid OTP format')
+];
+
+const resetPasswordValidation = [
+  body('token').trim().notEmpty().withMessage('Reset token is required'),
+  strongPassword('newPassword')
 ];
 
 const changePasswordValidation = [
   body('currentPassword').notEmpty().withMessage('Current password is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+  strongPassword('newPassword')
 ];
 
 // Routes
@@ -50,10 +64,9 @@ router.post('/login', loginValidation, authController.login);
 router.post('/register', registerValidation, authController.register);
 router.post('/forgot-password', forgotPasswordValidation, authController.forgotPassword);
 router.post('/verify-otp', verifyOTPValidation, authController.verifyOTP);
-router.post('/reset-password', authController.resetPassword);
+router.post('/reset-password', resetPasswordValidation, authController.resetPassword);
 router.post('/change-password', authenticate, changePasswordValidation, authController.changePassword);
 router.get('/me', authenticate, authController.getMe);
 router.post('/refresh', authenticate, authController.refreshToken);
 
 module.exports = router;
-

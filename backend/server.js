@@ -39,10 +39,17 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Paystack-Signature']
 }));
 
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '2mb' }));
+app.use(express.json({
+  limit: process.env.JSON_BODY_LIMIT || '2mb',
+  verify: (req, res, buf) => {
+    if (req.originalUrl === '/api/payments/webhook') {
+      req.rawBody = buf.toString('utf8');
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_BODY_LIMIT || '2mb' }));
 
 // Root route
@@ -82,8 +89,9 @@ app.get('/health', (req, res) => {
   res.json({ success: true, status: 'ok', message: 'Dues Management System API is healthy' });
 });
 
-// Serve static files with lightweight caching
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '1h', etag: true }));
+// Keep payment proofs private. Existing /uploads/:filename URLs now require auth and ownership checks.
+const protectedUploadsRouter = require('./src/routes/protectedUploads');
+app.use('/uploads', protectedUploadsRouter);
 app.use('/receipts', express.static(path.join(__dirname, 'receipts'), { maxAge: '1h', etag: true }));
 
 // Rate limiting tuned for production traffic. Override with env vars as traffic grows.
@@ -100,11 +108,32 @@ const authLimiter = rateLimit({
   max: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 30),
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, message: 'Too many login attempts. Please try again later.' }
+  message: { success: false, message: 'Too many authentication attempts. Please try again later.' }
+});
+
+const sensitiveLimiter = rateLimit({
+  windowMs: parseNumber(process.env.SENSITIVE_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+  max: parseNumber(process.env.SENSITIVE_RATE_LIMIT_MAX, 20),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many sensitive requests. Please try again later.' }
+});
+
+const paymentLimiter = rateLimit({
+  windowMs: parseNumber(process.env.PAYMENT_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+  max: parseNumber(process.env.PAYMENT_RATE_LIMIT_MAX, 60),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many payment requests. Please try again later.' }
 });
 
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/forgot-password', sensitiveLimiter);
+app.use('/api/auth/verify-otp', sensitiveLimiter);
+app.use('/api/auth/reset-password', sensitiveLimiter);
+app.use('/api/auth/refresh', sensitiveLimiter);
+app.use('/api/payments', paymentLimiter);
 app.use('/api/', generalLimiter);
 
 // Routes
@@ -112,6 +141,7 @@ app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/students', require('./src/routes/students'));
 app.use('/api/dues', require('./src/routes/dues'));
 app.use('/api/payments', require('./src/routes/payments'));
+app.use('/api/protected-uploads', protectedUploadsRouter);
 app.use('/api/receipts', require('./src/routes/receipts'));
 app.use('/api/dashboard', require('./src/routes/dashboard'));
 app.use('/api/reports', require('./src/routes/reports'));

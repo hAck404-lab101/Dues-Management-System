@@ -1,4 +1,5 @@
 const axios = require('axios');
+const crypto = require('crypto');
 const { query } = require('../config/database');
 const { decrypt } = require('../utils/encryption');
 
@@ -93,23 +94,23 @@ exports.getTransaction = async (id) => {
   }
 };
 
-// Verify webhook signature
-exports.verifyWebhookSignature = async (payload, signature) => {
-  const crypto = require('crypto');
+// Verify webhook signature synchronously so callers cannot accidentally accept a pending Promise.
+// Set PAYSTACK_WEBHOOK_SECRET in production. If unavailable, PAYSTACK_SECRET_KEY is used as fallback.
+exports.verifyWebhookSignature = (payload, signature) => {
+  const secret = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY || '';
 
-  // Try to use webhook secret first, fall back to secret key
-  const { rows: webRows } = await query('SELECT value FROM settings WHERE `key` = "paystack_webhook_secret"');
-  let secret = webRows.length > 0 && webRows[0].value ? decrypt(webRows[0].value) : '';
+  if (!secret || !signature) return false;
 
-  if (!secret) {
-    const { rows: keyRows } = await query('SELECT value FROM settings WHERE `key` = "paystack_secret_key"');
-    secret = keyRows.length > 0 && keyRows[0].value ? decrypt(keyRows[0].value) : (process.env.PAYSTACK_SECRET_KEY || '');
-  }
+  const body = Buffer.isBuffer(payload)
+    ? payload.toString('utf8')
+    : typeof payload === 'string'
+      ? payload
+      : JSON.stringify(payload);
 
   const hash = crypto
     .createHmac('sha512', secret)
-    .update(JSON.stringify(payload))
+    .update(body)
     .digest('hex');
 
-  return hash === signature;
+  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(signature));
 };
