@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const { pool } = require('./src/config/database');
+const { repairDuesTables } = require('./src/utils/repairDuesTables');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -129,9 +130,17 @@ const PORT = process.env.PORT || 5000;
 
 // Initialize database and start server
 pool.getConnection()
-  .then((connection) => {
+  .then(async (connection) => {
     console.log('Database connected successfully');
-    connection.release();
+
+    try {
+      await repairDuesTables(connection);
+    } catch (repairError) {
+      console.error('Dues table repair warning:', repairError.message);
+      console.error('Server will still start, but dues may fail until the schema is fixed.');
+    } finally {
+      connection.release();
+    }
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
