@@ -3,6 +3,7 @@ const router = express.Router();
 const paymentsController = require('../controllers/paymentsController');
 const { authenticate, isAdmin, isStudent, isFinancialSecretary } = require('../middleware/auth');
 const { auditLog } = require('../middleware/auditLog');
+const { requirePaymentAccess } = require('../utils/accessControl');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -43,11 +44,10 @@ router.post('/verify', authenticate, paymentsController.verifyPayment);
 router.post('/webhook', paymentsController.handleWebhook);
 router.post('/manual', authenticate, isStudent, upload.single('proof'), paymentsController.createManualPayment);
 router.get('/', authenticate, paymentsController.getPayments);
-router.get('/:id', authenticate, paymentsController.getPaymentById);
+router.get('/:id', authenticate, requirePaymentAccess, paymentsController.getPaymentById);
 router.patch('/:id/approve', authenticate, isFinancialSecretary, auditLog('APPROVE_PAYMENT', 'payment'), paymentsController.approvePayment);
 router.patch('/:id/reject', authenticate, isFinancialSecretary, auditLog('REJECT_PAYMENT', 'payment'), paymentsController.rejectPayment);
 router.post('/:id/resend-sms', authenticate, isFinancialSecretary, auditLog('RESEND_SMS', 'payment'), paymentsController.resendSMSReceipt);
 router.post('/:id/resend-email', authenticate, isFinancialSecretary, auditLog('RESEND_EMAIL', 'payment'), paymentsController.resendEmailReceipt);
 
 module.exports = router;
-
