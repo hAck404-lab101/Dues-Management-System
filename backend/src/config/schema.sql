@@ -183,7 +183,8 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'manual_payment_account_number', '', 'pay_manual', 'Account number or MoMo number for manual payments'),
 (UUID(), 'student_registration_open', 'true', 'portal', 'Allow students to register from the portal'),
 (UUID(), 'active_academic_year', '', 'portal', 'Current academic year'),
-(UUID(), 'sms_provider', 'arkesel', 'comm_sms', 'SMS provider name'),
+(UUID(), 'sms_provider', 'gonlinesites', 'comm_sms', 'SMS provider name'),
+(UUID(), 'sms_api_url', 'https://sms.gonlinesites.com/app/smsapi/index.php', 'comm_sms', 'SMS provider API URL'),
 (UUID(), 'sms_api_key', '', 'comm_sms', 'Encrypted SMS provider API key'),
 (UUID(), 'sms_sender_id', 'HTU DUES', 'comm_sms', 'SMS sender ID'),
 (UUID(), 'sms_payment_template', 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}', 'comm_sms', 'Payment SMS template'),
@@ -200,8 +201,10 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'app_favicon', '', 'sys_appearance', 'Application favicon');
 
 -- Compatibility update for databases that already inserted these settings under older categories
-UPDATE settings SET category = 'comm_sms' WHERE `key` IN ('sms_provider', 'sms_api_key', 'sms_sender_id', 'sms_payment_template', 'sms_credentials_template');
+UPDATE settings SET category = 'comm_sms' WHERE `key` IN ('sms_provider', 'sms_api_url', 'sms_api_key', 'sms_sender_id', 'sms_payment_template', 'sms_credentials_template');
 UPDATE settings SET category = 'comm_email' WHERE `key` IN ('email_host', 'email_port', 'email_user', 'email_pass', 'email_from', 'email_from_name');
+UPDATE settings SET `value` = 'gonlinesites' WHERE `key` = 'sms_provider' AND (`value` IS NULL OR `value` = '' OR `value` = 'arkesel');
+UPDATE settings SET `value` = 'https://sms.gonlinesites.com/app/smsapi/index.php' WHERE `key` = 'sms_api_url' AND (`value` IS NULL OR `value` = '');
 
 -- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so migrate.js skips duplicate errors)
 CREATE INDEX idx_users_email ON users(email);
