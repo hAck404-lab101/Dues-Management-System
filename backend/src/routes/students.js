@@ -4,11 +4,12 @@ const studentsController = require('../controllers/studentsController');
 const studentCredentialsController = require('../controllers/studentCredentialsController');
 const { authenticate, isAdmin, isStudent } = require('../middleware/auth');
 const { auditLog } = require('../middleware/auditLog');
+const { requireStudentRecordAccess } = require('../utils/accessControl');
 
 router.get('/', authenticate, isAdmin, studentsController.getAllStudents);
 router.get('/me', authenticate, isStudent, studentsController.getMyProfile);
 router.patch('/me', authenticate, isStudent, studentsController.updateMyProfile);
-router.get('/:id', authenticate, studentsController.getStudentById);
+router.get('/:id', authenticate, requireStudentRecordAccess, studentsController.getStudentById);
 router.post('/', authenticate, isAdmin, auditLog('CREATE_STUDENT', 'student'), studentsController.createStudent);
 router.put('/:id', authenticate, isAdmin, auditLog('UPDATE_STUDENT', 'student'), studentsController.updateStudent);
 router.patch('/:id/reset-credentials', authenticate, isAdmin, auditLog('RESET_STUDENT_CREDENTIALS', 'student'), studentCredentialsController.resetStudentCredentials);
