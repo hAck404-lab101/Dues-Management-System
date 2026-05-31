@@ -153,6 +153,13 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
     try {
       const { sendEmail, sendSMS } = require('./notificationService');
 
+      // Fetch delivery settings
+      const emailEnabledResult = await executor('SELECT `value` FROM settings WHERE `key` = "receipt_email_delivery_enabled"');
+      const smsEnabledResult = await executor('SELECT `value` FROM settings WHERE `key` = "receipt_sms_delivery_enabled"');
+      
+      const emailEnabled = emailEnabledResult.rows[0]?.value !== 'false'; // defaults to true
+      const smsEnabled = smsEnabledResult.rows[0]?.value !== 'false'; // defaults to true
+
       // Fetch SMS template
       const templateResult = await executor('SELECT `value` FROM settings WHERE `key` = "sms_payment_template"');
       let smsMsg = templateResult.rows[0]?.value || `Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}`;
@@ -225,7 +232,7 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
 
       const emailText = `Hello ${data.full_name}, your payment of GHS ${Number(amountPaid).toFixed(2)} for ${data.due_name} has been received. Receipt: ${receiptNumber}. Your PDF receipt is attached to this email.`;
 
-      if (data.email) {
+      if (emailEnabled && data.email) {
         await sendEmail(
           data.email,
           `Payment Receipt: ${receiptNumber} - ${data.due_name}`,
@@ -240,7 +247,7 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
         );
       }
 
-      if (data.phone_number) {
+      if (smsEnabled && data.phone_number) {
         await sendSMS(data.phone_number, smsMsg);
       }
     } catch (notifyErr) {

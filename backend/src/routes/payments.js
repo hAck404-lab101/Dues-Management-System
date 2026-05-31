@@ -46,8 +46,8 @@ router.get('/', authenticate, paymentsController.getPayments);
 router.get('/:id', authenticate, paymentsController.getPaymentById);
 router.patch('/:id/approve', authenticate, isFinancialSecretary, auditLog('APPROVE_PAYMENT', 'payment'), paymentsController.approvePayment);
 router.patch('/:id/reject', authenticate, isFinancialSecretary, auditLog('REJECT_PAYMENT', 'payment'), paymentsController.rejectPayment);
-router.post('/:id/resend-sms', authenticate, isFinancialSecretary, auditLog('RESEND_SMS', 'payment'), paymentsController.resendSMSReceipt);
-router.post('/:id/resend-email', authenticate, isFinancialSecretary, auditLog('RESEND_EMAIL', 'payment'), paymentsController.resendEmailReceipt);
+router.post('/:id/resend-sms', authenticate, auditLog('RESEND_SMS', 'payment'), paymentsController.resendSMSReceipt);
+router.post('/:id/resend-email', authenticate, auditLog('RESEND_EMAIL', 'payment'), paymentsController.resendEmailReceipt);
 
 module.exports = router;
 

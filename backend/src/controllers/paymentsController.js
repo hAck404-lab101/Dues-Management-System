@@ -145,8 +145,7 @@ exports.verifyPayment = async (req, res) => {
         );
 
         if (studentRows.rows.length > 0) {
-          const receipt = await receiptService.generateReceipt(payment.id, studentRows.rows[0].id, payment.due_id, payment.amount, connection);
-          await sendPaymentConfirmationEmail(studentRows.rows[0], payment, receipt.receipt_url).catch(err => console.error('Email error:', err));
+          await receiptService.generateReceipt(payment.id, studentRows.rows[0].id, payment.due_id, payment.amount, connection);
         }
 
         await connection.commit();
@@ -207,8 +206,7 @@ exports.handleWebhook = async (req, res) => {
           );
 
           if (studentRows.rows.length > 0) {
-            const receipt = await receiptService.generateReceipt(payment.id, studentRows.rows[0].id, payment.due_id, payment.amount, connection);
-            await sendPaymentConfirmationEmail(studentRows.rows[0], payment, receipt.receipt_url).catch(err => console.error('Email error:', err));
+            await receiptService.generateReceipt(payment.id, studentRows.rows[0].id, payment.due_id, payment.amount, connection);
           }
 
           await connection.commit();
@@ -310,11 +308,13 @@ exports.getPayments = async (req, res) => {
              p.paystack_reference, p.proof_image_url, p.notes, p.created_at, p.approved_at,
              s.student_id, s.full_name as student_name, s.email as student_email,
              d.name as due_name,
-             u.email as approved_by_email
+             u.email as approved_by_email,
+             r.receipt_number, r.receipt_url
       FROM payments p
       INNER JOIN students s ON p.student_id = s.id
       INNER JOIN dues d ON p.due_id = d.id
       LEFT JOIN users u ON p.approved_by = u.id
+      LEFT JOIN receipts r ON p.id = r.payment_id
       WHERE 1=1
     `;
     const params = [];
@@ -419,8 +419,7 @@ exports.approvePayment = async (req, res) => {
       );
 
       if (studentRows.rows.length > 0) {
-        const receipt = await receiptService.generateReceipt(payment.id, studentRows.rows[0].id, payment.due_id, payment.amount, connection);
-        await sendPaymentConfirmationEmail(studentRows.rows[0], payment, receipt.receipt_url).catch(err => console.error('Email error:', err));
+        await receiptService.generateReceipt(payment.id, studentRows.rows[0].id, payment.due_id, payment.amount, connection);
       }
 
       await connection.commit();
@@ -476,6 +475,7 @@ exports.resendSMSReceipt = async (req, res) => {
       `SELECT p.amount, p.payment_method, p.payment_type,
               r.receipt_number, r.receipt_url, r.amount_paid,
               s.full_name, s.phone_number, s.student_id as index_number,
+              s.user_id as student_user_id,
               d.name as due_name 
        FROM payments p
        INNER JOIN receipts r ON p.id = r.payment_id
@@ -490,6 +490,14 @@ exports.resendSMSReceipt = async (req, res) => {
     }
 
     const data = paymentRows[0];
+
+    // Check permissions: either admin roles or the student who owns the payment
+    const allowedRoles = ['admin', 'financial_secretary', 'treasurer', 'president'];
+    if (!allowedRoles.includes(req.user.role)) {
+      if (req.user.role === 'student' && req.user.id !== data.student_user_id) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
 
     if (!data.phone_number) {
       return res.status(400).json({ success: false, message: 'Student has no registered phone number' });
@@ -535,6 +543,7 @@ exports.resendEmailReceipt = async (req, res) => {
       `SELECT p.amount, p.payment_method, p.payment_type, p.created_at,
               r.receipt_number, r.receipt_url, r.amount_paid,
               s.full_name, s.email, s.phone_number, s.student_id as index_number,
+              s.user_id as student_user_id,
               d.name as due_name 
        FROM payments p
        INNER JOIN receipts r ON p.id = r.payment_id
@@ -549,6 +558,14 @@ exports.resendEmailReceipt = async (req, res) => {
     }
 
     const data = paymentRows[0];
+
+    // Check permissions: either admin roles or the student who owns the payment
+    const allowedRoles = ['admin', 'financial_secretary', 'treasurer', 'president'];
+    if (!allowedRoles.includes(req.user.role)) {
+      if (req.user.role === 'student' && req.user.id !== data.student_user_id) {
+        return res.status(403).json({ success: false, message: 'Access denied' });
+      }
+    }
 
     if (!data.email) {
       return res.status(400).json({ success: false, message: 'Student has no registered email' });

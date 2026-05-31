@@ -53,6 +53,10 @@ const migrateSettingsV2 = async () => {
             // COMMUNICATION - SMS
             ['sms_template_payment', 'Payment of {amount} for {due_name} received. Receipt: {receipt_no}', 'comm_sms', 'Template for payment confirmation SMS'],
             ['sms_template_reminder', 'Reminder: You have an outstanding payment of {amount} for {due_name}.', 'comm_sms', 'Template for payment reminder SMS'],
+            ['receipt_sms_delivery_enabled', 'true', 'comm_sms', 'Automatically send SMS receipt when payment is approved or completed'],
+
+            // COMMUNICATION - EMAIL
+            ['receipt_email_delivery_enabled', 'true', 'comm_email', 'Automatically email receipt when payment is approved or completed'],
 
             // SECURITY
             ['password_policy_min_length', '8', 'security', 'Minimum password length'],
