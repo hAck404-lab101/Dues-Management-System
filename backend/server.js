@@ -5,7 +5,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
-const compression = require('compression');
 const { pool } = require('./src/config/database');
 const { repairDuesTables } = require('./src/utils/repairDuesTables');
 
@@ -18,9 +17,8 @@ const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
-// Security and performance middleware
+// Security middleware
 app.use(helmet());
-app.use(compression());
 
 // CORS setup
 const allowedOrigins = [
