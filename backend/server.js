@@ -91,7 +91,9 @@ app.get('/health', (req, res) => {
   res.json({ success: true, status: 'ok', message: 'Dues Management System API is healthy' });
 });
 
-// Keep payment proofs private. Use /api/protected-uploads/:filename with auth checks instead.
+// Keep payment proofs private. Existing /uploads/:filename URLs now require auth and ownership checks.
+const protectedUploadsRouter = require('./src/routes/protectedUploads');
+app.use('/uploads', protectedUploadsRouter);
 app.use('/receipts', express.static(path.join(__dirname, 'receipts'), { maxAge: '1h', etag: true }));
 
 // Rate limiting tuned for production traffic. Override with env vars as traffic grows.
@@ -141,7 +143,7 @@ app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/students', require('./src/routes/students'));
 app.use('/api/dues', require('./src/routes/dues'));
 app.use('/api/payments', require('./src/routes/payments'));
-app.use('/api/protected-uploads', require('./src/routes/protectedUploads'));
+app.use('/api/protected-uploads', protectedUploadsRouter);
 app.use('/api/receipts', require('./src/routes/receipts'));
 app.use('/api/dashboard', require('./src/routes/dashboard'));
 app.use('/api/reports', require('./src/routes/reports'));
