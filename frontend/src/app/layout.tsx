@@ -8,7 +8,7 @@ import { BrandingProvider } from '@/contexts/BrandingContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'UCC Departmental Dues Management System',
+  title: 'Dues Management System',
   description: 'A secure, transparent digital system for managing departmental dues',
   icons: {
     icon: '/favicon.png',

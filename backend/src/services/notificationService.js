@@ -21,6 +21,10 @@ exports.sendSMS = async (phoneNumber, message) => {
 
         if (!sms_api_key) return false;
 
+        // Resolve app name for default sender ID
+        const { rows: nameRows } = await query('SELECT value FROM settings WHERE `key` = "app_name" LIMIT 1');
+        const appName = (nameRows[0]?.value || 'Dues Portal').substring(0, 11); // Arkesel max 11 chars
+
         const formattedPhone = phoneNumber.replace(/[^0-9]/g, '').replace(/^0/, '233');
         const finalPhone = formattedPhone.startsWith('233') ? formattedPhone : '233' + formattedPhone;
 
@@ -28,7 +32,7 @@ exports.sendSMS = async (phoneNumber, message) => {
             action: 'send-sms',
             api_key: sms_api_key,
             to: finalPhone,
-            from: sms_sender_id || 'UCC Dues',
+            from: sms_sender_id || appName,
             sms: message
         };
 
@@ -47,6 +51,10 @@ exports.sendEmail = async (to, subject, text, html, attachments = []) => {
 
         if (!email_host || !email_user || !email_pass) return false;
 
+        // Resolve app name for default display name
+        const { rows: nameRows } = await query('SELECT value FROM settings WHERE `key` = "app_name" LIMIT 1');
+        const appName = nameRows[0]?.value || 'Dues Portal';
+
         const transporter = nodemailer.createTransport({
             host: email_host,
             port: parseInt(email_port) || 587,
@@ -55,7 +63,7 @@ exports.sendEmail = async (to, subject, text, html, attachments = []) => {
         });
 
         const info = await transporter.sendMail({
-            from: `"${email_from_name || 'UCC Dues'}" <${email_from || email_user}>`,
+            from: `"${email_from_name || appName}" <${email_from || email_user}>`,
             to,
             subject,
             text,

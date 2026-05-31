@@ -16,6 +16,7 @@ router.post('/bulk-import-students', authenticate, isAdmin, auditLog('BULK_IMPOR
 // Clearance
 router.get('/students/:id/clearance', authenticate, isAdmin, adminController.getStudentClearance);
 router.get('/students/:id/clearance-pdf', authenticate, isAdmin, adminController.downloadClearancePDF);
+router.post('/students/:id/send-credentials', authenticate, isAdmin, auditLog('SEND_CREDENTIALS', 'student'), adminController.sendStudentCredentials);
 
 // Bulk SMS
 router.post('/bulk-sms', authenticate, isAdmin, auditLog('BULK_SMS', 'sms'), adminController.sendBulkSMS);

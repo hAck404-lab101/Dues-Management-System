@@ -103,6 +103,68 @@ exports.bulkImportStudents = async (req, res) => {
 };
 
 /**
+ * Send/resend login credentials to a student via SMS
+ * Resets password to their index number and sends credentials to their phone
+ */
+exports.sendStudentCredentials = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get student + user info
+    const studentResult = await pool.query(
+      `SELECT s.id, s.student_id, s.full_name, s.phone_number, u.id as user_id, u.email
+       FROM students s
+       INNER JOIN users u ON s.user_id = u.id
+       WHERE s.id = ?`,
+      [id]
+    );
+
+    if (studentResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    const student = studentResult.rows[0];
+
+    if (!student.phone_number) {
+      return res.status(400).json({
+        success: false,
+        message: `${student.full_name} has no phone number on record. Please edit the student profile to add one.`
+      });
+    }
+
+    // Reset password to index number (simple & predictable for first-time login)
+    const tempPassword = student.student_id;
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, student.user_id]);
+
+    // Fetch app name for the message
+    const { rows: nameRows } = await pool.query('SELECT value FROM settings WHERE `key` = "app_name" LIMIT 1');
+    const appName = nameRows[0]?.value || 'Dues Management System';
+
+    // Send SMS
+    const message = `${appName}: Your login credentials have been sent.\nIndex No: ${student.student_id}\nPassword: ${tempPassword}\nPlease log in and change your password immediately.`;
+    const smsSent = await sendSMS(student.phone_number, message);
+
+    if (!smsSent) {
+      return res.status(502).json({
+        success: false,
+        message: 'Password was reset, but SMS failed to send. Check SMS settings.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Credentials sent to ${student.full_name} (${student.phone_number.replace(/(\d{3})\d+(\d{2})/, '$1***$2')})`
+    });
+  } catch (error) {
+    console.error('Send credentials error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
+
+/**
  * Generate a student clearance certificate
  * Returns JSON with clearance status, or could generate a PDF
  */
@@ -174,7 +236,7 @@ exports.downloadClearancePDF = async (req, res) => {
     const { rows: settingsRows } = await pool.query('SELECT `key`, `value` FROM settings WHERE category = "sys_appearance"');
     const settings = {};
     settingsRows.forEach(s => settings[s.key] = s.value);
-    const appName = settings.app_name || 'UCC DEPARTMENTAL DUES';
+    const appName = settings.app_name || 'Dues Management System';
 
     const studentResult = await pool.query(
       'SELECT s.student_id, s.full_name, s.email, s.level, s.programme, s.academic_year FROM students s WHERE s.id = ?',
@@ -210,7 +272,7 @@ exports.downloadClearancePDF = async (req, res) => {
     // Header
     doc.fillColor('#0B3C5D').fontSize(22).font('Helvetica-Bold').text(appName.toUpperCase(), { align: 'center' });
     doc.moveDown(0.3);
-    doc.fillColor('#666').fontSize(11).font('Helvetica').text('University of Cape Coast', { align: 'center' });
+    doc.fillColor('#666').fontSize(11).font('Helvetica').text('Departmental Dues Management System', { align: 'center' });
     doc.moveDown(1.5);
     doc.fillColor(isCleared ? '#166534' : '#991b1b').fontSize(18).font('Helvetica-Bold')
       .text(isCleared ? '✓ CLEARANCE CERTIFICATE' : '✗ CLEARANCE DENIED', { align: 'center' });

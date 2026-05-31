@@ -16,8 +16,7 @@ export default function Home() {
       <section className="bg-gradient-to-br from-primary to-primary-dark text-white py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-4">{appName}</h1>
-          <p className="text-xl md:text-2xl mb-2">Management System</p>
-          <p className="text-lg opacity-90 mb-8">{appName.includes('UCC') ? 'University of Cape Coast' : ''}</p>
+          <p className="text-xl md:text-2xl mb-8">Departmental Dues Management System</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
               <button className="btn-secondary text-lg px-8 py-3">Get Started</button>
@@ -230,9 +229,7 @@ export default function Home() {
               <p className="text-sm opacity-90">
                 {appName}<br />
                 Management Portal<br />
-                <a href="mailto:support@ucc.edu.gh" className="hover:text-secondary transition-colors">
-                  support@ucc.edu.gh
-                </a>
+                Contact your department administrator for support.
               </p>
             </div>
           </div>
