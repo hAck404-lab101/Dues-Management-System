@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { UsersIcon, LandmarkIcon, WalletIcon, CardIcon, ShieldIcon, ReceiptIcon, LockClosedIcon } from '@/components/Icons';
+import { UsersIcon, LandmarkIcon, WalletIcon, CardIcon, ShieldIcon, ReceiptIcon } from '@/components/Icons';
 
 interface AdminDashboardData {
   summary: {
@@ -30,9 +30,6 @@ export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || user.role === 'student')) {
@@ -56,35 +53,6 @@ export default function AdminDashboard() {
       toast.error(error.response?.data?.message || 'Failed to load dashboard');
     } finally {
       setLoadingData(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
-    }
-
-    if (passwordForm.newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters');
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      await api.post('/auth/change-password', {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-      });
-      toast.success('Admin password changed successfully');
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setShowPasswordForm(false);
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
-    } finally {
-      setChangingPassword(false);
     }
   };
 
@@ -178,64 +146,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="card mb-8 border-l-4 border-primary">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <span className="w-5 h-5"><LockClosedIcon /></span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-primary">Admin Security</h2>
-              <p className="text-sm text-gray-500">Change your administrator password regularly to protect payment and student records.</p>
-            </div>
-          </div>
-          <button type="button" className="btn-outline" onClick={() => setShowPasswordForm(v => !v)}>
-            {showPasswordForm ? 'Hide Password Form' : 'Change Password'}
-          </button>
-        </div>
-
-        {showPasswordForm && (
-          <form onSubmit={handleChangePassword} className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t">
-            <div>
-              <label className="label">Current Password *</label>
-              <input
-                type="password"
-                className="input-field"
-                value={passwordForm.currentPassword}
-                onChange={e => setPasswordForm(f => ({ ...f, currentPassword: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <label className="label">New Password *</label>
-              <input
-                type="password"
-                className="input-field"
-                value={passwordForm.newPassword}
-                onChange={e => setPasswordForm(f => ({ ...f, newPassword: e.target.value }))}
-                required
-              />
-            </div>
-            <div>
-              <label className="label">Confirm New Password *</label>
-              <input
-                type="password"
-                className="input-field"
-                value={passwordForm.confirmPassword}
-                onChange={e => setPasswordForm(f => ({ ...f, confirmPassword: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="md:col-span-3 flex justify-end gap-3">
-              <button type="button" className="btn-outline" onClick={() => setShowPasswordForm(false)}>Cancel</button>
-              <button type="submit" disabled={changingPassword} className="btn-primary">
-                {changingPassword ? 'Changing...' : 'Save New Password'}
-              </button>
-            </div>
-          </form>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
