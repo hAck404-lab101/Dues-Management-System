@@ -5,14 +5,22 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const compression = require('compression');
 const { pool } = require('./src/config/database');
 const { repairDuesTables } = require('./src/utils/repairDuesTables');
 
+const parseNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 const app = express();
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
-// Security middleware
+// Security and performance middleware
 app.use(helmet());
+app.use(compression());
 
 // CORS setup
 const allowedOrigins = [
@@ -26,27 +34,24 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin, like Postman, curl, or direct browser API visits
     if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     console.log('Blocked by CORS:', origin);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_BODY_LIMIT || '2mb' }));
 
 // Root route
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'HTU Dues Management System API is running',
+    message: 'Dues Management System API is running',
     status: 'online',
     health: '/health',
     api: '/api'
@@ -57,7 +62,7 @@ app.get('/', (req, res) => {
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'HTU Dues Management System API',
+    message: 'Dues Management System API',
     availableRoutes: {
       auth: '/api/auth',
       students: '/api/students',
@@ -75,24 +80,34 @@ app.get('/api', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    status: 'ok',
-    message: 'HTU Dues Management System API is healthy'
-  });
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, status: 'ok', message: 'Dues Management System API is healthy' });
 });
 
-// Serve static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/receipts', express.static(path.join(__dirname, 'receipts')));
+// Serve static files with lightweight caching
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '1h', etag: true }));
+app.use('/receipts', express.static(path.join(__dirname, 'receipts'), { maxAge: '1h', etag: true }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100
+// Rate limiting tuned for production traffic. Override with env vars as traffic grows.
+const generalLimiter = rateLimit({
+  windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+  max: parseNumber(process.env.RATE_LIMIT_MAX, 1000),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests. Please try again shortly.' }
 });
 
-app.use('/api/', limiter);
+const authLimiter = rateLimit({
+  windowMs: parseNumber(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
+  max: parseNumber(process.env.AUTH_RATE_LIMIT_MAX, 30),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please try again later.' }
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/', generalLimiter);
 
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));
@@ -108,8 +123,7 @@ app.use('/api/features', require('./src/routes/featurePack'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-
+  console.error(err.stack || err.message);
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
@@ -119,16 +133,11 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.originalUrl
-  });
+  res.status(404).json({ success: false, message: 'Route not found', path: req.originalUrl });
 });
 
 const PORT = process.env.PORT || 5000;
 
-// Initialize database and start server
 pool.getConnection()
   .then(async (connection) => {
     console.log('Database connected successfully');
@@ -142,9 +151,12 @@ pool.getConnection()
       connection.release();
     }
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+
+    server.keepAliveTimeout = parseNumber(process.env.SERVER_KEEP_ALIVE_TIMEOUT_MS, 65000);
+    server.headersTimeout = parseNumber(process.env.SERVER_HEADERS_TIMEOUT_MS, 66000);
   })
   .catch((err) => {
     console.error('Database connection error:', err);
