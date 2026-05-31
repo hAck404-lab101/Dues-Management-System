@@ -34,6 +34,19 @@ const formatGhanaPhone = (phoneNumber) => {
     return `233${raw}`;
 };
 
+const isUnicodeMessage = (message) => /[^\x00-\x7F]/.test(String(message || ''));
+
+const responseLooksSuccessful = (data, status) => {
+    const text = typeof data === 'string' ? data.toLowerCase() : JSON.stringify(data || {}).toLowerCase();
+    return status >= 200 && status < 300 &&
+        !text.includes('invalid') &&
+        !text.includes('error') &&
+        !text.includes('failed') &&
+        !text.includes('insufficient') &&
+        !text.includes('unauthorized') &&
+        !text.includes('denied');
+};
+
 const sendArkeselSMS = async ({ apiKey, senderId, phone, message }) => {
     const params = {
         action: 'send-sms',
@@ -44,74 +57,35 @@ const sendArkeselSMS = async ({ apiKey, senderId, phone, message }) => {
     };
 
     const res = await axios.get('https://sms.arkesel.com/sms/api', { params, timeout: 20000 });
-    return res.data?.code === 'ok' || res.status === 200;
+    return res.data?.code === 'ok' || responseLooksSuccessful(res.data, res.status);
 };
 
 const sendGOnlineSitesSMS = async ({ apiKey, senderId, phone, message, apiUrl }) => {
-    const endpoint = apiUrl || 'https://sms.gonlinesites.com/app/smsapi/index.php';
+    const endpoint = apiUrl || 'http://sms.gonlinesites.com/app/sms/api';
+    const params = {
+        action: 'send-sms',
+        api_key: apiKey,
+        to: phone,
+        from: senderId || 'HTU DUES',
+        sms: message
+    };
 
-    const attempts = [
-        {
-            method: 'get',
-            params: {
-                key: apiKey,
-                type: 'text',
-                contacts: phone,
-                senderid: senderId || 'HTU DUES',
-                msg: message
-            }
-        },
-        {
-            method: 'get',
-            params: {
-                api_key: apiKey,
-                to: phone,
-                from: senderId || 'HTU DUES',
-                message
-            }
-        },
-        {
-            method: 'post',
-            data: {
-                key: apiKey,
-                type: 'text',
-                contacts: phone,
-                senderid: senderId || 'HTU DUES',
-                msg: message
-            }
-        }
-    ];
-
-    let lastResponse = null;
-    for (const attempt of attempts) {
-        try {
-            const res = await axios({
-                url: endpoint,
-                method: attempt.method,
-                params: attempt.params,
-                data: attempt.data,
-                timeout: 20000
-            });
-
-            lastResponse = res.data;
-            const text = typeof res.data === 'string' ? res.data.toLowerCase() : JSON.stringify(res.data || {}).toLowerCase();
-
-            if (
-                res.status >= 200 && res.status < 300 &&
-                !text.includes('invalid') &&
-                !text.includes('error') &&
-                !text.includes('failed') &&
-                !text.includes('insufficient')
-            ) {
-                return true;
-            }
-        } catch (error) {
-            lastResponse = error.response?.data || error.message;
-        }
+    if (isUnicodeMessage(message)) {
+        params.unicode = 1;
     }
 
-    console.error('GOnlineSites SMS failed. Last provider response:', lastResponse);
-    return false;
+    const res = await axios.get(endpoint, {
+        params,
+        timeout: 20000,
+        maxRedirects: 5
+    });
+
+    if (!responseLooksSuccessful(res.data, res.status)) {
+        console.error('GOnlineSites SMS failed. Provider response:', res.data);
+        return false;
+    }
+
+    return true;
 };
 
 exports.sendSMS = async (phoneNumber, message) => {
@@ -119,7 +93,7 @@ exports.sendSMS = async (phoneNumber, message) => {
         if (!phoneNumber || !message) return false;
 
         const settings = await getSettingsByCategory('comm_sms');
-        const sms_provider = (settings.sms_provider || process.env.SMS_PROVIDER || 'arkesel').toLowerCase();
+        const sms_provider = (settings.sms_provider || process.env.SMS_PROVIDER || 'gonlinesites').toLowerCase();
         const sms_api_key = settings.sms_api_key || process.env.SMS_API_KEY;
         const sms_sender_id = settings.sms_sender_id || process.env.SMS_SENDER_ID || 'HTU DUES';
         const sms_api_url = settings.sms_api_url || process.env.SMS_API_URL;
