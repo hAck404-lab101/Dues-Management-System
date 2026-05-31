@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { register, User } from '@/lib/auth';
+import { register } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranding } from '@/contexts/BrandingContext';
 import api from '@/lib/api';
@@ -27,6 +27,7 @@ export default function RegisterPage() {
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState<'open' | 'closed'>('open');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     const fetchPublicSettings = async () => {
@@ -36,13 +37,13 @@ export default function RegisterPage() {
           const settings = res.data.data;
 
           if (settings.available_programmes) {
-            const progs = settings.available_programmes.split(',').map((p: string) => p.trim());
+            const progs = settings.available_programmes.split(',').map((p: string) => p.trim()).filter(Boolean);
             setAvailableProgrammes(progs);
             if (progs.length > 0) setFormData(prev => ({ ...prev, programme: progs[0] }));
           }
 
           if (settings.available_academic_years) {
-            const years = settings.available_academic_years.split(',').map((y: string) => y.trim());
+            const years = settings.available_academic_years.split(',').map((y: string) => y.trim()).filter(Boolean);
             setAvailableYears(years);
             if (years.length > 0) setFormData(prev => ({ ...prev, academicYear: years[years.length - 1] }));
           }
@@ -66,6 +67,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      toast.error('Please accept the Privacy Policy and Terms & Conditions to continue');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -80,7 +86,6 @@ export default function RegisterPage() {
       });
       setUser(res.user);
       toast.success('Registration successful!');
-      // Use window.location.href for a full refresh to ensure all context reflects the new session
       window.location.href = '/student/dashboard';
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
@@ -132,7 +137,6 @@ export default function RegisterPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* ... existing form fields ... */}
                 <div>
                   <label className="label">Index Number *</label>
                   <input
@@ -228,8 +232,28 @@ export default function RegisterPage() {
                   </select>
                 </div>
               </div>
+
+              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
+                <label className="flex gap-3 items-start cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    required
+                  />
+                  <span>
+                    I confirm that the information provided is accurate, and I agree to the{' '}
+                    <Link href="/privacy" className="text-primary font-semibold hover:underline" target="_blank">Privacy Policy</Link>{' '}
+                    and{' '}
+                    <Link href="/terms" className="text-primary font-semibold hover:underline" target="_blank">Terms & Conditions</Link>.
+                    I also confirm that I am 13 years or older, or that my account is created or authorized by a parent, guardian, school, department, or authorized administrator.
+                  </span>
+                </label>
+              </div>
+
               <p className="text-sm text-gray-600">* Required fields</p>
-              <button type="submit" disabled={loading} className="btn-primary w-full">
+              <button type="submit" disabled={loading || !acceptedTerms} className="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed">
                 {loading ? 'Registering...' : 'Register'}
               </button>
               <div className="text-center text-sm">
@@ -247,4 +271,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
