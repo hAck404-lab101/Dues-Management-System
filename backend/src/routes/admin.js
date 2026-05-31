@@ -5,8 +5,9 @@ const usersController = require('../controllers/usersController');
 const { authenticate, isAdmin } = require('../middleware/auth');
 const { auditLog } = require('../middleware/auditLog');
 
-// Audit logs
+// Audit and SMS logs
 router.get('/audit-logs', authenticate, isAdmin, adminController.getAuditLogs);
+router.get('/sms-logs', authenticate, isAdmin, adminController.getSmsLogs);
 
 // Student management
 router.post('/promote-students', authenticate, isAdmin, adminController.promoteStudents);
