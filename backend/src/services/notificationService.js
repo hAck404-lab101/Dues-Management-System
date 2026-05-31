@@ -2,6 +2,7 @@ const axios = require('axios');
 const nodemailer = require('nodemailer');
 const { query } = require('../config/database');
 const { decrypt } = require('../utils/encryption');
+const { generateUUID } = require('../utils/uuid');
 
 const getSettingsByCategories = async (categories) => {
     const placeholders = categories.map(() => '?').join(',');
@@ -47,17 +48,49 @@ const responseLooksSuccessful = (data, status) => {
         !text.includes('denied');
 };
 
+const safeResponse = (value) => {
+    try {
+        const text = typeof value === 'string' ? value : JSON.stringify(value || {});
+        return text.length > 3000 ? text.slice(0, 3000) : text;
+    } catch (_) {
+        return String(value || '');
+    }
+};
+
+const logSMS = async ({ phone, message, type, provider, senderId, status, response, relatedType, relatedId }) => {
+    try {
+        await query(
+            `INSERT INTO sms_logs (id, recipient_phone, message, message_type, provider, sender_id, status, provider_response, related_type, related_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                generateUUID(),
+                phone,
+                message,
+                type || 'general',
+                provider || null,
+                senderId || null,
+                status,
+                safeResponse(response),
+                relatedType || null,
+                relatedId || null
+            ]
+        );
+    } catch (error) {
+        console.warn('SMS log save failed:', error.message);
+    }
+};
+
 const sendArkeselSMS = async ({ apiKey, senderId, phone, message }) => {
     const params = {
         action: 'send-sms',
         api_key: apiKey,
         to: phone,
-        from: senderId || 'HTU Dues',
+        from: senderId || 'UEW Dues',
         sms: message
     };
 
     const res = await axios.get('https://sms.arkesel.com/sms/api', { params, timeout: 20000 });
-    return res.data?.code === 'ok' || responseLooksSuccessful(res.data, res.status);
+    return { ok: res.data?.code === 'ok' || responseLooksSuccessful(res.data, res.status), response: res.data };
 };
 
 const sendGOnlineSitesSMS = async ({ apiKey, senderId, phone, message, apiUrl }) => {
@@ -66,7 +99,7 @@ const sendGOnlineSitesSMS = async ({ apiKey, senderId, phone, message, apiUrl })
         action: 'send-sms',
         api_key: apiKey,
         to: phone,
-        from: senderId || 'HTU DUES',
+        from: senderId || 'UEW Dues',
         sms: message
     };
 
@@ -80,50 +113,79 @@ const sendGOnlineSitesSMS = async ({ apiKey, senderId, phone, message, apiUrl })
         maxRedirects: 5
     });
 
-    if (!responseLooksSuccessful(res.data, res.status)) {
+    const ok = responseLooksSuccessful(res.data, res.status);
+    if (!ok) {
         console.error('GOnlineSites SMS failed. Provider response:', res.data);
-        return false;
     }
 
-    return true;
+    return { ok, response: res.data };
 };
 
-exports.sendSMS = async (phoneNumber, message) => {
+exports.sendSMS = async (phoneNumber, message, options = {}) => {
+    const meta = {
+        type: options.type || 'general',
+        relatedType: options.relatedType || null,
+        relatedId: options.relatedId || null
+    };
+
+    let finalPhone = '';
+    let sms_provider = 'gonlinesites';
+    let sms_sender_id = 'UEW Dues';
+
     try {
         if (!phoneNumber || !message) return false;
 
         const settings = await getSettingsByCategory('comm_sms');
-        const sms_provider = (settings.sms_provider || process.env.SMS_PROVIDER || 'gonlinesites').toLowerCase();
+        sms_provider = (settings.sms_provider || process.env.SMS_PROVIDER || 'gonlinesites').toLowerCase();
         const sms_api_key = settings.sms_api_key || process.env.SMS_API_KEY;
-        const sms_sender_id = settings.sms_sender_id || process.env.SMS_SENDER_ID || 'HTU DUES';
+        sms_sender_id = settings.sms_sender_id || process.env.SMS_SENDER_ID || 'UEW Dues';
         const sms_api_url = settings.sms_api_url || process.env.SMS_API_URL;
 
+        finalPhone = formatGhanaPhone(phoneNumber);
+        if (!finalPhone) return false;
+
         if (!sms_api_key) {
-            console.warn('SMS not sent: missing sms_api_key setting or SMS_API_KEY env variable');
+            const response = 'Missing sms_api_key setting or SMS_API_KEY env variable';
+            console.warn(`SMS not sent: ${response}`);
+            await logSMS({ phone: finalPhone, message, provider: sms_provider, senderId: sms_sender_id, status: 'failed', response, ...meta });
             return false;
         }
 
-        const finalPhone = formatGhanaPhone(phoneNumber);
-        if (!finalPhone) return false;
-
+        let result;
         if (['gonlinesites', 'gonline', 'g-online-sites', 'sms.gonlinesites.com'].includes(sms_provider)) {
-            return await sendGOnlineSitesSMS({
+            result = await sendGOnlineSitesSMS({
                 apiKey: sms_api_key,
                 senderId: sms_sender_id,
                 phone: finalPhone,
                 message,
                 apiUrl: sms_api_url
             });
+        } else {
+            result = await sendArkeselSMS({
+                apiKey: sms_api_key,
+                senderId: sms_sender_id,
+                phone: finalPhone,
+                message
+            });
         }
 
-        return await sendArkeselSMS({
-            apiKey: sms_api_key,
-            senderId: sms_sender_id,
+        await logSMS({
             phone: finalPhone,
-            message
+            message,
+            provider: sms_provider,
+            senderId: sms_sender_id,
+            status: result.ok ? 'sent' : 'failed',
+            response: result.response,
+            ...meta
         });
+
+        return result.ok;
     } catch (error) {
-        console.error('SMS error:', error.response?.data || error.message);
+        const response = error.response?.data || error.message;
+        console.error('SMS error:', response);
+        if (finalPhone) {
+            await logSMS({ phone: finalPhone, message, provider: sms_provider, senderId: sms_sender_id, status: 'failed', response, ...meta });
+        }
         return false;
     }
 };
@@ -145,7 +207,7 @@ exports.sendEmail = async (to, subject, text, html, attachments = []) => {
         });
 
         const info = await transporter.sendMail({
-            from: `"${email_from_name || 'HTU Dues'}" <${email_from || email_user}>`,
+            from: `"${email_from_name || 'Dues Management'}" <${email_from || email_user}>`,
             to,
             subject,
             text,
