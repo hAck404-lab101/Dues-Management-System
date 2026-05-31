@@ -210,6 +210,8 @@ export default function Home() {
                 <li><Link href="/#faq" className="hover:text-secondary transition-colors">FAQ</Link></li>
                 <li><Link href="/login" className="hover:text-secondary transition-colors">Login</Link></li>
                 <li><Link href="/register" className="hover:text-secondary transition-colors">Register</Link></li>
+                <li><Link href="/privacy" className="hover:text-secondary transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-secondary transition-colors">Terms & Conditions</Link></li>
               </ul>
             </div>
             <div>
