@@ -1,6 +1,24 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
+const parseNumber = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const poolOptions = {
+  waitForConnections: true,
+  connectionLimit: parseNumber(process.env.DB_CONNECTION_LIMIT, 25),
+  maxIdle: parseNumber(process.env.DB_MAX_IDLE, 10),
+  idleTimeout: parseNumber(process.env.DB_IDLE_TIMEOUT_MS, 60000),
+  queueLimit: parseNumber(process.env.DB_QUEUE_LIMIT, 500),
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+  multipleStatements: false,
+  dateStrings: false,
+  connectTimeout: parseNumber(process.env.DB_CONNECT_TIMEOUT_MS, 20000)
+};
+
 let connectionConfig;
 
 const databaseUrl =
@@ -17,9 +35,7 @@ if (databaseUrl) {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database: url.pathname.replace('/', ''),
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    ...poolOptions
   };
 } else {
   const requiredVars = [
@@ -44,9 +60,7 @@ if (databaseUrl) {
     user: process.env.MYSQLUSER,
     password: process.env.MYSQLPASSWORD,
     database: process.env.MYSQLDATABASE,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    ...poolOptions
   };
 }
 
@@ -65,6 +79,11 @@ const query = async (sql, params = []) => {
 const poolWrapper = {
   query,
 
+  execute: async (sql, params = []) => {
+    const result = await pool.execute(sql, params);
+    return formatResult(result);
+  },
+
   getConnection: async () => {
     const conn = await pool.getConnection();
 
@@ -81,7 +100,7 @@ const poolWrapper = {
 
 pool.getConnection()
   .then((connection) => {
-    console.log('✓ Connected to MySQL database');
+    console.log(`✓ Connected to MySQL database with pool limit ${connectionConfig.connectionLimit}`);
     connection.release();
   })
   .catch((err) => {
