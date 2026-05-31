@@ -11,8 +11,8 @@ import { ImportIcon, DownloadIcon, FolderIcon, PencilIcon, ExclamationIcon } fro
 
 const LEVELS = ['100', '200', '300', '400'];
 const CSV_TEMPLATE = `indexNumber,fullName,email,level,programme,academicYear,phoneNumber
-UCC/CS/21/001,John Doe,john.doe@ucc.edu.gh,100,Computer Science,2024/2025,0244123456
-UCC/CS/21/002,Jane Smith,jane.smith@ucc.edu.gh,200,Information Technology,2024/2025,0551234567`;
+STD/ICT/26/001,John Doe,john.doe@example.com,100,Information Technology,2025/2026,0244123456
+STD/ICT/26/002,Jane Smith,jane.smith@example.com,200,Computer Science,2025/2026,0551234567`;
 
 interface ParsedStudent {
     indexNumber: string;
@@ -116,7 +116,6 @@ export default function BulkImportPage() {
         <Layout title="Bulk Import Students">
             <div className="max-w-5xl mx-auto space-y-6">
 
-                {/* Header */}
                 <div className="card p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold text-primary flex items-center gap-2">
@@ -131,7 +130,6 @@ export default function BulkImportPage() {
                     </button>
                 </div>
 
-                {/* Valid Options Help */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
                         <h3 className="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">Valid Programmes</h3>
@@ -153,7 +151,6 @@ export default function BulkImportPage() {
                     </div>
                 </div>
 
-                {/* Tab Selector */}
                 <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
                     {(['csv', 'manual'] as const).map(t => (
                         <button key={t} onClick={() => setTab(t)} className={`px-5 py-2 text-sm font-medium rounded-lg transition-colors ${tab === t ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -194,7 +191,6 @@ export default function BulkImportPage() {
                     </div>
                 )}
 
-                {/* Preview Table */}
                 {parsed.length > 0 && (
                     <div className="card overflow-x-auto">
                         <div className="flex items-center justify-between p-4 border-b">
@@ -249,7 +245,6 @@ export default function BulkImportPage() {
                     </div>
                 )}
 
-                {/* Result */}
                 {result && (
                     <div className={`card p-6 border-l-4 ${result.errors?.length > 0 ? 'border-yellow-400 bg-yellow-50' : 'border-green-500 bg-green-50'}`}>
                         <h3 className="font-bold mb-3">Import Results</h3>
