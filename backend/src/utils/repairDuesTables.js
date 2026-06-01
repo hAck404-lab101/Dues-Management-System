@@ -20,6 +20,12 @@ const repairDuesTables = async (connection) => {
 
   console.log('Checking dues and notification tables...');
 
+  await exec('Ensure users reset_password_token exists', 'ALTER TABLE users ADD COLUMN reset_password_token VARCHAR(255) NULL AFTER is_active');
+  await exec('Ensure users reset_password_expires exists', 'ALTER TABLE users ADD COLUMN reset_password_expires TIMESTAMP NULL AFTER reset_password_token');
+  await exec('Ensure users otp_code exists', 'ALTER TABLE users ADD COLUMN otp_code VARCHAR(10) NULL AFTER reset_password_expires');
+  await exec('Ensure users otp_expires exists', 'ALTER TABLE users ADD COLUMN otp_expires TIMESTAMP NULL AFTER otp_code');
+  await exec('Ensure users reset token index exists', 'ALTER TABLE users ADD INDEX idx_users_reset_token (reset_password_token)');
+
   await exec('Ensure dues table exists', `
     CREATE TABLE IF NOT EXISTS dues (
       id CHAR(36) PRIMARY KEY,
