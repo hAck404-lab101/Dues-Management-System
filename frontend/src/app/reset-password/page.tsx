@@ -1,48 +1,74 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { useBranding } from '@/contexts/BrandingContext';
 
-function ResetPasswordForm() {
+export default function ResetPasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
   const { appName, appLogo } = useBranding();
+  const [token, setToken] = useState('');
   const [form, setForm] = useState({ password: '', confirm: '' });
   const [loading, setLoading] = useState(false);
+  const [checkingToken, setCheckingToken] = useState(true);
 
   useEffect(() => {
-    if (!token) {
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get('token') || '';
+
+    if (!resetToken) {
       toast.error('Invalid or missing reset token');
       router.push('/forgot-password');
+      return;
     }
-  }, [token, router]);
+
+    setToken(resetToken);
+    setCheckingToken(false);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!token) {
+      toast.error('Invalid or missing reset token');
+      return;
+    }
+
     if (form.password !== form.confirm) {
       toast.error('Passwords do not match');
       return;
     }
+
     if (form.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
     }
+
     setLoading(true);
     try {
       await api.post('/auth/reset-password', { token, password: form.password });
       toast.success('Password reset successfully');
       router.push('/login');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Reset failed. Session may have expired.');
+    } catch (err: unknown) {
+      const message = err && typeof err === 'object' && 'response' in err
+        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      toast.error(message || 'Reset failed. Session may have expired.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (checkingToken) {
+    return (
+      <div className="min-h-screen bg-neutral flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -107,13 +133,5 @@ function ResetPasswordForm() {
         </form>
       </div>
     </div>
-  );
-}
-
-export default function ResetPasswordPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-neutral flex items-center justify-center"><div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div></div>}>
-      <ResetPasswordForm />
-    </Suspense>
   );
 }
