@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,10 +8,21 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { SmsIcon, CheckCircleIcon, ExclamationIcon } from '@/components/Icons';
 
+type SmsLog = {
+  id: string;
+  created_at: string;
+  recipient_phone: string;
+  message_type?: string;
+  provider?: string;
+  status: 'sent' | 'failed';
+  message: string;
+  provider_response?: string;
+};
+
 export default function SmsLogsPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<SmsLog[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -26,16 +37,19 @@ export default function SmsLogsPage() {
   const fetchLogs = useCallback(async () => {
     setLoadingData(true);
     try {
-      const params: any = { page, limit: 25 };
+      const params: Record<string, string | number> = { page, limit: 25 };
       if (status) params.status = status;
       if (phone) params.phone = phone;
       const res = await api.get('/admin/sms-logs', { params });
       if (res.data.success) {
-        setLogs(res.data.data);
+        setLogs(res.data.data || []);
         setTotalPages(res.data.pagination?.pages || 1);
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to load SMS logs');
+    } catch (error: unknown) {
+      const message = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      toast.error(message || 'Failed to load SMS logs');
     } finally {
       setLoadingData(false);
     }
@@ -92,8 +106,8 @@ export default function SmsLogsPage() {
               </thead>
               <tbody>
                 {logs.map(log => (
-                  <>
-                    <tr key={log.id} className="border-b hover:bg-gray-50 transition-colors">
+                  <Fragment key={log.id}>
+                    <tr className="border-b hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4 text-gray-500 text-xs whitespace-nowrap">
                         {new Date(log.created_at).toLocaleString('en-GH', { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
@@ -129,7 +143,7 @@ export default function SmsLogsPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
