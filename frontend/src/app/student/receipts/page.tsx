@@ -6,6 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { TableSkeleton } from '@/components/Skeletons';
 
 export default function ReceiptsPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function ReceiptsPage() {
   if (loading || loadingData) {
     return (
       <Layout title="My Receipts">
-        <div className="text-center py-12">Loading...</div>
+        <TableSkeleton rows={5} columns={4} />
       </Layout>
     );
   }
@@ -79,4 +80,3 @@ export default function ReceiptsPage() {
     </Layout>
   );
 }
-
