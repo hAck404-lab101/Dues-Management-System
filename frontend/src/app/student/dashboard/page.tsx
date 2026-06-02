@@ -100,6 +100,9 @@ export default function StudentDashboard() {
     );
   }
 
+  const studentName = data.student?.full_name || user?.student?.fullName || 'Student';
+  const firstName = String(studentName).split(' ')[0] || 'Student';
+
   return (
     <Layout title="Student Dashboard">
       {user?.mustChangePassword && (
@@ -155,6 +158,18 @@ export default function StudentDashboard() {
           </div>
         </div>
       )}
+
+      <div className="card bg-gradient-to-br from-primary to-primary-dark text-white mb-8 overflow-hidden relative">
+        <div className="relative z-10">
+          <p className="text-white/70 text-sm font-semibold uppercase tracking-[0.18em]">Welcome back</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold mt-2">Welcome, {firstName}</h1>
+          <p className="text-white/80 mt-2 max-w-2xl">
+            Track your dues, make payments, and download official receipts from your student portal.
+          </p>
+        </div>
+        <div className="absolute -right-12 -top-12 w-40 h-40 rounded-full bg-white/10" />
+        <div className="absolute right-12 -bottom-16 w-48 h-48 rounded-full bg-secondary/20" />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="card bg-primary text-white">
