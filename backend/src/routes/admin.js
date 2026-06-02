@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+const clearanceEmailController = require('../controllers/clearanceEmailController');
 const usersController = require('../controllers/usersController');
 const { authenticate, isAdmin } = require('../middleware/auth');
 const { auditLog } = require('../middleware/auditLog');
@@ -17,6 +18,7 @@ router.post('/bulk-import-students', authenticate, isAdmin, auditLog('BULK_IMPOR
 // Clearance
 router.get('/students/:id/clearance', authenticate, isAdmin, adminController.getStudentClearance);
 router.get('/students/:id/clearance-pdf', authenticate, isAdmin, adminController.downloadClearancePDF);
+router.post('/students/:id/clearance-email', authenticate, isAdmin, auditLog('SEND_CLEARANCE_EMAIL', 'student'), clearanceEmailController.sendClearancePDFEmail);
 router.post('/students/:id/send-credentials', authenticate, isAdmin, auditLog('SEND_CREDENTIALS', 'student'), adminController.sendStudentCredentials);
 
 // Bulk SMS
