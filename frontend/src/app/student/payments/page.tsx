@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { DownloadIcon, EnvelopeIcon, SmsIcon } from '@/components/Icons';
+import { TableSkeleton } from '@/components/Skeletons';
 
 export default function PaymentsPage() {
   const router = useRouter();
@@ -68,7 +69,7 @@ export default function PaymentsPage() {
   if (loading || loadingData) {
     return (
       <Layout title="My Payments">
-        <div className="text-center py-12">Loading...</div>
+        <TableSkeleton rows={6} columns={6} />
       </Layout>
     );
   }
@@ -138,7 +139,7 @@ export default function PaymentsPage() {
                             title="Send Email"
                           >
                             {submitting === payment.id + '-email' ? (
-                              <span className="w-3.5 h-3.5 animate-spin border-2 border-yellow-700 border-t-transparent rounded-full" />
+                              <span className="w-3.5 h-3.5 animate-pulse bg-yellow-200 rounded-full" />
                             ) : (
                               <span className="w-3.5 h-3.5"><EnvelopeIcon /></span>
                             )}
@@ -152,7 +153,7 @@ export default function PaymentsPage() {
                             title="Send SMS"
                           >
                             {submitting === payment.id + '-sms' ? (
-                              <span className="w-3.5 h-3.5 animate-spin border-2 border-blue-700 border-t-transparent rounded-full" />
+                              <span className="w-3.5 h-3.5 animate-pulse bg-blue-200 rounded-full" />
                             ) : (
                               <span className="w-3.5 h-3.5"><SmsIcon /></span>
                             )}
