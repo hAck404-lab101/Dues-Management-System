@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ExclamationIcon, CardIcon, SmsIcon } from '@/components/Icons';
+import { FormSkeleton, SkeletonBlock } from '@/components/Skeletons';
 
 export default function MakePaymentPage() {
   const router = useRouter();
@@ -19,10 +20,10 @@ export default function MakePaymentPage() {
   const [paymentMethod, setPaymentMethod] = useState('paystack');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
-
   const [error, setError] = useState<string | null>(null);
   const [settings, setSettings] = useState<any>({});
   const [serviceFee, setServiceFee] = useState(0);
+  const [loadingDue, setLoadingDue] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -47,17 +48,18 @@ export default function MakePaymentPage() {
   };
 
   useEffect(() => {
-    if (!dueId && !loading) {
+    if (loading) return;
+    if (!dueId) {
       toast.error('No due selected for payment');
-      router.push('/student/dashboard');
+      router.replace('/student/dashboard');
       return;
     }
-    if (dueId) {
-      fetchDue();
-    }
+    fetchDue();
   }, [dueId, loading]);
 
   const fetchDue = async () => {
+    setLoadingDue(true);
+    setError(null);
     try {
       const response = await api.get(`/dues/${dueId}`);
       if (response.data.success) {
@@ -70,6 +72,8 @@ export default function MakePaymentPage() {
       console.error('Fetch due error:', error);
       setError('Failed to load due information');
       toast.error('Failed to load due information');
+    } finally {
+      setLoadingDue(false);
     }
   };
 
@@ -87,8 +91,7 @@ export default function MakePaymentPage() {
       });
 
       if (response.data.success) {
-        // Redirect to Paystack payment page
-        window.location.href = response.data.paystack.authorization_url;
+        window.location.assign(response.data.paystack.authorization_url);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to initialize payment');
@@ -125,13 +128,22 @@ export default function MakePaymentPage() {
     }
   };
 
-  if (loading) {
+  if (loading || loadingDue) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-gray-500 font-medium">Loading auth state...</p>
+      <Layout title="Make Payment">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1"><FormSkeleton /></div>
+          <div className="lg:col-span-2 space-y-6">
+            <div className="card p-6 space-y-4">
+              <SkeletonBlock className="h-7 w-48" />
+              <SkeletonBlock className="h-20 w-full rounded-2xl" />
+              <SkeletonBlock className="h-12 w-full rounded-xl" />
+            </div>
+            <div className="card p-6 space-y-4">
+              <SkeletonBlock className="h-7 w-56" />
+              <SkeletonBlock className="h-24 w-full rounded-2xl" />
+              <SkeletonBlock className="h-12 w-full rounded-xl" />
+            </div>
           </div>
         </div>
       </Layout>
@@ -140,24 +152,29 @@ export default function MakePaymentPage() {
 
   if (error || (!due && !loading && dueId)) {
     return (
-      <Layout title="Error">
+      <Layout title="Payment Unavailable">
         <div className="max-w-2xl mx-auto text-center py-20 card flex flex-col items-center justify-center">
           <div className="w-16 h-16 text-yellow-500 mb-4"><ExclamationIcon /></div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">{error || 'Something went wrong'}</h2>
-          <p className="text-gray-600 mb-8">We couldn't retrieve the due information. Please try again or contact support.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">{error || 'Payment information could not be loaded'}</h2>
+          <p className="text-gray-600 mb-8">Please return to your dashboard and select the due again.</p>
           <button onClick={() => router.push('/student/dashboard')} className="btn-primary px-8">Return to Dashboard</button>
         </div>
       </Layout>
     );
   }
 
-  if (!due) return null;
+  if (!due) {
+    return (
+      <Layout title="Make Payment">
+        <FormSkeleton />
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Make Payment">
       <div className="max-w-4xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* LEFT COLUMN: Summary */}
           <div className="lg:col-span-1">
             <div className="card sticky top-24">
               <h2 className="text-xl font-bold text-primary mb-6">Payment Summary</h2>
@@ -198,9 +215,7 @@ export default function MakePaymentPage() {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Payment Methods */}
           <div className="lg:col-span-2 space-y-8">
-            {/* ONLINE OPTION */}
             <div className="card overflow-hidden">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex gap-4 items-center">
@@ -239,16 +254,11 @@ export default function MakePaymentPage() {
               >
                 {processing ? (
                   <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Processing...
+                    <span className="w-5 h-5 rounded-full bg-white/30 animate-pulse" />
+                    Redirecting to Paystack...
                   </>
                 ) : (
-                  <>
-                    Pay via Paystack
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </>
+                  <>Pay via Paystack</>
                 )}
               </button>
               <div className="mt-4 flex items-center justify-center gap-6 opacity-40">
@@ -258,7 +268,6 @@ export default function MakePaymentPage() {
               </div>
             </div>
 
-            {/* MANUAL OPTION */}
             <div className="card">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center p-3">
@@ -273,52 +282,10 @@ export default function MakePaymentPage() {
               <div className="space-y-6">
                 <div className="p-5 bg-orange-50 border border-orange-100 rounded-2xl relative overflow-hidden">
                   <div className="relative z-10 space-y-4">
-                    <h4 className="font-bold text-orange-900 flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Instructions
-                    </h4>
+                    <h4 className="font-bold text-orange-900">Instructions</h4>
                     <p className="text-sm text-orange-800 leading-relaxed whitespace-pre-wrap">
                       {settings.manual_payment_instructions || 'Please send the exact amount to any of the accounts below and upload your proof of payment.'}
                     </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {settings.manual_payment_phone && (
-                        <div className="bg-white/60 p-4 rounded-xl border border-orange-200">
-                          <span className="text-[10px] uppercase font-bold text-orange-600 block mb-1">Momo Account</span>
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-lg select-all">{settings.manual_payment_phone}</span>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(settings.manual_payment_phone);
-                                toast.success('Copied!');
-                              }}
-                              className="p-1 hover:bg-orange-100 rounded text-orange-600"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      {settings.manual_payment_bank && (
-                        <div className="bg-white/60 p-4 rounded-xl border border-orange-200">
-                          <span className="text-[10px] uppercase font-bold text-orange-600 block mb-1">Bank Details</span>
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-sm whitespace-pre-wrap select-all">{settings.manual_payment_bank}</span>
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(settings.manual_payment_bank);
-                                toast.success('Copied!');
-                              }}
-                              className="p-1 hover:bg-orange-100 rounded text-orange-600"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -326,11 +293,7 @@ export default function MakePaymentPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="label">Method Used</label>
-                      <select
-                        className="input-field"
-                        value={paymentMethod}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                      >
+                      <select className="input-field" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                         <option value="mtn_momo">MTN MoMo</option>
                         <option value="vodafone_cash">Telecel Cash</option>
                         <option value="airteltigo">AT Money</option>
@@ -343,27 +306,14 @@ export default function MakePaymentPage() {
                       <label className="label">Proof (Screenshot/Receipt)</label>
                       <label className="relative flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary transition-colors cursor-pointer group">
                         <div className="flex flex-col items-center justify-center pt-2 pb-2">
-                          <svg className="w-8 h-8 text-gray-400 group-hover:text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                          </svg>
                           <p className="text-xs text-gray-500">{proofFile ? proofFile.name : 'Click to upload proof'}</p>
                         </div>
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          className="hidden"
-                          onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                          required
-                        />
+                        <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => setProofFile(e.target.files?.[0] || null)} required />
                       </label>
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={processing || !proofFile}
-                    className="btn-secondary w-full py-4 text-lg"
-                  >
+                  <button type="submit" disabled={processing || !proofFile} className="btn-secondary w-full py-4 text-lg">
                     {processing ? 'Submitting for Approval...' : 'Confirm Manual Payment'}
                   </button>
                   <p className="text-[10px] text-gray-400 text-center">Manual payments are usually approved within 2-24 hours.</p>
