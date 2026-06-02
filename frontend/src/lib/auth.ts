@@ -6,22 +6,23 @@ export interface User {
   email: string;
   role: string;
   studentId?: string;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
   student?: {
     id: string;
     fullName: string;
     level: number;
     programme: string;
     academicYear: string;
+    phoneNumber?: string;
   };
 }
 
 export const login = async (emailOrIndexNumber: string, password: string) => {
-  // Determine if it's an email or index number
   const isEmail = emailOrIndexNumber.includes('@');
   const payload = isEmail
     ? { email: emailOrIndexNumber, password }
     : { indexNumber: emailOrIndexNumber, password };
-
 
   try {
     const response = await api.post('/auth/login', payload);
@@ -102,4 +103,3 @@ export const isStudent = (user: User | null): boolean => {
   if (!user) return false;
   return user.role === 'student';
 };
-
