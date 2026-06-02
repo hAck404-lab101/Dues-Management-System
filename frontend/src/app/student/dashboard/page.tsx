@@ -24,9 +24,11 @@ interface DashboardData {
 
 export default function StudentDashboard() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, setUser } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,6 +55,35 @@ export default function StudentDashboard() {
     }
   };
 
+  const handleRequiredPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await api.post('/auth/change-password', {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      toast.success('Password changed successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      if (user) setUser({ ...user, mustChangePassword: false });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to change password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   if (loading || loadingData) {
     return (
       <Layout title="Student Dashboard">
@@ -71,6 +102,60 @@ export default function StudentDashboard() {
 
   return (
     <Layout title="Student Dashboard">
+      {user?.mustChangePassword && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="bg-primary text-white p-6">
+              <h2 className="text-2xl font-extrabold">Change Temporary Password</h2>
+              <p className="text-white/80 text-sm mt-1">
+                You are using a temporary password. Please set a new password before continuing.
+              </p>
+            </div>
+            <form onSubmit={handleRequiredPasswordChange} className="p-6 space-y-4">
+              <div>
+                <label className="label">Temporary / Current Password *</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={passwordForm.currentPassword}
+                  onChange={e => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="label">New Password *</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={passwordForm.newPassword}
+                  onChange={e => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label">Confirm New Password *</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  value={passwordForm.confirmPassword}
+                  onChange={e => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="pt-4 border-t flex flex-col gap-3">
+                <button type="submit" disabled={changingPassword} className="btn-primary w-full">
+                  {changingPassword ? 'Updating password...' : 'Save New Password'}
+                </button>
+                <p className="text-xs text-gray-500 text-center">
+                  This modal will close only after your temporary password is changed.
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="card bg-primary text-white">
           <h3 className="text-sm font-medium opacity-90">Total Dues</h3>
