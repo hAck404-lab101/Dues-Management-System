@@ -4,7 +4,7 @@ const { sendPaymentConfirmationEmail } = require('../utils/email');
 const receiptService = require('../services/receiptService');
 const crypto = require('crypto');
 const { generateUUID } = require('../utils/uuid');
-const { buildReceiptVerifyUrl } = require('../utils/publicUrl');
+const { buildReceiptVerifyUrl, enforcePublicUrlInText } = require('../utils/publicUrl');
 
 const adminRoles = ['admin', 'financial_secretary', 'treasurer', 'president'];
 
@@ -301,7 +301,7 @@ exports.resendSMSReceipt = async (req, res) => {
     const { sendSMS } = require('../services/notificationService');
     const { rows: templateRows } = await pool.query('SELECT `value` FROM settings WHERE `key` = "sms_payment_template"');
     let smsMsg = templateRows[0]?.value || 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Verify: {url}';
-    const verifyUrl = buildReceiptVerifyUrl(data.receipt_number);
+    const verifyUrl = enforcePublicUrlInText(buildReceiptVerifyUrl(data.receipt_number));
     smsMsg = smsMsg
       .replace(/{name}/g, data.full_name)
       .replace(/{id_no}/g, data.index_number)
@@ -309,6 +309,7 @@ exports.resendSMSReceipt = async (req, res) => {
       .replace(/{due_name}/g, data.due_name)
       .replace(/{receipt_no}/g, data.receipt_number)
       .replace(/{url}/g, verifyUrl);
+    smsMsg = enforcePublicUrlInText(smsMsg);
     const success = await sendSMS(data.phone_number, smsMsg, { type: 'payment_receipt_resend', relatedType: 'payment', relatedId: req.params.id });
     if (success) return res.json({ success: true, message: `SMS receipt sent to ${data.full_name}` });
     res.status(502).json({ success: false, message: 'SMS could not be sent. Check SMS settings/provider logs.' });
@@ -324,7 +325,7 @@ exports.resendEmailReceipt = async (req, res) => {
     if (!data) return res.status(404).json({ success: false, message: 'Approved/completed payment receipt not found' });
     if (!adminRoles.includes(req.user.role) && !(req.user.role === 'student' && req.user.id === data.student_user_id)) return res.status(403).json({ success: false, message: 'Access denied' });
     if (!data.email) return res.status(400).json({ success: false, message: 'Student has no registered email' });
-    const verifyUrl = buildReceiptVerifyUrl(data.receipt_number);
+    const verifyUrl = enforcePublicUrlInText(buildReceiptVerifyUrl(data.receipt_number));
     const result = await sendPaymentConfirmationEmail(
       { full_name: data.full_name, email: data.email },
       { amount: data.amount, payment_method: data.payment_method, created_at: data.created_at, due_name: data.due_name },
