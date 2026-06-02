@@ -10,7 +10,9 @@ const canAccessReceiptRow = async (user, receipt) => {
   if (!user || !receipt) return false;
   if (ADMIN_ROLES.includes(user.role)) return true;
   if (user.role !== 'student') return false;
-  const result = await pool.query('SELECT id FROM students WHERE id = ? AND user_id = ?', [receipt.student_id, user.id]);
+
+  const studentRecordId = receipt.student_record_id || receipt.student_uuid || receipt.student_db_id || receipt.student_id;
+  const result = await pool.query('SELECT id FROM students WHERE id = ? AND user_id = ?', [studentRecordId, user.id]);
   return result.rows.length > 0;
 };
 
@@ -119,7 +121,7 @@ exports.getReceiptById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      `SELECT r.*, s.student_id as index_number, s.full_name, s.email, s.level, s.programme, s.academic_year,
+      `SELECT r.*, r.student_id as student_record_id, s.student_id as index_number, s.full_name, s.email, s.level, s.programme, s.academic_year,
               d.name as due_name
        FROM receipts r
        INNER JOIN students s ON r.student_id = s.id
@@ -150,7 +152,7 @@ exports.getReceiptByNumber = async (req, res) => {
       balance: receipt.balance,
       total_amount: receipt.total_amount,
       issued_at: receipt.issued_at,
-      student_id: receipt.student_id,
+      student_id: receipt.index_number || receipt.student_id,
       full_name: receipt.full_name,
       level: receipt.level,
       programme: receipt.programme,
@@ -178,6 +180,6 @@ exports.downloadReceipt = async (req, res) => {
     fs.createReadStream(filepath).pipe(res);
   } catch (error) {
     console.error('Download receipt error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: error.message || 'Server error' });
   }
 };
