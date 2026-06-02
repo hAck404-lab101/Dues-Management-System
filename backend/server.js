@@ -17,13 +17,11 @@ const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
-// Security middleware
 app.use(helmet());
 
-// CORS setup
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://dues-management-system-phi.vercel.app',
+  process.env.PUBLIC_APP_URL,
   'https://uewdept.org',
   'https://www.uewdept.org',
   'http://localhost:3000',
@@ -45,48 +43,28 @@ app.use(cors({
 app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_BODY_LIMIT || '2mb' }));
 
-// Root route
 app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Dues Management System API is running',
-    status: 'online',
-    health: '/health',
-    api: '/api'
-  });
+  res.json({ success: true, message: 'Dues Management System API is running', status: 'online', health: '/health', api: '/api' });
 });
 
-// API info route
 app.get('/api', (req, res) => {
   res.json({
     success: true,
     message: 'Dues Management System API',
     availableRoutes: {
-      auth: '/api/auth',
-      students: '/api/students',
-      dues: '/api/dues',
-      payments: '/api/payments',
-      receipts: '/api/receipts',
-      dashboard: '/api/dashboard',
-      reports: '/api/reports',
-      admin: '/api/admin',
-      settings: '/api/settings',
-      features: '/api/features'
+      auth: '/api/auth', students: '/api/students', dues: '/api/dues', payments: '/api/payments', receipts: '/api/receipts', dashboard: '/api/dashboard', reports: '/api/reports', admin: '/api/admin', settings: '/api/settings', features: '/api/features'
     }
   });
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.set('Cache-Control', 'no-store');
   res.json({ success: true, status: 'ok', message: 'Dues Management System API is healthy' });
 });
 
-// Serve static files with lightweight caching
+// Proof uploads can remain public enough for admin previews, but receipt PDFs must go through authenticated API routes.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '1h', etag: true }));
-app.use('/receipts', express.static(path.join(__dirname, 'receipts'), { maxAge: '1h', etag: true }));
 
-// Rate limiting tuned for production traffic. Override with env vars as traffic grows.
 const generalLimiter = rateLimit({
   windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
   max: parseNumber(process.env.RATE_LIMIT_MAX, 1000),
@@ -107,7 +85,6 @@ app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/', generalLimiter);
 
-// Routes
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/students', require('./src/routes/students'));
 app.use('/api/dues', require('./src/routes/dues'));
@@ -119,17 +96,11 @@ app.use('/api/admin', require('./src/routes/admin'));
 app.use('/api/settings', require('./src/routes/settings'));
 app.use('/api/features', require('./src/routes/featurePack'));
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack || err.message);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
+  res.status(err.status || 500).json({ success: false, message: err.message || 'Internal server error', ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found', path: req.originalUrl });
 });
@@ -139,7 +110,6 @@ const PORT = process.env.PORT || 5000;
 pool.getConnection()
   .then(async (connection) => {
     console.log('Database connected successfully');
-
     try {
       await repairDuesTables(connection);
     } catch (repairError) {
@@ -148,11 +118,7 @@ pool.getConnection()
     } finally {
       connection.release();
     }
-
-    const server = app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-
+    const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     server.keepAliveTimeout = parseNumber(process.env.SERVER_KEEP_ALIVE_TIMEOUT_MS, 65000);
     server.headersTimeout = parseNumber(process.env.SERVER_HEADERS_TIMEOUT_MS, 66000);
   })
