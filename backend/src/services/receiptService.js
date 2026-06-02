@@ -5,11 +5,12 @@ const fs = require('fs');
 const path = require('path');
 const { generateUUID } = require('../utils/uuid');
 const { sendPaymentConfirmationEmail } = require('../utils/email');
-const { buildReceiptVerifyUrl } = require('../utils/publicUrl');
+const { buildReceiptVerifyUrl, enforcePublicUrlInText } = require('../utils/publicUrl');
 
 const normalizePrefix = (value = '') => {
   const clean = String(value || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
-  return clean || 'DMS';
+  if (!clean || clean === 'UCC') return 'DMS';
+  return clean;
 };
 
 const getSettings = async (executor) => {
@@ -17,7 +18,8 @@ const getSettings = async (executor) => {
   const settings = {};
   rows.forEach((row) => { settings[row.key] = row.value; });
   const appName = settings.app_name || settings.email_from_name || 'Dues Management System';
-  const prefix = normalizePrefix(settings.receipt_prefix || appName.split(/\s+/).map(w => w[0]).join(''));
+  const proposedPrefix = settings.receipt_prefix || appName.split(/\s+/).map(w => w[0]).join('');
+  const prefix = normalizePrefix(proposedPrefix);
   return {
     appName,
     appDescription: settings.app_description || 'Secure student dues, payments, and receipts portal',
@@ -64,7 +66,7 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
     const totalDueAmount = parseFloat(data.total_due_amount || 0);
     const balance = totalDueAmount - totalPaid;
     const receiptNumber = await generateReceiptNumber(executor, brand.receiptPrefix);
-    const verifyUrl = buildReceiptVerifyUrl(receiptNumber);
+    const verifyUrl = enforcePublicUrlInText(buildReceiptVerifyUrl(receiptNumber));
 
     const qrData = JSON.stringify({
       receipt_number: receiptNumber,
@@ -165,6 +167,7 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
         .replace(/{due_name}/g, data.due_name)
         .replace(/{receipt_no}/g, receiptNumber)
         .replace(/{url}/g, verifyUrl);
+      smsMsg = enforcePublicUrlInText(smsMsg);
 
       if (emailEnabled && data.email) {
         await sendPaymentConfirmationEmail(
