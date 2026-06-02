@@ -26,6 +26,41 @@ const looksLikePhone = (value = '') => {
   return raw.length >= 9 && raw.length <= 13;
 };
 
+const cleanOtp = (value = '') => String(value || '').replace(/[^0-9]/g, '').trim();
+
+const findStudentUserByIdentity = async (identityValue = '') => {
+  const cleanIdentity = String(identityValue || '').trim();
+  if (!cleanIdentity) return null;
+
+  const indexResult = await pool.query(
+    `SELECT u.id, u.email, u.student_id, u.otp_code, u.otp_expires,
+            s.id as student_record_id, s.full_name, s.phone_number
+     FROM users u
+     INNER JOIN students s ON u.student_id = s.student_id
+     WHERE u.role = 'student' AND (u.student_id = ? OR s.student_id = ?)
+     LIMIT 1`,
+    [cleanIdentity, cleanIdentity]
+  );
+  if (indexResult.rows.length > 0) {
+    return { ...indexResult.rows[0], normalizedPhone: normalizePhone(indexResult.rows[0].phone_number) };
+  }
+
+  if (looksLikePhone(cleanIdentity)) {
+    const normalizedIdentityPhone = normalizePhone(cleanIdentity);
+    const phoneResult = await pool.query(
+      `SELECT u.id, u.email, u.student_id, u.otp_code, u.otp_expires,
+              s.id as student_record_id, s.full_name, s.phone_number
+       FROM users u
+       INNER JOIN students s ON u.student_id = s.student_id
+       WHERE u.role = 'student' AND s.phone_number IS NOT NULL`
+    );
+    const matched = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === normalizedIdentityPhone) || null;
+    return matched ? { ...matched, normalizedPhone: normalizedIdentityPhone } : null;
+  }
+
+  return null;
+};
+
 const userPayload = (user) => ({
   id: user.id,
   email: user.email,
@@ -133,16 +168,7 @@ exports.register = async (req, res) => {
       };
 
       if (settingsMap.signup_email_enabled !== 'false') {
-        sendSignupEmail({
-          full_name: fullName,
-          fullName,
-          student_id: indexNumber,
-          indexNumber,
-          email,
-          programme,
-          academic_year: academicYear,
-          academicYear
-        }).catch(err => console.error('Signup email failed:', err.message));
+        sendSignupEmail({ full_name: fullName, fullName, student_id: indexNumber, indexNumber, email, programme, academic_year: academicYear, academicYear }).catch(err => console.error('Signup email failed:', err.message));
       }
 
       const token = generateToken(userId, 'student');
@@ -165,24 +191,11 @@ exports.forgotPassword = async (req, res) => {
     if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation error', errors: errors.array() });
     const identityValue = String(req.body.identity || req.body.indexNumber || req.body.phoneNumber || '').trim();
     if (!identityValue) return res.status(400).json({ success: false, message: 'Index number or phone number is required' });
-    const identityIsPhone = looksLikePhone(identityValue);
-    const normalizedIdentityPhone = identityIsPhone ? normalizePhone(identityValue) : '';
-    let matchedUser = null;
-    if (identityIsPhone) {
-      const phoneResult = await pool.query(
-        `SELECT u.id, u.email, u.student_id, s.id as student_record_id, s.full_name, s.phone_number FROM users u INNER JOIN students s ON u.student_id = s.student_id WHERE u.role = 'student' AND s.phone_number IS NOT NULL`, []
-      );
-      matchedUser = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === normalizedIdentityPhone) || null;
-      if (matchedUser) matchedUser.normalizedPhone = normalizedIdentityPhone;
-    } else {
-      const result = await pool.query(
-        `SELECT u.id, u.email, u.student_id, s.id as student_record_id, s.full_name, s.phone_number FROM users u INNER JOIN students s ON u.student_id = s.student_id WHERE u.role = 'student' AND (u.student_id = ? OR s.student_id = ?)`,
-        [identityValue, identityValue]
-      );
-      if (result.rows.length > 0) matchedUser = { ...result.rows[0], normalizedPhone: normalizePhone(result.rows[0].phone_number) };
-    }
+
+    const matchedUser = await findStudentUserByIdentity(identityValue);
     if (!matchedUser) return res.status(404).json({ success: false, message: 'No matching student account found. Check the index number or phone number.' });
     if (!matchedUser.normalizedPhone) return res.status(400).json({ success: false, message: 'No phone number is associated with this account. Please contact an administrator.' });
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 10 * 60000);
     await pool.query('UPDATE users SET otp_code = ?, otp_expires = ? WHERE id = ?', [otp, otpExpires, matchedUser.id]);
@@ -200,24 +213,16 @@ exports.verifyOTP = async (req, res) => {
   try {
     const { identity, otp } = req.body;
     const cleanIdentity = String(identity || '').trim();
-    if (!otp || !cleanIdentity) return res.status(400).json({ success: false, message: 'Identity and verification code are required' });
-    const identityIsPhone = looksLikePhone(cleanIdentity);
-    let user = null;
-    if (identityIsPhone) {
-      const phoneResult = await pool.query(
-        `SELECT u.id, u.otp_code, u.otp_expires, u.student_id, s.phone_number FROM users u INNER JOIN students s ON u.student_id = s.student_id WHERE u.role = 'student' AND s.phone_number IS NOT NULL`, []
-      );
-      user = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === normalizePhone(cleanIdentity)) || null;
-    } else {
-      const userResult = await pool.query(
-        `SELECT u.id, u.otp_code, u.otp_expires, u.student_id, s.phone_number FROM users u INNER JOIN students s ON u.student_id = s.student_id WHERE u.role = 'student' AND (u.student_id = ? OR s.student_id = ?)`,
-        [cleanIdentity, cleanIdentity]
-      );
-      user = userResult.rows[0] || null;
-    }
+    const submittedOtp = cleanOtp(otp);
+    if (!submittedOtp || !cleanIdentity) return res.status(400).json({ success: false, message: 'Identity and verification code are required' });
+
+    const user = await findStudentUserByIdentity(cleanIdentity);
     if (!user) return res.status(400).json({ success: false, message: 'Invalid verification request' });
-    if (!user.otp_code || user.otp_code !== otp) return res.status(400).json({ success: false, message: 'Invalid verification code' });
+
+    const storedOtp = cleanOtp(user.otp_code);
+    if (!storedOtp || storedOtp !== submittedOtp) return res.status(400).json({ success: false, message: 'Invalid verification code' });
     if (!user.otp_expires || new Date(user.otp_expires) < new Date()) return res.status(400).json({ success: false, message: 'Verification code has expired' });
+
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetExpires = new Date(Date.now() + 10 * 60000);
     await pool.query('UPDATE users SET reset_password_token = ?, reset_password_expires = ?, otp_code = NULL, otp_expires = NULL WHERE id = ?', [resetToken, resetExpires, user.id]);
