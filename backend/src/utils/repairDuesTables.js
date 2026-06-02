@@ -24,6 +24,7 @@ const repairDuesTables = async (connection) => {
   await exec('Ensure users reset_password_expires exists', 'ALTER TABLE users ADD COLUMN reset_password_expires TIMESTAMP NULL AFTER reset_password_token');
   await exec('Ensure users otp_code exists', 'ALTER TABLE users ADD COLUMN otp_code VARCHAR(10) NULL AFTER reset_password_expires');
   await exec('Ensure users otp_expires exists', 'ALTER TABLE users ADD COLUMN otp_expires TIMESTAMP NULL AFTER otp_code');
+  await exec('Ensure users must_change_password exists', 'ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT false AFTER otp_expires');
   await exec('Ensure users reset token index exists', 'ALTER TABLE users ADD INDEX idx_users_reset_token (reset_password_token)');
 
   await exec('Ensure dues table exists', `
