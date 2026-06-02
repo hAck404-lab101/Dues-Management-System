@@ -4,7 +4,6 @@ const authController = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const { body } = require('express-validator');
 
-// Validation middleware - accept either email or indexNumber
 const loginValidation = [
   body('password').notEmpty().withMessage('Password is required'),
   body().custom((value) => {
@@ -28,8 +27,8 @@ const registerValidation = [
 
 const forgotPasswordValidation = [
   body().custom((value) => {
-    if (!value.indexNumber && !value.phoneNumber) {
-      throw new Error('Index number or Phone number is required');
+    if (!value.identity && !value.indexNumber && !value.phoneNumber) {
+      throw new Error('Index number or phone number is required');
     }
     return true;
   })
@@ -45,7 +44,6 @@ const changePasswordValidation = [
   body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
 ];
 
-// Routes
 router.post('/login', loginValidation, authController.login);
 router.post('/register', registerValidation, authController.register);
 router.post('/forgot-password', forgotPasswordValidation, authController.forgotPassword);
@@ -56,4 +54,3 @@ router.get('/me', authenticate, authController.getMe);
 router.post('/refresh', authenticate, authController.refreshToken);
 
 module.exports = router;
-
