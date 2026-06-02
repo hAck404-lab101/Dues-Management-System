@@ -5,12 +5,10 @@ const fs = require('fs');
 const path = require('path');
 const { generateUUID } = require('../utils/uuid');
 const { sendPaymentConfirmationEmail } = require('../utils/email');
+const { buildReceiptVerifyUrl } = require('../utils/publicUrl');
 
 const normalizePrefix = (value = '') => {
-  const clean = String(value || '')
-    .replace(/[^A-Za-z0-9]/g, '')
-    .toUpperCase()
-    .slice(0, 8);
+  const clean = String(value || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
   return clean || 'DMS';
 };
 
@@ -32,10 +30,7 @@ const getSettings = async (executor) => {
 const generateReceiptNumber = async (executor = pool.query.bind(pool), prefix = 'DMS') => {
   const year = new Date().getFullYear();
   const safePrefix = normalizePrefix(prefix);
-  const result = await executor(
-    `SELECT COUNT(*) as total FROM receipts WHERE receipt_number LIKE ?`,
-    [`${safePrefix}-${year}-%`]
-  );
+  const result = await executor('SELECT COUNT(*) as total FROM receipts WHERE receipt_number LIKE ?', [`${safePrefix}-${year}-%`]);
   const count = parseInt(result.rows[0].total || 0, 10) + 1;
   return `${safePrefix}-${year}-${String(count).padStart(6, '0')}`;
 };
@@ -69,12 +64,14 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
     const totalDueAmount = parseFloat(data.total_due_amount || 0);
     const balance = totalDueAmount - totalPaid;
     const receiptNumber = await generateReceiptNumber(executor, brand.receiptPrefix);
+    const verifyUrl = buildReceiptVerifyUrl(receiptNumber);
 
     const qrData = JSON.stringify({
       receipt_number: receiptNumber,
       student_id: data.student_id,
       due_name: data.due_name,
       amount: amountPaid,
+      verify_url: verifyUrl,
       date: new Date().toISOString()
     });
 
@@ -113,7 +110,6 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
       doc.roundedRect(50, y, 495, 28, 8).fill('#F3F4F6');
       doc.fillColor(brand.primaryColor).fontSize(11).font('Helvetica-Bold').text(title, 65, y + 9);
     };
-
     const label = (text, x, y) => doc.fillColor('#6B7280').fontSize(9).font('Helvetica-Bold').text(text, x, y);
     const value = (text, x, y, opts = {}) => doc.fillColor('#111827').fontSize(11).font('Helvetica').text(text, x, y, opts);
 
@@ -134,13 +130,11 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
     label('Amount Paid', 245, 588); doc.fillColor(brand.primaryColor).fontSize(13).font('Helvetica-Bold').text(`GHS ${Number(amountPaid).toFixed(2)}`, 245, 600, { width: 130 });
     label('Balance', 400, 588); doc.fillColor(balance <= 0 ? '#166534' : '#B45309').fontSize(13).font('Helvetica-Bold').text(`GHS ${Number(balance).toFixed(2)}`, 400, 600, { width: 120 });
 
-    if (qrBuffer.length > 0) {
-      const qrImageBuffer = Buffer.concat(qrBuffer);
-      doc.image(qrImageBuffer, 247, 650, { fit: [100, 100] });
-    }
+    if (qrBuffer.length > 0) doc.image(Buffer.concat(qrBuffer), 247, 650, { fit: [100, 100] });
     doc.fillColor('#6B7280').fontSize(8).font('Helvetica').text('Scan QR code to verify receipt', 50, 756, { align: 'center' });
-    doc.fillColor('#6B7280').fontSize(8).font('Helvetica').text('This is a computer-generated receipt. No signature required.', 50, 780, { align: 'center' });
-    doc.fillColor('#9CA3AF').fontSize(8).font('Helvetica').text(`${brand.appName} • Digital Receipt System`, 50, 793, { align: 'center' });
+    doc.fillColor('#6B7280').fontSize(8).font('Helvetica').text(`Verify online: ${verifyUrl}`, 50, 768, { align: 'center' });
+    doc.fillColor('#6B7280').fontSize(8).font('Helvetica').text('This is a computer-generated receipt. No signature required.', 50, 782, { align: 'center' });
+    doc.fillColor('#9CA3AF').fontSize(8).font('Helvetica').text(`${brand.appName} • Digital Receipt System`, 50, 795, { align: 'center' });
 
     doc.end();
     await new Promise((resolve, reject) => {
@@ -161,32 +155,27 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
       const smsEnabledResult = await executor('SELECT `value` FROM settings WHERE `key` = "receipt_sms_delivery_enabled"');
       const emailEnabled = emailEnabledResult.rows[0]?.value !== 'false';
       const smsEnabled = smsEnabledResult.rows[0]?.value !== 'false';
-      const appUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const fullReceiptUrl = `${appUrl}${receiptUrl}`;
 
       const templateResult = await executor('SELECT `value` FROM settings WHERE `key` = "sms_payment_template"');
-      let smsMsg = templateResult.rows[0]?.value || `Hello {name}, your payment of GHS {amount} for {due_name} has been confirmed. Receipt: {receipt_no}. Download: {url}`;
+      let smsMsg = templateResult.rows[0]?.value || `Hello {name}, your payment of GHS {amount} for {due_name} has been confirmed. Receipt: {receipt_no}. Verify: {url}`;
       smsMsg = smsMsg
         .replace(/{name}/g, data.full_name)
         .replace(/{id_no}/g, data.student_id)
         .replace(/{amount}/g, Number(amountPaid).toFixed(2))
         .replace(/{due_name}/g, data.due_name)
         .replace(/{receipt_no}/g, receiptNumber)
-        .replace(/{url}/g, fullReceiptUrl);
+        .replace(/{url}/g, verifyUrl);
 
       if (emailEnabled && data.email) {
         await sendPaymentConfirmationEmail(
           { full_name: data.full_name, email: data.email },
           { amount: amountPaid, payment_method: data.payment_method, created_at: data.created_at, due_name: data.due_name },
-          fullReceiptUrl,
+          verifyUrl,
           { receipt_number: receiptNumber, amount_paid: amountPaid },
           [{ filename: `Receipt-${receiptNumber}.pdf`, path: filepath }]
         );
       }
-
-      if (smsEnabled && data.phone_number) {
-        await sendSMS(data.phone_number, smsMsg, { type: 'payment_receipt', relatedType: 'payment', relatedId: paymentId });
-      }
+      if (smsEnabled && data.phone_number) await sendSMS(data.phone_number, smsMsg, { type: 'payment_receipt', relatedType: 'payment', relatedId: paymentId });
     } catch (notifyErr) {
       console.error('Notification error after receipt generation:', notifyErr);
     }
