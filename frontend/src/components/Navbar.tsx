@@ -24,7 +24,6 @@ export default function Navbar() {
     setIsClient(true);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
   const handleLogout = () => {
@@ -35,6 +34,7 @@ export default function Navbar() {
 
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin/login';
   const authenticated = isClient && !!user;
+  const canUseBackup = ['admin', 'treasurer', 'president'].includes(user?.role || '');
 
   if (isAuthPage) return null;
 
@@ -42,8 +42,7 @@ export default function Navbar() {
     <nav className="bg-primary text-white shadow-xl sticky top-0 z-[100]">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-20">
-          {/* Logo Section */}
-          <Link href={authenticated ? (user?.role === 'admin' ? '/admin/dashboard' : '/student/dashboard') : '/'} className="flex items-center gap-3 group">
+          <Link href={authenticated ? (user?.role === 'student' ? '/student/dashboard' : '/admin/dashboard') : '/'} className="flex items-center gap-3 group">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
                 {appLogo ? (
@@ -72,7 +71,6 @@ export default function Navbar() {
             <span className="text-xl font-extrabold tracking-tight hidden sm:block">{appName}</span>
           </Link>
 
-          {/* Nav Links */}
           <div className="hidden lg:flex items-center space-x-1">
             {authenticated && (
               <>
@@ -110,11 +108,12 @@ export default function Navbar() {
                     <NavDropdown
                       label="System"
                       icon={<SettingsIcon />}
-                      active={pathname.includes('/admin/bulk-sms') || pathname.includes('/admin/audit-log') || pathname.includes('/admin/team') || pathname.includes('/admin/settings') || pathname.includes('/admin/security')}
+                      active={pathname.includes('/admin/bulk-sms') || pathname.includes('/admin/audit-log') || pathname.includes('/admin/team') || pathname.includes('/admin/settings') || pathname.includes('/admin/security') || pathname.includes('/admin/backup')}
                     >
                       <DropdownItem href="/admin/bulk-sms" icon={<SmsIcon />} label="Bulk SMS" active={pathname === '/admin/bulk-sms'} />
                       <DropdownItem href="/admin/audit-log" icon={<ShieldIcon />} label="Audit Log" active={pathname === '/admin/audit-log'} />
                       <DropdownItem href="/admin/security" icon={<LockClosedIcon />} label="Account Security" active={pathname === '/admin/security'} />
+                      {canUseBackup && <DropdownItem href="/admin/backup" icon={<ShieldIcon />} label="Backup & Recovery" active={pathname === '/admin/backup'} />}
                       {user?.role === 'admin' && <DropdownItem href="/admin/team" icon={<GroupIcon />} label="Team" active={pathname === '/admin/team'} />}
                       <DropdownItem href="/admin/settings" icon={<SettingsIcon />} label="Settings" active={pathname === '/admin/settings'} />
                     </NavDropdown>
@@ -130,7 +129,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Right Side Tools */}
           <div className="flex items-center gap-4">
             {authenticated && (
               <div className="flex items-center gap-3 border-l border-white/10 pl-4">
@@ -150,10 +148,10 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Mobile Toggle */}
             <button
               className="lg:hidden w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-white/20 transition-all"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen ? (
@@ -167,7 +165,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Backdrop */}
       {mobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-200"
@@ -176,7 +173,7 @@ export default function Navbar() {
       )}
 
       <div
-        className={`lg:hidden transition-all duration-300 ease-in-out border-t border-white/5 overflow-hidden shadow-2xl bg-primary/98 backdrop-blur-2xl absolute left-0 right-0 top-20 z-[100] ${mobileMenuOpen ? 'max-h-[500px] opacity-100 py-6 visible pointer-events-auto' : 'max-h-0 opacity-0 invisible overflow-hidden pointer-events-none'}`}
+        className={`lg:hidden transition-all duration-300 ease-in-out border-t border-white/5 overflow-hidden shadow-2xl bg-primary/98 backdrop-blur-2xl absolute left-0 right-0 top-20 z-[100] ${mobileMenuOpen ? 'max-h-[620px] opacity-100 py-6 visible pointer-events-auto' : 'max-h-0 opacity-0 invisible overflow-hidden pointer-events-none'}`}
       >
         <div className="container mx-auto px-4 space-y-2">
           {authenticated ? (
@@ -206,6 +203,7 @@ export default function Navbar() {
                   <MobileNavItem href="/admin/bulk-sms" label="Bulk SMS" icon={<SmsIcon />} />
                   <MobileNavItem href="/admin/audit-log" label="Audit Log" icon={<ShieldIcon />} />
                   <MobileNavItem href="/admin/security" label="Account Security" icon={<LockClosedIcon />} />
+                  {canUseBackup && <MobileNavItem href="/admin/backup" label="Backup & Recovery" icon={<ShieldIcon />} />}
                   {user?.role === 'admin' && <MobileNavItem href="/admin/team" label="Team" icon={<GroupIcon />} />}
                   <MobileNavItem href="/admin/settings" label="Settings" icon={<SettingsIcon />} />
                 </>
