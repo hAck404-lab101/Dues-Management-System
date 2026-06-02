@@ -193,7 +193,11 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
 
 exports.getReceiptByNumber = async (receiptNumber) => {
   const result = await pool.query(
-    `SELECT r.*, s.student_id, s.full_name, s.email, s.level, s.programme, d.name as due_name
+    `SELECT r.id, r.receipt_number, r.student_id as student_record_id, r.due_id, r.payment_id,
+            r.amount_paid, r.balance, r.total_amount, r.receipt_url, r.qr_code_data,
+            r.issued_at, r.issued_by, r.created_at,
+            s.student_id as index_number, s.full_name, s.email, s.level, s.programme, s.academic_year,
+            d.name as due_name
      FROM receipts r
      INNER JOIN students s ON r.student_id = s.id
      INNER JOIN dues d ON r.due_id = d.id
