@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { DashboardSkeleton } from '@/components/Skeletons';
 
 interface DashboardData {
   student: any;
@@ -54,8 +55,8 @@ export default function StudentDashboard() {
 
   if (loading || loadingData) {
     return (
-      <Layout>
-        <div className="text-center py-12">Loading...</div>
+      <Layout title="Student Dashboard">
+        <DashboardSkeleton />
       </Layout>
     );
   }
@@ -175,4 +176,3 @@ export default function StudentDashboard() {
     </Layout>
   );
 }
-
