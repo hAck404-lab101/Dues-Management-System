@@ -8,7 +8,7 @@ import { useBranding } from '@/contexts/BrandingContext';
 import { useRouter } from 'next/navigation';
 
 export default function ForgotPasswordPage() {
-  const [form, setForm] = useState({ indexNumber: '', phoneNumber: '' });
+  const [identity, setIdentity] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<'identity' | 'otp'>('identity');
@@ -17,25 +17,21 @@ export default function ForgotPasswordPage() {
   const { appName, appLogo } = useBranding();
   const router = useRouter();
 
-  const requestPayload = () => ({
-    indexNumber: form.indexNumber.trim() || undefined,
-    phoneNumber: form.phoneNumber.trim() || undefined,
-  });
-
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.indexNumber.trim() && !form.phoneNumber.trim()) {
+    const cleanIdentity = identity.trim();
+    if (!cleanIdentity) {
       toast.error('Enter your index number or registered phone number');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await api.post('/auth/forgot-password', requestPayload());
+      const res = await api.post('/auth/forgot-password', { identity: cleanIdentity });
       if (res.data.success) {
         setMaskedContact(res.data.contact || 'your registered phone');
-        setVerifiedIdentity(res.data.identity || form.indexNumber.trim());
+        setVerifiedIdentity(res.data.identity || cleanIdentity);
         setStep('otp');
         toast.success('Verification code sent');
       }
@@ -51,9 +47,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       const res = await api.post('/auth/verify-otp', {
-        identity: verifiedIdentity || form.indexNumber.trim(),
-        indexNumber: form.indexNumber.trim() || verifiedIdentity || undefined,
-        phoneNumber: form.phoneNumber.trim() || undefined,
+        identity: verifiedIdentity || identity.trim(),
         otp,
       });
       if (res.data.success) {
@@ -94,32 +88,21 @@ export default function ForgotPasswordPage() {
               <div>
                 <h1 className="text-xl font-bold text-primary">Reset your password</h1>
                 <p className="text-sm text-gray-600 mt-1">
-                  Enter your index number. You can also enter your registered phone number so the system confirms both belong to the same student account.
+                  Enter either your index number or the phone number registered on your student account.
                 </p>
               </div>
 
               <div>
-                <label className="label">Index Number</label>
+                <label className="label">Index Number or Phone Number</label>
                 <input
                   type="text"
                   className="input-field"
-                  placeholder="Enter your index number"
-                  value={form.indexNumber}
-                  onChange={e => setForm(prev => ({ ...prev, indexNumber: e.target.value }))}
-                />
-              </div>
-
-              <div>
-                <label className="label">Registered Phone Number</label>
-                <input
-                  type="tel"
-                  className="input-field"
-                  placeholder="Optional, e.g. 0244123456"
-                  value={form.phoneNumber}
-                  onChange={e => setForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  placeholder="Example: STD/ICT/26/001 or 0244123456"
+                  value={identity}
+                  onChange={e => setIdentity(e.target.value)}
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  If you enter both, the system will only send the code if the phone number belongs to that index number.
+                  The reset code will be sent to the phone number already saved on your student profile.
                 </p>
               </div>
 
