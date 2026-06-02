@@ -77,10 +77,7 @@ const repairDuesTables = async (connection) => {
     await exec('Copy old student_dues into due_assignments', `
       INSERT IGNORE INTO due_assignments (id, due_id, student_id, level, programme, amount, assigned_at)
       SELECT
-        CASE
-          WHEN id IS NULL THEN UUID()
-          ELSE CAST(id AS CHAR)
-        END,
+        CASE WHEN id IS NULL THEN UUID() ELSE CAST(id AS CHAR) END,
         due_id,
         student_id,
         level,
@@ -93,6 +90,30 @@ const repairDuesTables = async (connection) => {
   }
 
   await exec('Ensure payments.service_fee exists', 'ALTER TABLE payments ADD COLUMN service_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER amount');
+
+  await exec('Ensure settings public_app_url exists', `
+    INSERT IGNORE INTO settings (id, \`key\`, \`value\`, category, description)
+    VALUES (UUID(), 'public_app_url', 'https://uewdept.org', 'sys_general', 'Canonical public app URL used in SMS and email links')
+  `);
+  await exec('Repair unsafe public_app_url setting', `
+    UPDATE settings SET \`value\` = 'https://uewdept.org'
+    WHERE \`key\` = 'public_app_url'
+      AND (\`value\` IS NULL OR \`value\` = '' OR \`value\` LIKE '%vercel.app%' OR \`value\` LIKE '%railway.app%' OR \`value\` LIKE '%localhost%')
+  `);
+  await exec('Ensure receipt prefix setting exists', `
+    INSERT IGNORE INTO settings (id, \`key\`, \`value\`, category, description)
+    VALUES (UUID(), 'receipt_prefix', 'DMS', 'sys_general', 'Receipt number prefix')
+  `);
+  await exec('Repair UCC receipt prefix setting', `
+    UPDATE settings SET \`value\` = 'DMS'
+    WHERE \`key\` = 'receipt_prefix'
+      AND (\`value\` IS NULL OR \`value\` = '' OR UPPER(\`value\`) = 'UCC')
+  `);
+  await exec('Repair receipt SMS template wording', `
+    UPDATE settings SET \`value\` = 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Verify: {url}'
+    WHERE \`key\` = 'sms_payment_template'
+      AND (\`value\` LIKE '%Download:%' OR \`value\` LIKE '%vercel.app%' OR \`value\` LIKE '%railway.app%')
+  `);
 
   await exec('Ensure sms_logs table exists', `
     CREATE TABLE IF NOT EXISTS sms_logs (
