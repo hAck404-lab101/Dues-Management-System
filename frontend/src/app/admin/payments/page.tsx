@@ -6,8 +6,11 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { TableSkeleton } from '@/components/Skeletons';
 
 const STATUSES = ['all', 'pending', 'approved', 'completed', 'rejected'];
+const METHODS = ['all', 'paystack', 'mtn_momo', 'vodafone_cash', 'airteltigo', 'bank_transfer', 'cash', 'other'];
+const TYPES = ['all', 'online', 'manual'];
 
 interface Payment {
   id: string;
@@ -22,8 +25,11 @@ interface Payment {
   student_name: string;
   student_id: string;
   student_email: string;
+  student_phone?: string;
   due_name: string;
   approved_by_email: string | null;
+  receipt_number?: string | null;
+  receipt_url?: string | null;
 }
 
 export default function AdminPaymentsPage() {
@@ -33,21 +39,23 @@ export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [paymentMethod, setPaymentMethod] = useState('all');
+  const [paymentType, setPaymentType] = useState('all');
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<string | null>(null);
 
-  // Body scroll lock when modals are open
   useEffect(() => {
-    if (rejectId || proofUrl) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    if (rejectId || proofUrl) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = 'unset';
     return () => { document.body.style.overflow = 'unset'; };
   }, [rejectId, proofUrl]);
 
@@ -58,27 +66,49 @@ export default function AdminPaymentsPage() {
   const fetchPayments = useCallback(async () => {
     setLoadingData(true);
     try {
-      const params: any = { page, limit: 15 };
+      const params: Record<string, string | number> = { page, limit: 15 };
       if (filterStatus !== 'all') params.status = filterStatus;
+      if (paymentMethod !== 'all') params.paymentMethod = paymentMethod;
+      if (paymentType !== 'all') params.paymentType = paymentType;
+      if (search.trim()) params.search = search.trim();
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+
       const res = await api.get('/payments', { params });
       if (res.data.success) {
-        setPayments(res.data.data);
+        setPayments(res.data.data || []);
         setTotalPages(res.data.pagination?.pages || 1);
+        setTotalRecords(res.data.pagination?.total || 0);
       }
-    } catch {
-      toast.error('Failed to load payments');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to load payments');
     } finally {
       setLoadingData(false);
     }
-  }, [page, filterStatus]);
+  }, [page, filterStatus, paymentMethod, paymentType, search, dateFrom, dateTo]);
 
   useEffect(() => { if (user && user.role !== 'student') fetchPayments(); }, [user, fetchPayments]);
+
+  const applyFilters = () => {
+    setPage(1);
+    fetchPayments();
+  };
+
+  const resetFilters = () => {
+    setFilterStatus('all');
+    setPaymentMethod('all');
+    setPaymentType('all');
+    setSearch('');
+    setDateFrom('');
+    setDateTo('');
+    setPage(1);
+  };
 
   const handleApprove = async (id: string) => {
     setSubmitting(id);
     try {
-      await api.patch(`/payments/${id}/approve`);
-      toast.success('Payment approved');
+      const res = await api.patch(`/payments/${id}/approve`);
+      toast.success(res.data?.message || 'Payment approved');
       fetchPayments();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to approve');
@@ -99,11 +129,11 @@ export default function AdminPaymentsPage() {
     } finally { setSubmitting(null); }
   };
 
-  const handleResendSMS = async (id: string) => {
-    setSubmitting(id);
+  const handleResendSMS = async (payment: Payment) => {
+    setSubmitting(`${payment.id}-sms`);
     try {
-      await api.post(`/payments/${id}/resend-sms`);
-      toast.success('SMS receipt resent');
+      const res = await api.post(`/payments/${payment.id}/resend-sms`);
+      toast.success(res.data?.message || `SMS sent to ${payment.student_name}`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to resend SMS');
     } finally {
@@ -111,11 +141,11 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const handleResendEmail = async (id: string) => {
-    setSubmitting(id);
+  const handleResendEmail = async (payment: Payment) => {
+    setSubmitting(`${payment.id}-email`);
     try {
-      await api.post(`/payments/${id}/resend-email`);
-      toast.success('Email receipt resent');
+      await api.post(`/payments/${payment.id}/resend-email`);
+      toast.success(`Email receipt sent to ${payment.student_name}`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to resend email');
     } finally {
@@ -132,25 +162,60 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const canSendReceipt = (p: Payment) => (p.status === 'approved' || p.status === 'completed') && !!p.receipt_number;
+
   return (
     <>
       <Layout title="Manage Payments">
-        {/* Filter Bar */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {STATUSES.map(s => (
-            <button
-              key={s}
-              onClick={() => { setFilterStatus(s); setPage(1); }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors capitalize ${filterStatus === s ? 'bg-primary text-white border-primary' : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary'}`}
-            >
-              {s}
-            </button>
-          ))}
+        <div className="card p-5 mb-6 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+            <div className="flex-1 min-w-[220px]">
+              <label className="label">Search student, index, due, receipt or reference</label>
+              <input
+                className="input-field"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+                placeholder="e.g. Yaw, 0123, Development Dues"
+              />
+            </div>
+            <div>
+              <label className="label">Status</label>
+              <select className="input-field min-w-[140px]" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}>
+                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Method</label>
+              <select className="input-field min-w-[150px]" value={paymentMethod} onChange={e => { setPaymentMethod(e.target.value); setPage(1); }}>
+                {METHODS.map(m => <option key={m} value={m}>{m.replace(/_/g, ' ')}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Type</label>
+              <select className="input-field min-w-[120px]" value={paymentType} onChange={e => { setPaymentType(e.target.value); setPage(1); }}>
+                {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-end gap-4">
+            <div>
+              <label className="label">Date From</label>
+              <input type="date" className="input-field" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1); }} />
+            </div>
+            <div>
+              <label className="label">Date To</label>
+              <input type="date" className="input-field" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1); }} />
+            </div>
+            <button onClick={applyFilters} className="btn-primary">Apply Filters</button>
+            <button onClick={resetFilters} className="btn-outline">Reset</button>
+            <p className="text-sm text-gray-500 md:ml-auto pb-2">{totalRecords} payment record{totalRecords === 1 ? '' : 's'} found</p>
+          </div>
         </div>
 
         <div className="card overflow-x-auto">
           {loadingData ? (
-            <div className="space-y-3 p-2">{[...Array(6)].map((_, i) => <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />)}</div>
+            <TableSkeleton rows={7} columns={9} />
           ) : payments.length === 0 ? (
             <p className="text-gray-500 text-center py-10">No payments found.</p>
           ) : (
@@ -163,6 +228,7 @@ export default function AdminPaymentsPage() {
                   <th className="py-3 px-3 font-semibold text-gray-600">Method</th>
                   <th className="py-3 px-3 font-semibold text-gray-600">Type</th>
                   <th className="py-3 px-3 font-semibold text-gray-600">Status</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Receipt</th>
                   <th className="py-3 px-3 font-semibold text-gray-600">Date</th>
                   <th className="py-3 px-3 font-semibold text-gray-600">Actions</th>
                 </tr>
@@ -173,13 +239,21 @@ export default function AdminPaymentsPage() {
                     <td className="py-3 px-3">
                       <p className="font-medium">{p.student_name}</p>
                       <p className="text-xs text-gray-400">{p.student_id}</p>
+                      {p.student_phone && <p className="text-[11px] text-gray-400">{p.student_phone}</p>}
                     </td>
-                    <td className="py-3 px-3 max-w-[140px] truncate">{p.due_name}</td>
+                    <td className="py-3 px-3 max-w-[160px] truncate">{p.due_name}</td>
                     <td className="py-3 px-3 font-semibold text-primary">GHS {Number(p.amount).toFixed(2)}</td>
                     <td className="py-3 px-3 capitalize">{p.payment_method.replace(/_/g, ' ')}</td>
                     <td className="py-3 px-3 capitalize">{p.payment_type}</td>
                     <td className="py-3 px-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyle(p.status)}`}>{p.status}</span>
+                    </td>
+                    <td className="py-3 px-3">
+                      {p.receipt_number ? (
+                        <span className="text-xs font-semibold text-green-700">{p.receipt_number}</span>
+                      ) : (
+                        <span className="text-xs text-gray-400">No receipt yet</span>
+                      )}
                     </td>
                     <td className="py-3 px-3 text-gray-500 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="py-3 px-3">
@@ -202,7 +276,7 @@ export default function AdminPaymentsPage() {
                               disabled={submitting === p.id}
                               className="text-xs px-2 py-1 rounded border border-green-400 text-green-700 hover:bg-green-50 font-medium disabled:opacity-50"
                             >
-                              {submitting === p.id ? '…' : 'Approve'}
+                              {submitting === p.id ? 'Approving…' : 'Approve'}
                             </button>
                             <button
                               onClick={() => { setRejectId(p.id); setRejectReason(''); }}
@@ -215,18 +289,19 @@ export default function AdminPaymentsPage() {
                         {(p.status === 'approved' || p.status === 'completed') && (
                           <>
                             <button
-                              onClick={() => handleResendSMS(p.id)}
-                              disabled={submitting === p.id}
-                              className="text-xs px-2 py-1 rounded border border-secondary text-secondary-dark hover:bg-secondary/10 font-bold disabled:opacity-50"
+                              onClick={() => handleResendSMS(p)}
+                              disabled={submitting === `${p.id}-sms` || !canSendReceipt(p)}
+                              className="text-xs px-2 py-1 rounded border border-secondary text-secondary-dark hover:bg-secondary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={canSendReceipt(p) ? 'Send payment receipt SMS again' : 'Receipt must exist before SMS can be resent'}
                             >
-                              {submitting === p.id ? 'Sending…' : 'Resend SMS'}
+                              {submitting === `${p.id}-sms` ? 'Sending…' : 'Resend SMS'}
                             </button>
                             <button
-                              onClick={() => handleResendEmail(p.id)}
-                              disabled={submitting === p.id}
-                              className="text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-primary/10 font-bold disabled:opacity-50"
+                              onClick={() => handleResendEmail(p)}
+                              disabled={submitting === `${p.id}-email` || !canSendReceipt(p)}
+                              className="text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-primary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {submitting === p.id ? 'Sending…' : 'Resend Email'}
+                              {submitting === `${p.id}-email` ? 'Sending…' : 'Resend Email'}
                             </button>
                           </>
                         )}
@@ -240,15 +315,14 @@ export default function AdminPaymentsPage() {
 
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-4 pb-2">
-              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">← Prev</button>
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">Prev</button>
               <span className="text-sm text-gray-600 px-2 py-1">Page {page} of {totalPages}</span>
-              <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">Next →</button>
+              <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)} className="btn-outline px-3 py-1 text-sm disabled:opacity-40">Next</button>
             </div>
           )}
         </div>
       </Layout>
 
-      {/* Reject Modal */}
       {rejectId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4" onClick={() => setRejectId(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()}>
@@ -259,7 +333,7 @@ export default function AdminPaymentsPage() {
             <label className="label">Reason for rejection</label>
             <textarea
               className="input-field mb-6" rows={3}
-              placeholder="e.g. Payment proof is unclear or doesn't match amount"
+              placeholder="e.g. Payment proof is unclear or does not match amount"
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
             />
@@ -271,7 +345,6 @@ export default function AdminPaymentsPage() {
         </div>
       )}
 
-      {/* Proof Image Modal */}
       {proofUrl && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[120] p-4" onClick={() => setProofUrl(null)}>
           <div className="relative max-w-4xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
