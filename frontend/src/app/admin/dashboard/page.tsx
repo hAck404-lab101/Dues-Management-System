@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { UsersIcon, LandmarkIcon, WalletIcon, CardIcon, ShieldIcon, ReceiptIcon } from '@/components/Icons';
+import { DashboardSkeleton } from '@/components/Skeletons';
 
 interface AdminDashboardData {
   summary: {
@@ -58,8 +59,8 @@ export default function AdminDashboard() {
 
   if (loading || loadingData) {
     return (
-      <Layout>
-        <div className="text-center py-12">Loading...</div>
+      <Layout title="Admin Dashboard">
+        <DashboardSkeleton />
       </Layout>
     );
   }
