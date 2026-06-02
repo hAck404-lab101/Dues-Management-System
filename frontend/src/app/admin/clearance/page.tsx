@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { AcademicCapIcon, CheckCircleIcon, XCircleIcon, DownloadIcon } from '@/components/Icons';
+import { SkeletonBlock } from '@/components/Skeletons';
 
 interface ClearanceData {
     student: any;
@@ -88,8 +89,6 @@ export default function ClearancePage() {
     return (
         <Layout title="Clearance Certificate">
             <div className="max-w-3xl mx-auto space-y-6">
-
-                {/* Search */}
                 <div className="card p-6 space-y-4">
                     <h2 className="text-xl font-bold text-primary flex items-center gap-2">
                         <span className="w-6 h-6"><AcademicCapIcon /></span>
@@ -106,7 +105,7 @@ export default function ClearancePage() {
                         />
                         {loadingStudents && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                <SkeletonBlock className="w-5 h-5 rounded-full" />
                             </div>
                         )}
                         {students.length > 0 && (
@@ -122,18 +121,28 @@ export default function ClearancePage() {
                     </div>
                 </div>
 
-                {/* Loading */}
                 {loadingClearance && (
-                    <div className="card p-8 text-center">
-                        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                        <p className="text-gray-500">Checking dues status...</p>
+                    <div className="space-y-5">
+                        <div className="card p-6 text-center space-y-4">
+                            <SkeletonBlock className="w-16 h-16 rounded-2xl mx-auto" />
+                            <SkeletonBlock className="h-7 w-48 mx-auto" />
+                            <SkeletonBlock className="h-4 w-64 mx-auto" />
+                        </div>
+                        <div className="card p-6 space-y-4">
+                            <SkeletonBlock className="h-5 w-40" />
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {[...Array(6)].map((_, index) => <SkeletonBlock key={index} className="h-16 rounded-lg" />)}
+                            </div>
+                        </div>
+                        <div className="card p-6 space-y-3">
+                            <SkeletonBlock className="h-5 w-36" />
+                            {[...Array(4)].map((_, index) => <SkeletonBlock key={index} className="h-10 rounded-lg" />)}
+                        </div>
                     </div>
                 )}
 
-                {/* Clearance Result */}
                 {clearance && !loadingClearance && (
                     <>
-                        {/* Status Banner */}
                         <div className={`card p-6 text-center border-2 ${clearance.isFullyCleared ? 'border-green-500 bg-green-50' : 'border-red-400 bg-red-50'}`}>
                             <div className="w-16 h-16 mx-auto mb-3">
                                 {clearance.isFullyCleared ? (
@@ -152,7 +161,6 @@ export default function ClearancePage() {
                             </p>
                         </div>
 
-                        {/* Student Info */}
                         <div className="card p-6">
                             <h3 className="font-bold text-primary mb-4">Student Details</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -172,7 +180,6 @@ export default function ClearancePage() {
                             </div>
                         </div>
 
-                        {/* Dues Summary */}
                         <div className="card overflow-hidden">
                             <div className="p-4 border-b flex justify-between items-center">
                                 <h3 className="font-bold text-primary">Dues Breakdown</h3>
@@ -223,10 +230,9 @@ export default function ClearancePage() {
                             )}
                         </div>
 
-                        {/* Download Button */}
                         <div className="flex gap-3">
                              <button onClick={downloadPDF} disabled={downloadingPDF} className="btn-primary flex-1 flex items-center justify-center gap-2">
-                                 <span className="w-5 h-5"><DownloadIcon /></span>
+                                 {downloadingPDF ? <SkeletonBlock className="w-5 h-5 rounded-full bg-white/30" /> : <span className="w-5 h-5"><DownloadIcon /></span>}
                                  <span>{downloadingPDF ? 'Generating PDF...' : 'Download Clearance Certificate (PDF)'}</span>
                              </button>
                         </div>
