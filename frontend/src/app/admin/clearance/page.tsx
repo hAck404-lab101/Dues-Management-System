@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { AcademicCapIcon, CheckCircleIcon, XCircleIcon, DownloadIcon } from '@/components/Icons';
+import { AcademicCapIcon, CheckCircleIcon, XCircleIcon, DownloadIcon, EnvelopeIcon } from '@/components/Icons';
 import { SkeletonBlock } from '@/components/Skeletons';
 
 interface ClearanceData {
@@ -29,6 +29,7 @@ export default function ClearancePage() {
     const [clearance, setClearance] = useState<ClearanceData | null>(null);
     const [loadingClearance, setLoadingClearance] = useState(false);
     const [downloadingPDF, setDownloadingPDF] = useState(false);
+    const [emailingPDF, setEmailingPDF] = useState(false);
 
     useEffect(() => {
         if (!loading && (!user || user.role === 'student')) router.push('/admin/login');
@@ -86,6 +87,19 @@ export default function ClearancePage() {
         }
     };
 
+    const emailPDF = async () => {
+        if (!selected) return;
+        setEmailingPDF(true);
+        try {
+            const res = await api.post(`/admin/students/${selected.id}/clearance-email`);
+            toast.success(res.data?.message || 'Clearance PDF emailed successfully');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to email clearance PDF');
+        } finally {
+            setEmailingPDF(false);
+        }
+    };
+
     return (
         <Layout title="Clearance Certificate">
             <div className="max-w-3xl mx-auto space-y-6">
@@ -94,7 +108,7 @@ export default function ClearancePage() {
                         <span className="w-6 h-6"><AcademicCapIcon /></span>
                         <span>Student Clearance Certificate</span>
                     </h2>
-                    <p className="text-sm text-gray-500">Search for a student to view and download their clearance certificate.</p>
+                    <p className="text-sm text-gray-500">Search for a student to view, download, or email their clearance certificate.</p>
                     <div className="relative">
                         <input
                             type="text"
@@ -103,11 +117,7 @@ export default function ClearancePage() {
                             value={search}
                             onChange={e => { setSearch(e.target.value); setSelected(null); setClearance(null); }}
                         />
-                        {loadingStudents && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <SkeletonBlock className="w-5 h-5 rounded-full" />
-                            </div>
-                        )}
+                        {loadingStudents && <div className="absolute right-3 top-1/2 -translate-y-1/2"><SkeletonBlock className="w-5 h-5 rounded-full" /></div>}
                         {students.length > 0 && (
                             <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-10 mt-1 max-h-56 overflow-y-auto">
                                 {students.map(s => (
@@ -130,9 +140,7 @@ export default function ClearancePage() {
                         </div>
                         <div className="card p-6 space-y-4">
                             <SkeletonBlock className="h-5 w-40" />
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {[...Array(6)].map((_, index) => <SkeletonBlock key={index} className="h-16 rounded-lg" />)}
-                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">{[...Array(6)].map((_, index) => <SkeletonBlock key={index} className="h-16 rounded-lg" />)}</div>
                         </div>
                         <div className="card p-6 space-y-3">
                             <SkeletonBlock className="h-5 w-36" />
@@ -144,21 +152,9 @@ export default function ClearancePage() {
                 {clearance && !loadingClearance && (
                     <>
                         <div className={`card p-6 text-center border-2 ${clearance.isFullyCleared ? 'border-green-500 bg-green-50' : 'border-red-400 bg-red-50'}`}>
-                            <div className="w-16 h-16 mx-auto mb-3">
-                                {clearance.isFullyCleared ? (
-                                    <CheckCircleIcon className="text-green-500 w-full h-full" />
-                                ) : (
-                                    <XCircleIcon className="text-red-500 w-full h-full" />
-                                )}
-                            </div>
-                            <h3 className={`text-2xl font-extrabold ${clearance.isFullyCleared ? 'text-green-700' : 'text-red-700'}`}>
-                                {clearance.isFullyCleared ? 'CLEARED' : 'NOT CLEARED'}
-                            </h3>
-                            <p className="text-sm mt-1 text-gray-600">
-                                {clearance.isFullyCleared
-                                    ? 'This student has settled all departmental dues.'
-                                    : `Outstanding balance: GH₵${clearance.totalBalance.toFixed(2)}`}
-                            </p>
+                            <div className="w-16 h-16 mx-auto mb-3">{clearance.isFullyCleared ? <CheckCircleIcon className="text-green-500 w-full h-full" /> : <XCircleIcon className="text-red-500 w-full h-full" />}</div>
+                            <h3 className={`text-2xl font-extrabold ${clearance.isFullyCleared ? 'text-green-700' : 'text-red-700'}`}>{clearance.isFullyCleared ? 'CLEARED' : 'NOT CLEARED'}</h3>
+                            <p className="text-sm mt-1 text-gray-600">{clearance.isFullyCleared ? 'This student has settled all departmental dues.' : `Outstanding balance: GH₵${clearance.totalBalance.toFixed(2)}`}</p>
                         </div>
 
                         <div className="card p-6">
@@ -188,53 +184,27 @@ export default function ClearancePage() {
                                     <span className="text-green-600">Paid: <strong>GH₵{clearance.totalPaid.toFixed(2)}</strong></span>
                                 </div>
                             </div>
-                            {clearance.dues.length === 0 ? (
-                                <p className="text-center text-gray-500 py-8">No dues assigned to this student.</p>
-                            ) : (
+                            {clearance.dues.length === 0 ? <p className="text-center text-gray-500 py-8">No dues assigned to this student.</p> : (
                                 <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="bg-gray-50 text-left">
-                                            <th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Due</th>
-                                            <th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Amount</th>
-                                            <th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Paid</th>
-                                            <th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Balance</th>
-                                            <th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Status</th>
-                                        </tr>
-                                    </thead>
+                                    <thead><tr className="bg-gray-50 text-left"><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Due</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Amount</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Paid</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Balance</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Status</th></tr></thead>
                                     <tbody>
                                         {clearance.dues.map((d: any, i: number) => (
-                                            <tr key={i} className="border-t">
-                                                <td className="py-3 px-4 font-medium">{d.due_name}</td>
-                                                <td className="py-3 px-4">GH₵{d.assigned_amount.toFixed(2)}</td>
-                                                <td className="py-3 px-4 text-green-600">GH₵{d.total_paid.toFixed(2)}</td>
-                                                <td className="py-3 px-4 text-red-600">GH₵{d.balance.toFixed(2)}</td>
-                                                <td className="py-3 px-4">
-                                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${d.cleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
-                                                        {d.cleared ? (
-                                                            <>
-                                                                <span className="w-3.5 h-3.5"><CheckCircleIcon /></span>
-                                                                <span>Cleared</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <span className="w-3.5 h-3.5"><XCircleIcon /></span>
-                                                                <span>Outstanding</span>
-                                                            </>
-                                                        )}
-                                                    </span>
-                                                </td>
-                                            </tr>
+                                            <tr key={i} className="border-t"><td className="py-3 px-4 font-medium">{d.due_name}</td><td className="py-3 px-4">GH₵{d.assigned_amount.toFixed(2)}</td><td className="py-3 px-4 text-green-600">GH₵{d.total_paid.toFixed(2)}</td><td className="py-3 px-4 text-red-600">GH₵{d.balance.toFixed(2)}</td><td className="py-3 px-4"><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${d.cleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>{d.cleared ? <><span className="w-3.5 h-3.5"><CheckCircleIcon /></span><span>Cleared</span></> : <><span className="w-3.5 h-3.5"><XCircleIcon /></span><span>Outstanding</span></>}</span></td></tr>
                                         ))}
                                     </tbody>
                                 </table>
                             )}
                         </div>
 
-                        <div className="flex gap-3">
-                             <button onClick={downloadPDF} disabled={downloadingPDF} className="btn-primary flex-1 flex items-center justify-center gap-2">
-                                 {downloadingPDF ? <SkeletonBlock className="w-5 h-5 rounded-full bg-white/30" /> : <span className="w-5 h-5"><DownloadIcon /></span>}
-                                 <span>{downloadingPDF ? 'Generating PDF...' : 'Download Clearance Certificate (PDF)'}</span>
-                             </button>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button onClick={downloadPDF} disabled={downloadingPDF || emailingPDF} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                                {downloadingPDF ? <SkeletonBlock className="w-5 h-5 rounded-full bg-white/30" /> : <span className="w-5 h-5"><DownloadIcon /></span>}
+                                <span>{downloadingPDF ? 'Generating PDF...' : 'Download Clearance PDF'}</span>
+                            </button>
+                            <button onClick={emailPDF} disabled={emailingPDF || downloadingPDF} className="btn-secondary flex-1 flex items-center justify-center gap-2">
+                                {emailingPDF ? <SkeletonBlock className="w-5 h-5 rounded-full bg-white/30" /> : <span className="w-5 h-5"><EnvelopeIcon /></span>}
+                                <span>{emailingPDF ? 'Sending Email...' : 'Email Clearance PDF'}</span>
+                            </button>
                         </div>
                     </>
                 )}
