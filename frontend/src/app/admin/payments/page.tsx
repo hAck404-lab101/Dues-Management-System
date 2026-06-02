@@ -51,6 +51,7 @@ export default function AdminPaymentsPage() {
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [proofName, setProofName] = useState('Payment proof');
   const [submitting, setSubmitting] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,6 +104,15 @@ export default function AdminPaymentsPage() {
     setDateTo('');
     setPage(1);
   };
+
+  const openProof = (payment: Payment) => {
+    if (!payment.proof_image_url) return;
+    const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace('/api', '');
+    setProofUrl(`${baseUrl}${payment.proof_image_url}`);
+    setProofName(`${payment.student_name} - ${payment.due_name}`);
+  };
+
+  const isPdfProof = proofUrl?.toLowerCase().split('?')[0].endsWith('.pdf');
 
   const handleApprove = async (id: string) => {
     setSubmitting(id);
@@ -249,58 +259,32 @@ export default function AdminPaymentsPage() {
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyle(p.status)}`}>{p.status}</span>
                     </td>
                     <td className="py-3 px-3">
-                      {p.receipt_number ? (
-                        <span className="text-xs font-semibold text-green-700">{p.receipt_number}</span>
-                      ) : (
-                        <span className="text-xs text-gray-400">No receipt yet</span>
-                      )}
+                      {p.receipt_number ? <span className="text-xs font-semibold text-green-700">{p.receipt_number}</span> : <span className="text-xs text-gray-400">No receipt yet</span>}
                     </td>
                     <td className="py-3 px-3 text-gray-500 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="py-3 px-3">
                       <div className="flex gap-2 flex-wrap">
                         {p.proof_image_url && p.proof_image_url !== 'null' && (
-                          <button
-                            onClick={() => {
-                              const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace('/api', '');
-                              setProofUrl(`${baseUrl}${p.proof_image_url}`);
-                            }}
-                            className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium"
-                          >
-                            Proof
+                          <button onClick={() => openProof(p)} className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium">
+                            View Proof
                           </button>
                         )}
                         {p.status === 'pending' && p.payment_type === 'manual' && (
                           <>
-                            <button
-                              onClick={() => handleApprove(p.id)}
-                              disabled={submitting === p.id}
-                              className="text-xs px-2 py-1 rounded border border-green-400 text-green-700 hover:bg-green-50 font-medium disabled:opacity-50"
-                            >
+                            <button onClick={() => handleApprove(p.id)} disabled={submitting === p.id} className="text-xs px-2 py-1 rounded border border-green-400 text-green-700 hover:bg-green-50 font-medium disabled:opacity-50">
                               {submitting === p.id ? 'Approving…' : 'Approve'}
                             </button>
-                            <button
-                              onClick={() => { setRejectId(p.id); setRejectReason(''); }}
-                              className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 font-medium"
-                            >
+                            <button onClick={() => { setRejectId(p.id); setRejectReason(''); }} className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 font-medium">
                               Reject
                             </button>
                           </>
                         )}
                         {(p.status === 'approved' || p.status === 'completed') && (
                           <>
-                            <button
-                              onClick={() => handleResendSMS(p)}
-                              disabled={submitting === `${p.id}-sms` || !canSendReceipt(p)}
-                              className="text-xs px-2 py-1 rounded border border-secondary text-secondary-dark hover:bg-secondary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                              title={canSendReceipt(p) ? 'Send payment receipt SMS again' : 'Receipt must exist before SMS can be resent'}
-                            >
+                            <button onClick={() => handleResendSMS(p)} disabled={submitting === `${p.id}-sms` || !canSendReceipt(p)} className="text-xs px-2 py-1 rounded border border-secondary text-secondary-dark hover:bg-secondary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed" title={canSendReceipt(p) ? 'Send payment receipt SMS again' : 'Receipt must exist before SMS can be resent'}>
                               {submitting === `${p.id}-sms` ? 'Sending…' : 'Resend SMS'}
                             </button>
-                            <button
-                              onClick={() => handleResendEmail(p)}
-                              disabled={submitting === `${p.id}-email` || !canSendReceipt(p)}
-                              className="text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-primary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
+                            <button onClick={() => handleResendEmail(p)} disabled={submitting === `${p.id}-email` || !canSendReceipt(p)} className="text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-primary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed">
                               {submitting === `${p.id}-email` ? 'Sending…' : 'Resend Email'}
                             </button>
                           </>
@@ -331,12 +315,7 @@ export default function AdminPaymentsPage() {
               <button onClick={() => setRejectId(null)} className="text-gray-400 hover:text-gray-600">&times;</button>
             </div>
             <label className="label">Reason for rejection</label>
-            <textarea
-              className="input-field mb-6" rows={3}
-              placeholder="e.g. Payment proof is unclear or does not match amount"
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-            />
+            <textarea className="input-field mb-6" rows={3} placeholder="e.g. Payment proof is unclear or does not match amount" value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
             <div className="flex gap-3">
               <button onClick={handleReject} disabled={!!submitting} className="btn-primary flex-1 bg-red-600 hover:bg-red-700">{submitting ? 'Rejecting…' : 'Reject Payment'}</button>
               <button onClick={() => setRejectId(null)} className="btn-outline flex-1">Cancel</button>
@@ -347,11 +326,26 @@ export default function AdminPaymentsPage() {
 
       {proofUrl && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[120] p-4" onClick={() => setProofUrl(null)}>
-          <div className="relative max-w-4xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setProofUrl(null)} className="absolute -top-12 right-0 bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-white text-2xl transition-all">&times;</button>
-            <img src={proofUrl} alt="Proof of payment" className="w-full rounded-2xl shadow-2xl max-h-[85vh] object-contain bg-white ring-4 ring-white/10" />
-            <div className="mt-4 flex gap-4">
-              <a href={proofUrl} download className="btn-secondary px-6">Download Proof</a>
+          <div className="relative max-w-5xl w-full flex flex-col items-center" onClick={e => e.stopPropagation()}>
+            <div className="w-full flex items-center justify-between mb-4 text-white">
+              <div>
+                <h3 className="font-bold text-lg">{proofName}</h3>
+                <p className="text-xs text-white/60">Payment proof preview</p>
+              </div>
+              <button onClick={() => setProofUrl(null)} className="bg-white/10 hover:bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-white text-2xl transition-all">&times;</button>
+            </div>
+
+            <div className="w-full bg-white rounded-2xl shadow-2xl ring-4 ring-white/10 overflow-hidden min-h-[70vh] flex items-center justify-center">
+              {isPdfProof ? (
+                <iframe src={proofUrl} title="Proof of payment PDF" className="w-full h-[78vh] bg-white" />
+              ) : (
+                <img src={proofUrl} alt="Proof of payment" className="w-full max-h-[78vh] object-contain bg-white" />
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-4 justify-center">
+              <a href={proofUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary px-6">Open in New Tab</a>
+              <a href={proofUrl} download className="btn-outline border-white text-white hover:bg-white hover:text-primary px-6">Download Proof</a>
               <button onClick={() => setProofUrl(null)} className="btn-outline border-white text-white hover:bg-white hover:text-primary px-6">Close</button>
             </div>
           </div>
