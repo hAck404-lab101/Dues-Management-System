@@ -20,6 +20,30 @@ const maskPhone = (value = '') => {
   return `${phone.slice(0, 5)}***${phone.slice(-2)}`;
 };
 
+const looksLikePhone = (value = '') => {
+  const raw = String(value).replace(/[^0-9]/g, '');
+  return raw.length >= 9 && raw.length <= 13;
+};
+
+const userPayload = (user) => ({
+  id: user.id,
+  email: user.email,
+  role: user.role,
+  studentId: user.student_id,
+  isActive: user.is_active,
+  mustChangePassword: !!user.must_change_password,
+  ...(user.student_record_id && {
+    student: {
+      id: user.student_record_id,
+      fullName: user.full_name,
+      level: user.level,
+      programme: user.programme,
+      academicYear: user.academic_year,
+      phoneNumber: user.phone_number
+    }
+  })
+});
+
 exports.login = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -32,8 +56,8 @@ exports.login = async (req, res) => {
 
     if (email) {
       userResult = await pool.query(
-        `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active,
-                s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year
+        `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active, u.must_change_password,
+                s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year, s.phone_number
          FROM users u
          LEFT JOIN students s ON u.student_id = s.student_id
          WHERE u.email = ?`,
@@ -41,8 +65,8 @@ exports.login = async (req, res) => {
       );
     } else if (indexNumber) {
       userResult = await pool.query(
-        `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active,
-                s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year
+        `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active, u.must_change_password,
+                s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year, s.phone_number
          FROM users u
          LEFT JOIN students s ON u.student_id = s.student_id
          WHERE u.student_id = ? OR s.student_id = ?`,
@@ -67,23 +91,7 @@ exports.login = async (req, res) => {
     }
 
     const token = generateToken(user.id, user.role);
-    const userInfo = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      studentId: user.student_id,
-      ...(user.student_record_id && {
-        student: {
-          id: user.student_record_id,
-          fullName: user.full_name,
-          level: user.level,
-          programme: user.programme,
-          academicYear: user.academic_year
-        }
-      })
-    };
-
-    res.json({ success: true, message: 'Login successful', token, user: userInfo });
+    res.json({ success: true, message: 'Login successful', token, user: userPayload(user) });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -133,8 +141,8 @@ exports.register = async (req, res) => {
       const studentRecordId = generateUUID();
 
       await connection.query(
-        `INSERT INTO users (id, email, password_hash, role, student_id, is_active)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO users (id, email, password_hash, role, student_id, is_active, must_change_password)
+         VALUES (?, ?, ?, ?, ?, ?, false)`,
         [userId, email, passwordHash, 'student', indexNumber, true]
       );
 
@@ -157,6 +165,8 @@ exports.register = async (req, res) => {
           email,
           role: 'student',
           studentId: indexNumber,
+          isActive: true,
+          mustChangePassword: false,
           student: {
             id: studentRows[0].id,
             fullName: studentRows[0].full_name,
@@ -184,36 +194,16 @@ exports.forgotPassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Validation error', errors: errors.array() });
     }
 
-    const { indexNumber, phoneNumber } = req.body;
-    const cleanIndex = String(indexNumber || '').trim();
-    const cleanPhone = normalizePhone(phoneNumber || '');
-
-    if (!cleanIndex && !cleanPhone) {
+    const identityValue = String(req.body.identity || req.body.indexNumber || req.body.phoneNumber || '').trim();
+    if (!identityValue) {
       return res.status(400).json({ success: false, message: 'Index number or phone number is required' });
     }
 
-    let lookupSql = `SELECT u.id, u.email, u.student_id, s.id as student_record_id, s.full_name, s.phone_number
-                     FROM users u
-                     INNER JOIN students s ON u.student_id = s.student_id
-                     WHERE u.role = 'student'`;
-    const params = [];
-
-    if (cleanIndex) {
-      lookupSql += ' AND (u.student_id = ? OR s.student_id = ?)';
-      params.push(cleanIndex, cleanIndex);
-    }
-
-    const result = await pool.query(lookupSql, params);
-
+    const identityIsPhone = looksLikePhone(identityValue);
+    const normalizedIdentityPhone = identityIsPhone ? normalizePhone(identityValue) : '';
     let matchedUser = null;
-    for (const row of result.rows) {
-      const storedPhone = normalizePhone(row.phone_number);
-      if (cleanPhone && storedPhone !== cleanPhone) continue;
-      matchedUser = { ...row, normalizedPhone: storedPhone };
-      break;
-    }
 
-    if (!matchedUser && !cleanIndex && cleanPhone) {
+    if (identityIsPhone) {
       const phoneResult = await pool.query(
         `SELECT u.id, u.email, u.student_id, s.id as student_record_id, s.full_name, s.phone_number
          FROM users u
@@ -221,12 +211,23 @@ exports.forgotPassword = async (req, res) => {
          WHERE u.role = 'student' AND s.phone_number IS NOT NULL`,
         []
       );
-      matchedUser = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === cleanPhone) || null;
-      if (matchedUser) matchedUser.normalizedPhone = cleanPhone;
+      matchedUser = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === normalizedIdentityPhone) || null;
+      if (matchedUser) matchedUser.normalizedPhone = normalizedIdentityPhone;
+    } else {
+      const result = await pool.query(
+        `SELECT u.id, u.email, u.student_id, s.id as student_record_id, s.full_name, s.phone_number
+         FROM users u
+         INNER JOIN students s ON u.student_id = s.student_id
+         WHERE u.role = 'student' AND (u.student_id = ? OR s.student_id = ?)`,
+        [identityValue, identityValue]
+      );
+      if (result.rows.length > 0) {
+        matchedUser = { ...result.rows[0], normalizedPhone: normalizePhone(result.rows[0].phone_number) };
+      }
     }
 
     if (!matchedUser) {
-      return res.status(404).json({ success: false, message: 'No matching student account found. Check the index number and phone number.' });
+      return res.status(404).json({ success: false, message: 'No matching student account found. Check the index number or phone number.' });
     }
 
     if (!matchedUser.normalizedPhone) {
@@ -259,34 +260,17 @@ exports.forgotPassword = async (req, res) => {
 
 exports.verifyOTP = async (req, res) => {
   try {
-    const { identity, indexNumber, phoneNumber, otp } = req.body;
-    const cleanIndex = String(indexNumber || identity || '').trim();
-    const cleanPhone = normalizePhone(phoneNumber || '');
+    const { identity, otp } = req.body;
+    const cleanIdentity = String(identity || '').trim();
 
-    if (!otp || (!cleanIndex && !cleanPhone)) {
+    if (!otp || !cleanIdentity) {
       return res.status(400).json({ success: false, message: 'Identity and verification code are required' });
     }
 
-    let lookupSql = `SELECT u.id, u.otp_code, u.otp_expires, u.student_id, s.phone_number
-                     FROM users u
-                     INNER JOIN students s ON u.student_id = s.student_id
-                     WHERE u.role = 'student'`;
-    const params = [];
-
-    if (cleanIndex) {
-      lookupSql += ' AND (u.student_id = ? OR s.student_id = ?)';
-      params.push(cleanIndex, cleanIndex);
-    }
-
-    const userResult = await pool.query(lookupSql, params);
+    const identityIsPhone = looksLikePhone(cleanIdentity);
     let user = null;
-    for (const row of userResult.rows) {
-      if (cleanPhone && normalizePhone(row.phone_number) !== cleanPhone) continue;
-      user = row;
-      break;
-    }
 
-    if (!user && !cleanIndex && cleanPhone) {
+    if (identityIsPhone) {
       const phoneResult = await pool.query(
         `SELECT u.id, u.otp_code, u.otp_expires, u.student_id, s.phone_number
          FROM users u
@@ -294,7 +278,16 @@ exports.verifyOTP = async (req, res) => {
          WHERE u.role = 'student' AND s.phone_number IS NOT NULL`,
         []
       );
-      user = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === cleanPhone) || null;
+      user = phoneResult.rows.find((row) => normalizePhone(row.phone_number) === normalizePhone(cleanIdentity)) || null;
+    } else {
+      const userResult = await pool.query(
+        `SELECT u.id, u.otp_code, u.otp_expires, u.student_id, s.phone_number
+         FROM users u
+         INNER JOIN students s ON u.student_id = s.student_id
+         WHERE u.role = 'student' AND (u.student_id = ? OR s.student_id = ?)`,
+        [cleanIdentity, cleanIdentity]
+      );
+      user = userResult.rows[0] || null;
     }
 
     if (!user) {
@@ -342,7 +335,7 @@ exports.resetPassword = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     await pool.query(
-      'UPDATE users SET password_hash = ?, reset_password_token = NULL, reset_password_expires = NULL WHERE id = ?',
+      'UPDATE users SET password_hash = ?, reset_password_token = NULL, reset_password_expires = NULL, must_change_password = true WHERE id = ?',
       [passwordHash, userResult.rows[0].id]
     );
 
@@ -374,7 +367,7 @@ exports.changePassword = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
-    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
+    await pool.query('UPDATE users SET password_hash = ?, must_change_password = false WHERE id = ?', [passwordHash, userId]);
 
     res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
@@ -388,7 +381,7 @@ exports.getMe = async (req, res) => {
     const userId = req.user.id;
 
     const userResult = await pool.query(
-      `SELECT u.id, u.email, u.role, u.student_id, u.is_active,
+      `SELECT u.id, u.email, u.role, u.student_id, u.is_active, u.must_change_password,
               s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year, s.phone_number
        FROM users u
        LEFT JOIN students s ON u.student_id = s.student_id
@@ -400,26 +393,7 @@ exports.getMe = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const user = userResult.rows[0];
-    const userInfo = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      studentId: user.student_id,
-      isActive: user.is_active,
-      ...(user.student_record_id && {
-        student: {
-          id: user.student_record_id,
-          fullName: user.full_name,
-          level: user.level,
-          programme: user.programme,
-          academicYear: user.academic_year,
-          phoneNumber: user.phone_number
-        }
-      })
-    };
-
-    res.json({ success: true, user: userInfo });
+    res.json({ success: true, user: userPayload(userResult.rows[0]) });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
