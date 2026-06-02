@@ -51,14 +51,14 @@ exports.resetStudentCredentials = async (req, res) => {
     if (student.existing_user_id || student.user_id) {
       await connection.query(
         `UPDATE users
-         SET email = ?, password_hash = ?, role = 'student', student_id = ?, is_active = true, updated_at = CURRENT_TIMESTAMP
+         SET email = ?, password_hash = ?, role = 'student', student_id = ?, is_active = true, must_change_password = true, updated_at = CURRENT_TIMESTAMP
          WHERE id = ? OR student_id = ?`,
         [student.email, passwordHash, student.student_id, userId, student.student_id]
       );
     } else {
       await connection.query(
-        `INSERT INTO users (id, email, password_hash, role, student_id, is_active)
-         VALUES (?, ?, ?, 'student', ?, true)`,
+        `INSERT INTO users (id, email, password_hash, role, student_id, is_active, must_change_password)
+         VALUES (?, ?, ?, 'student', ?, true, true)`,
         [userId, student.email, passwordHash, student.student_id]
       );
     }
@@ -75,7 +75,7 @@ exports.resetStudentCredentials = async (req, res) => {
         generateUUID(),
         req.user?.id || null,
         id,
-        JSON.stringify({ student_id: student.student_id, delivery: 'sms' }),
+        JSON.stringify({ student_id: student.student_id, delivery: 'sms', must_change_password: true }),
         req.ip || null,
         req.headers['user-agent'] || null
       ]
@@ -88,7 +88,7 @@ exports.resetStudentCredentials = async (req, res) => {
       'Hello {name}, your student portal login has been reset. Login ID: {login}. Temporary password: {password}. Please change it after login.'
     );
 
-    const appName = await getSetting('app_name', 'HTU Dues Management System');
+    const appName = await getSetting('app_name', 'Dues Management System');
     const smsMessage = template
       .replace(/{name}/g, student.full_name)
       .replace(/{login}/g, student.student_id)
@@ -96,7 +96,7 @@ exports.resetStudentCredentials = async (req, res) => {
       .replace(/{password}/g, tempPassword)
       .replace(/{app_name}/g, appName);
 
-    const smsSent = await sendSMS(student.phone_number, smsMessage);
+    const smsSent = await sendSMS(student.phone_number, smsMessage, { type: 'student_credentials', relatedType: 'student', relatedId: student.id });
 
     res.json({
       success: true,
@@ -108,6 +108,7 @@ exports.resetStudentCredentials = async (req, res) => {
         phone_number: student.phone_number,
         sms_sent: smsSent,
         login: student.student_id,
+        must_change_password: true,
         ...(process.env.NODE_ENV !== 'production' ? { temporary_password: tempPassword } : {})
       }
     });
