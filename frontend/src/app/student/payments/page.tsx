@@ -18,27 +18,40 @@ export default function PaymentsPage() {
   const [submitting, setSubmitting] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
+    if (!loading && !user) router.push('/login');
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchPayments();
-    }
+    if (user) fetchPayments();
   }, [user]);
 
   const fetchPayments = async () => {
     try {
       const response = await api.get('/payments');
-      if (response.data.success) {
-        setPayments(response.data.data);
-      }
+      if (response.data.success) setPayments(response.data.data);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load payments');
     } finally {
       setLoadingData(false);
+    }
+  };
+
+  const downloadReceipt = async (receiptNumber: string) => {
+    setSubmitting(`${receiptNumber}-download`);
+    try {
+      const response = await api.get(`/receipts/download/${encodeURIComponent(receiptNumber)}`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt-${receiptNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Receipt download failed');
+    } finally {
+      setSubmitting(null);
     }
   };
 
@@ -79,9 +92,7 @@ export default function PaymentsPage() {
       <div className="card">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-primary">Payment History</h2>
-          <Link href="/student/payments/make">
-            <button className="btn-primary">Make New Payment</button>
-          </Link>
+          <Link href="/student/payments/make"><button className="btn-primary">Make New Payment</button></Link>
         </div>
 
         {payments.length === 0 ? (
@@ -107,10 +118,10 @@ export default function PaymentsPage() {
                     <td className="py-4 capitalize text-gray-600">{payment.payment_method.replace(/_/g, ' ')}</td>
                     <td className="py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide capitalize ${
-                        payment.status === 'completed' || payment.status === 'approved' 
-                          ? 'bg-green-50 text-green-700 border border-green-200' 
-                          : payment.status === 'pending' 
-                            ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' 
+                        payment.status === 'completed' || payment.status === 'approved'
+                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          : payment.status === 'pending'
+                            ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                             : 'bg-red-50 text-red-700 border border-red-200'
                       }`}>
                         {payment.status}
@@ -118,31 +129,25 @@ export default function PaymentsPage() {
                     </td>
                     <td className="py-4 text-gray-500">{new Date(payment.created_at).toLocaleDateString()}</td>
                     <td className="py-4 text-right pr-4">
-                      {payment.receipt_url ? (
+                      {payment.receipt_number ? (
                         <div className="flex justify-end items-center gap-2">
                           <button
-                            onClick={() => {
-                              const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
-                              window.open(`${apiBaseUrl}${payment.receipt_url}`, '_blank');
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/20 text-primary hover:bg-primary/5 text-xs font-semibold shadow-sm hover:shadow transition-all"
-                            title="Download PDF"
+                            onClick={() => downloadReceipt(payment.receipt_number)}
+                            disabled={submitting === `${payment.receipt_number}-download`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary/20 text-primary hover:bg-primary/5 text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50"
+                            title="Download PDF securely"
                           >
                             <span className="w-3.5 h-3.5"><DownloadIcon /></span>
-                            <span>PDF</span>
+                            <span>{submitting === `${payment.receipt_number}-download` ? 'Downloading...' : 'PDF'}</span>
                           </button>
-                          
+
                           <button
                             onClick={() => handleResendEmail(payment.id)}
                             disabled={submitting === payment.id + '-email' || submitting === payment.id + '-sms'}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-yellow-600/20 text-yellow-700 hover:bg-yellow-50 text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50"
                             title="Send Email"
                           >
-                            {submitting === payment.id + '-email' ? (
-                              <span className="w-3.5 h-3.5 animate-pulse bg-yellow-200 rounded-full" />
-                            ) : (
-                              <span className="w-3.5 h-3.5"><EnvelopeIcon /></span>
-                            )}
+                            {submitting === payment.id + '-email' ? <span className="w-3.5 h-3.5 animate-pulse bg-yellow-200 rounded-full" /> : <span className="w-3.5 h-3.5"><EnvelopeIcon /></span>}
                             <span>Email</span>
                           </button>
 
@@ -152,11 +157,7 @@ export default function PaymentsPage() {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-600/20 text-blue-700 hover:bg-blue-50 text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-50"
                             title="Send SMS"
                           >
-                            {submitting === payment.id + '-sms' ? (
-                              <span className="w-3.5 h-3.5 animate-pulse bg-blue-200 rounded-full" />
-                            ) : (
-                              <span className="w-3.5 h-3.5"><SmsIcon /></span>
-                            )}
+                            {submitting === payment.id + '-sms' ? <span className="w-3.5 h-3.5 animate-pulse bg-blue-200 rounded-full" /> : <span className="w-3.5 h-3.5"><SmsIcon /></span>}
                             <span>SMS</span>
                           </button>
                         </div>
