@@ -72,6 +72,8 @@ const SETTING_GROUPS = [
     }
 ];
 
+const ALL_TABS = SETTING_GROUPS.flatMap((group: any) => group.subcategories.map((sub: any) => ({ ...sub, groupName: group.name })));
+
 export default function AdminSettingsPage() {
     const router = useRouter();
     const { user, loading } = useAuth();
@@ -84,7 +86,6 @@ export default function AdminSettingsPage() {
 
     const allowedRoles = ['admin', 'treasurer', 'financial_secretary', 'president'];
 
-    // Fallback URL for brand assets
     const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api').replace('/api', '');
 
     useEffect(() => {
@@ -184,18 +185,17 @@ export default function AdminSettingsPage() {
     const renderSettingInput = (key: string) => {
         const val = settings[key].value;
 
-        // Image Uploads
         if (key === 'app_logo' || key === 'app_logo_secondary' || key === 'app_favicon') {
             return (
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-5 group">
-                    <div className="w-12 h-12 bg-white border-2 border-dashed border-gray-200 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-colors">
+                <div className="p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-100 flex items-center gap-3 sm:gap-5 group">
+                    <div className="w-11 h-11 sm:w-12 sm:h-12 bg-white border-2 border-dashed border-gray-200 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 group-hover:border-primary transition-colors">
                         {val ? (
                             <img src={val.startsWith('/') ? `${API_BASE}${val}` : val} className="w-full h-full object-contain p-1" alt="Preview" />
                         ) : (
                             <span className="w-6 h-6 text-gray-400 opacity-50"><ImageIcon /></span>
                         )}
                     </div>
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2 min-w-0">
                         <input
                             type="text"
                             className="input-field py-1 text-xs"
@@ -217,7 +217,6 @@ export default function AdminSettingsPage() {
             );
         }
 
-        // Toggles / Booleans
         if (key.endsWith('_enabled') || key.endsWith('_status') || key.endsWith('_required') || key === 'paystack_auto_verify') {
             const isToggle = key !== 'registration_status';
             const isOn = isToggle ? val === 'true' : val === 'open';
@@ -238,7 +237,6 @@ export default function AdminSettingsPage() {
             );
         }
 
-        // Comma-separated lists (Acad years, Programmes, Courses, etc)
         if (key.includes('available_')) {
             return (
                 <div className="space-y-3">
@@ -275,7 +273,6 @@ export default function AdminSettingsPage() {
             );
         }
 
-        // Dropdowns
         if (key === 'app_theme' || key === 'service_charge_type' || key === 'service_charge_scope' || key === 'manual_payment_workflow') {
             const dropdownOptions = {
                 app_theme: ['light', 'dark', 'system'],
@@ -295,7 +292,6 @@ export default function AdminSettingsPage() {
             );
         }
 
-        // Textareas
         if (key.includes('instructions') || key.includes('bank') || key.includes('template') || key === 'app_footer_text') {
             return (
                 <textarea
@@ -307,7 +303,6 @@ export default function AdminSettingsPage() {
             );
         }
 
-        // Default Input
         const isPassword = key.includes('pass') || key.includes('secret') || key.includes('api_key');
         return (
             <input
@@ -322,11 +317,10 @@ export default function AdminSettingsPage() {
     const getGroupedContent = () => {
         if (activeTab === 'sys_maintenance') {
             return (
-                <div className="space-y-6">
-                    {/* Maintenance Toggles */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4 sm:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         {Object.keys(settings).filter(k => k === 'maintenance_mode').map(k => (
-                            <div key={k} className="p-6 bg-gray-50 border rounded-lg">
+                            <div key={k} className="p-4 sm:p-6 bg-gray-50 border rounded-lg">
                                 <h4 className="font-bold text-primary text-sm mb-1 uppercase tracking-tight">Maintenance Mode</h4>
                                 <p className="text-xs text-gray-500 mb-4">{settings[k].description}</p>
                                 {renderSettingInput(k)}
@@ -334,8 +328,7 @@ export default function AdminSettingsPage() {
                         ))}
                     </div>
 
-                    {/* Reset Site Card */}
-                    <div className="p-6 bg-red-50 border border-red-100 rounded-lg relative overflow-hidden group">
+                    <div className="p-4 sm:p-6 bg-red-50 border border-red-100 rounded-lg relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                             <svg className="w-16 h-16 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </div>
@@ -368,7 +361,7 @@ export default function AdminSettingsPage() {
                                     }
                                 }}
                                 disabled={submitting}
-                                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-sm transition-all"
+                                className="bg-red-600 hover:bg-red-700 text-white px-5 sm:px-6 py-2 rounded-lg font-bold text-sm shadow-sm transition-all"
                             >
                                 Reset Entire Site Now
                             </button>
@@ -381,8 +374,8 @@ export default function AdminSettingsPage() {
         const filteredSettings = Object.keys(settings).filter(key => settings[key].category === activeTab);
 
         return (
-            <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+            <div className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 sm:gap-y-6">
                     {filteredSettings.map(key => (
                         <div key={key} className={`flex flex-col ${(key.includes('instructions') || key.includes('bank') || key.includes('template')) ? 'md:col-span-2' : ''}`}>
                             <div className="flex items-center justify-between mb-2">
@@ -400,12 +393,12 @@ export default function AdminSettingsPage() {
                 </div>
 
                 {filteredSettings.length > 0 && (
-                    <div className="pt-6 border-t flex items-center justify-between mt-8">
+                    <div className="pt-4 sm:pt-6 border-t flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-5 sm:mt-8">
                         <p className="text-xs text-gray-400 italic">Settings saved on this tab apply immediately.</p>
                         <button
                             onClick={handleUpdate}
                             disabled={submitting}
-                            className="btn-primary"
+                            className="btn-primary w-full sm:w-auto"
                         >
                             {submitting ? 'Saving...' : 'Save Settings'}
                         </button>
@@ -415,12 +408,30 @@ export default function AdminSettingsPage() {
         );
     };
 
+    const activeTabMeta = ALL_TABS.find((tab: any) => tab.id === activeTab);
+
     return (
         <Layout title="System Administration">
-            <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+                <div className="lg:hidden sticky top-16 z-30 -mx-3 px-3 py-3 bg-neutral/95 backdrop-blur border-y border-gray-100">
+                    <div className="flex gap-2 overflow-x-auto pb-1 settings-mobile-tabs">
+                        {ALL_TABS.map((sub: any) => (
+                            <button
+                                key={sub.id}
+                                onClick={() => setActiveTab(sub.id)}
+                                className={`shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all border ${activeTab === sub.id
+                                    ? 'bg-primary text-white border-primary shadow-md'
+                                    : 'bg-white text-gray-600 border-gray-100 shadow-sm'
+                                    }`}
+                            >
+                                <span className="w-4 h-4"><sub.icon /></span>
+                                <span>{sub.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-                {/* Multi-Level Sidebar */}
-                <div className="w-full lg:w-64 shrink-0 space-y-6">
+                <div className="hidden lg:block w-full lg:w-64 shrink-0 space-y-6">
                     {SETTING_GROUPS.map((group: any) => (
                         <div key={group.id} className="card p-4">
                             <h3 className="flex items-center gap-2 px-2 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -445,18 +456,17 @@ export default function AdminSettingsPage() {
                     ))}
                 </div>
 
-                {/* Dynamic Content Area */}
-                <div className="flex-1">
-                    <div className="card shadow-md">
-                        <div className="mb-10 pb-6 border-b flex items-center justify-between">
-                            <div>
+                <div className="flex-1 min-w-0">
+                    <div className="card shadow-md p-4 sm:p-6">
+                        <div className="mb-5 sm:mb-10 pb-4 sm:pb-6 border-b flex items-center justify-between">
+                            <div className="min-w-0">
                                 <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase mb-1">
                                     <span>ADMIN</span>
                                     <span>/</span>
                                     <span className="text-secondary">SETTINGS</span>
                                 </div>
-                                <h2 className="text-2xl font-extrabold text-primary uppercase">
-                                    {activeTab.split('_').pop()?.replace('sys', 'system')} <span className="text-gray-300">Management</span>
+                                <h2 className="text-xl sm:text-2xl font-extrabold text-primary uppercase leading-tight">
+                                    {activeTabMeta?.name || activeTab.split('_').pop()?.replace('sys', 'system')} <span className="text-gray-300">Management</span>
                                 </h2>
                             </div>
                             <div className="hidden sm:flex flex-col items-end">
@@ -467,7 +477,7 @@ export default function AdminSettingsPage() {
                             </div>
                         </div>
 
-                        <div className="min-h-[500px]">
+                        <div className="min-h-[260px] sm:min-h-[500px]">
                             {getGroupedContent()}
                         </div>
                     </div>
