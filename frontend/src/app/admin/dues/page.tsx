@@ -35,10 +35,19 @@ export default function AdminDuesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [editDue, setEditDue] = useState<Due | null>(null);
   const [bulkDue, setBulkDue] = useState<Due | null>(null);
+  const [assignDue, setAssignDue] = useState<Due | null>(null);
+
   const [form, setForm] = useState(emptyForm);
   const [bulkForm, setBulkForm] = useState(emptyBulk);
+  const [assignAmount, setAssignAmount] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentResults, setStudentResults] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [searchingStudents, setSearchingStudents] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [availableProgrammes, setAvailableProgrammes] = useState<string[]>([]);
   const [availableAcademicYears, setAvailableAcademicYears] = useState<string[]>([]);
@@ -78,12 +87,32 @@ export default function AdminDuesPage() {
     }
   }, [user, fetchDues, fetchSettings]);
 
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (!showAssignModal || studentSearch.trim().length < 2) {
+        setStudentResults([]);
+        return;
+      }
+      setSearchingStudents(true);
+      try {
+        const res = await api.get('/students', { params: { search: studentSearch.trim(), limit: 8 } });
+        if (res.data.success) setStudentResults(res.data.data || []);
+      } catch {
+        toast.error('Student search failed');
+      } finally {
+        setSearchingStudents(false);
+      }
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [studentSearch, showAssignModal]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     try {
       await api.post('/dues', {
-        name: form.name, amount: parseFloat(form.amount),
+        name: form.name,
+        amount: parseFloat(form.amount),
         academicYear: form.academicYear,
         deadline: form.deadline || null,
         lateFee: parseFloat(form.lateFee) || 0,
@@ -104,7 +133,8 @@ export default function AdminDuesPage() {
     setSubmitting(true);
     try {
       await api.put(`/dues/${editDue.id}`, {
-        name: form.name, amount: parseFloat(form.amount),
+        name: form.name,
+        amount: parseFloat(form.amount),
         academicYear: form.academicYear,
         deadline: form.deadline || null,
         lateFee: parseFloat(form.lateFee) || 0,
@@ -132,6 +162,7 @@ export default function AdminDuesPage() {
   const handleBulkAssign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkDue) return;
+    if (!bulkDue.is_active) return toast.error('Activate this due before assigning it.');
     setSubmitting(true);
     try {
       const payload: any = {};
@@ -139,8 +170,8 @@ export default function AdminDuesPage() {
       if (bulkForm.programme) payload.programme = bulkForm.programme;
       if (bulkForm.academicYear) payload.academicYear = bulkForm.academicYear;
       if (bulkForm.amount) payload.amount = parseFloat(bulkForm.amount);
-      await api.post(`/dues/${bulkDue.id}/assign-bulk`, payload);
-      toast.success('Bulk assigned successfully');
+      const res = await api.post(`/dues/${bulkDue.id}/assign-bulk`, payload);
+      toast.success(res.data?.message || 'Bulk assigned successfully');
       setShowBulkModal(false);
       setBulkForm(emptyBulk);
     } catch (err: any) {
@@ -148,10 +179,32 @@ export default function AdminDuesPage() {
     } finally { setSubmitting(false); }
   };
 
+  const handleAssignToStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignDue) return;
+    if (!assignDue.is_active) return toast.error('Activate this due before assigning it.');
+    if (!selectedStudent) return toast.error('Select a student first');
+    setSubmitting(true);
+    try {
+      const payload: any = { studentId: selectedStudent.id };
+      if (assignAmount) payload.amount = parseFloat(assignAmount);
+      await api.post(`/dues/${assignDue.id}/assign`, payload);
+      toast.success(`Due assigned to ${selectedStudent.full_name}`);
+      setShowAssignModal(false);
+      setAssignDue(null);
+      setSelectedStudent(null);
+      setStudentSearch('');
+      setAssignAmount('');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Student assignment failed');
+    } finally { setSubmitting(false); }
+  };
+
   const openEdit = (d: Due) => {
     setEditDue(d);
     setForm({
-      name: d.name, amount: d.amount.toString(),
+      name: d.name,
+      amount: d.amount.toString(),
       academicYear: d.academic_year,
       deadline: d.deadline ? d.deadline.split('T')[0] : '',
       lateFee: d.late_fee?.toString() || '0',
@@ -160,13 +213,28 @@ export default function AdminDuesPage() {
     setShowEditModal(true);
   };
 
+  const openSingleAssign = (d: Due) => {
+    if (!d.is_active) return toast.error('Activate this due before assigning it.');
+    setAssignDue(d);
+    setAssignAmount(d.amount.toString());
+    setStudentSearch('');
+    setStudentResults([]);
+    setSelectedStudent(null);
+    setShowAssignModal(true);
+  };
+
+  const openBulkAssign = (d: Due) => {
+    if (!d.is_active) return toast.error('Activate this due before assigning it.');
+    setBulkDue(d);
+    setBulkForm({ ...emptyBulk, amount: d.amount.toString() });
+    setShowBulkModal(true);
+  };
+
   return (
     <>
       <Layout title="Manage Dues">
         <div className="flex justify-end mb-6">
-          <button onClick={() => { setForm(emptyForm); setShowCreateModal(true); }} className="btn-primary">
-            + Create Due
-          </button>
+          <button onClick={() => { setForm(emptyForm); setShowCreateModal(true); }} className="btn-primary">+ Create Due</button>
         </div>
 
         <div className="card overflow-x-auto">
@@ -199,25 +267,14 @@ export default function AdminDuesPage() {
                     <td className="py-3 px-3 text-gray-500">{d.deadline ? new Date(d.deadline).toLocaleDateString() : '—'}</td>
                     <td className="py-3 px-3 text-red-500 font-medium">GHS {Number(d.late_fee).toFixed(2)}</td>
                     <td className="py-3 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${d.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                        {d.is_active ? 'Active' : 'Inactive'}
-                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${d.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>{d.is_active ? 'Active' : 'Inactive'}</span>
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex gap-2 flex-wrap">
                         <button onClick={() => openEdit(d)} className="text-xs btn-outline px-2 py-1">Edit</button>
-                        <button
-                          onClick={() => { setBulkDue(d); setBulkForm({ ...emptyBulk, amount: d.amount.toString() }); setShowBulkModal(true); }}
-                          className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium"
-                        >
-                          Bulk Assign
-                        </button>
-                        <button
-                          onClick={() => handleToggleActive(d)}
-                          className={`text-xs px-2 py-1 rounded border font-medium transition-colors ${d.is_active ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'}`}
-                        >
-                          {d.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <button onClick={() => openSingleAssign(d)} disabled={!d.is_active} className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/5 font-medium disabled:opacity-40 disabled:cursor-not-allowed">Assign Student</button>
+                        <button onClick={() => openBulkAssign(d)} disabled={!d.is_active} className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium disabled:opacity-40 disabled:cursor-not-allowed">Bulk Assign</button>
+                        <button onClick={() => handleToggleActive(d)} className={`text-xs px-2 py-1 rounded border font-medium transition-colors ${d.is_active ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'}`}>{d.is_active ? 'Deactivate' : 'Activate'}</button>
                         <button onClick={() => router.push(`/admin/clearance?studentSearch=true`)} className="text-xs px-2 py-1 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 font-medium">Clearance</button>
                       </div>
                     </td>
@@ -229,34 +286,56 @@ export default function AdminDuesPage() {
         </div>
       </Layout>
 
-      {/* Modals outside Layout for absolute viewport coverage */}
       {showCreateModal && (
         <Modal title="Create New Due" onClose={() => setShowCreateModal(false)}>
-          <DueForm
-            form={form}
-            setForm={setForm}
-            onSubmit={handleCreate}
-            submitting={submitting}
-            onCancel={() => setShowCreateModal(false)}
-            submitLabel="Create Due"
-            availablePrograms={availableProgrammes}
-            availableYears={availableAcademicYears}
-          />
+          <DueForm form={form} setForm={setForm} onSubmit={handleCreate} submitting={submitting} onCancel={() => setShowCreateModal(false)} submitLabel="Create Due" availablePrograms={availableProgrammes} availableYears={availableAcademicYears} />
         </Modal>
       )}
 
       {showEditModal && (
         <Modal title={`Edit: ${editDue?.name}`} onClose={() => setShowEditModal(false)}>
-          <DueForm
-            form={form}
-            setForm={setForm}
-            onSubmit={handleEdit}
-            submitting={submitting}
-            onCancel={() => setShowEditModal(false)}
-            submitLabel="Save Changes"
-            availablePrograms={availableProgrammes}
-            availableYears={availableAcademicYears}
-          />
+          <DueForm form={form} setForm={setForm} onSubmit={handleEdit} submitting={submitting} onCancel={() => setShowEditModal(false)} submitLabel="Save Changes" availablePrograms={availableProgrammes} availableYears={availableAcademicYears} />
+        </Modal>
+      )}
+
+      {showAssignModal && assignDue && (
+        <Modal title={`Assign to Student: ${assignDue.name}`} onClose={() => setShowAssignModal(false)}>
+          <form onSubmit={handleAssignToStudent} className="space-y-4">
+            <p className="text-sm text-gray-500">Search and select one student to assign this due.</p>
+            <div className="relative">
+              <label className="label">Search Student</label>
+              <input className="input-field" value={studentSearch} onChange={e => { setStudentSearch(e.target.value); setSelectedStudent(null); }} placeholder="Search by name, index number, or email" />
+              {searchingStudents && <p className="text-xs text-gray-400 mt-2">Searching...</p>}
+              {studentResults.length > 0 && !selectedStudent && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white border rounded-xl shadow-xl max-h-56 overflow-y-auto z-20">
+                  {studentResults.map(s => (
+                    <button key={s.id} type="button" onClick={() => { setSelectedStudent(s); setStudentSearch(`${s.full_name} (${s.student_id})`); setStudentResults([]); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0">
+                      <p className="font-semibold text-sm text-primary">{s.full_name}</p>
+                      <p className="text-xs text-gray-500">{s.student_id} · {s.programme} · Level {s.level}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {selectedStudent && (
+              <div className="p-3 rounded-xl bg-primary/5 border border-primary/10">
+                <p className="font-bold text-primary text-sm">{selectedStudent.full_name}</p>
+                <p className="text-xs text-gray-500">{selectedStudent.student_id} · {selectedStudent.programme} · Level {selectedStudent.level}</p>
+              </div>
+            )}
+
+            <div>
+              <label className="label">Amount (GHS)</label>
+              <input type="number" step="0.01" className="input-field" value={assignAmount} onChange={e => setAssignAmount(e.target.value)} />
+              <p className="text-xs text-gray-400 mt-1">Leave as the due amount unless this student needs a custom amount.</p>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button type="submit" disabled={submitting || !selectedStudent} className="btn-primary flex-1 disabled:opacity-50">{submitting ? 'Assigning…' : 'Assign Student'}</button>
+              <button type="button" onClick={() => setShowAssignModal(false)} className="btn-outline flex-1">Cancel</button>
+            </div>
+          </form>
         </Modal>
       )}
 
@@ -306,43 +385,14 @@ function DueForm({ form, setForm, onSubmit, submitting, onCancel, submitLabel, a
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2">
-          <label className="label">Due Name *</label>
-          <input type="text" className="input-field" value={form.name} onChange={e => setForm((f: any) => ({ ...f, name: e.target.value }))} required />
-        </div>
-        <div>
-          <label className="label">Amount (GHS) *</label>
-          <input type="number" step="0.01" className="input-field" value={form.amount} onChange={e => setForm((f: any) => ({ ...f, amount: e.target.value }))} required />
-        </div>
-        <div>
-          <label className="label">Academic Year *</label>
-          <select
-            className="input-field"
-            value={form.academicYear}
-            onChange={e => setForm((f: any) => ({ ...f, academicYear: e.target.value }))}
-            required
-          >
-            <option value="">Select Year</option>
-            {(availableYears || []).map((y: string) => <option key={y} value={y}>{y}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="label">Deadline</label>
-          <input type="date" className="input-field" value={form.deadline} onChange={e => setForm((f: any) => ({ ...f, deadline: e.target.value }))} />
-        </div>
-        <div>
-          <label className="label">Late Fee (GHS)</label>
-          <input type="number" step="0.01" className="input-field" value={form.lateFee} onChange={e => setForm((f: any) => ({ ...f, lateFee: e.target.value }))} />
-        </div>
-        <div className="col-span-2">
-          <label className="label">Description</label>
-          <textarea className="input-field" rows={2} value={form.description} onChange={e => setForm((f: any) => ({ ...f, description: e.target.value }))} />
-        </div>
+        <div className="col-span-2"><label className="label">Due Name *</label><input type="text" className="input-field" value={form.name} onChange={e => setForm((f: any) => ({ ...f, name: e.target.value }))} required /></div>
+        <div><label className="label">Amount (GHS) *</label><input type="number" step="0.01" className="input-field" value={form.amount} onChange={e => setForm((f: any) => ({ ...f, amount: e.target.value }))} required /></div>
+        <div><label className="label">Academic Year *</label><select className="input-field" value={form.academicYear} onChange={e => setForm((f: any) => ({ ...f, academicYear: e.target.value }))} required><option value="">Select Year</option>{(availableYears || []).map((y: string) => <option key={y} value={y}>{y}</option>)}</select></div>
+        <div><label className="label">Deadline</label><input type="date" className="input-field" value={form.deadline} onChange={e => setForm((f: any) => ({ ...f, deadline: e.target.value }))} /></div>
+        <div><label className="label">Late Fee (GHS)</label><input type="number" step="0.01" className="input-field" value={form.lateFee} onChange={e => setForm((f: any) => ({ ...f, lateFee: e.target.value }))} /></div>
+        <div className="col-span-2"><label className="label">Description</label><textarea className="input-field" rows={2} value={form.description} onChange={e => setForm((f: any) => ({ ...f, description: e.target.value }))} /></div>
       </div>
-      <div className="flex gap-3 pt-2">
-        <button type="submit" disabled={submitting} className="btn-primary flex-1">{submitting ? 'Saving…' : submitLabel}</button>
-        <button type="button" onClick={onCancel} className="btn-outline flex-1">Cancel</button>
-      </div>
+      <div className="flex gap-3 pt-2"><button type="submit" disabled={submitting} className="btn-primary flex-1">{submitting ? 'Saving…' : submitLabel}</button><button type="button" onClick={onCancel} className="btn-outline flex-1">Cancel</button></div>
     </form>
   );
 }
@@ -354,20 +404,12 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
           <h3 className="text-xl font-extrabold text-primary">{title}</h3>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
         <div className="p-8">{children}</div>
