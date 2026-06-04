@@ -37,6 +37,47 @@ const generateReceiptNumber = async (executor = pool.query.bind(pool), prefix = 
   return `${safePrefix}-${year}-${String(count).padStart(6, '0')}`;
 };
 
+const queueReceiptNotifications = ({ data, amountPaid, receiptNumber, verifyUrl, filepath, paymentId }) => {
+  const run = async () => {
+    try {
+      const { sendSMS } = require('./notificationService');
+      const emailEnabledResult = await pool.query('SELECT `value` FROM settings WHERE `key` = "receipt_email_delivery_enabled"');
+      const smsEnabledResult = await pool.query('SELECT `value` FROM settings WHERE `key` = "receipt_sms_delivery_enabled"');
+      const emailEnabled = emailEnabledResult.rows[0]?.value !== 'false';
+      const smsEnabled = smsEnabledResult.rows[0]?.value !== 'false';
+
+      const templateResult = await pool.query('SELECT `value` FROM settings WHERE `key` = "sms_payment_template"');
+      let smsMsg = templateResult.rows[0]?.value || `Hello {name}, your payment of GHS {amount} for {due_name} has been confirmed. Receipt: {receipt_no}. Verify: {url}`;
+      smsMsg = smsMsg
+        .replace(/{name}/g, data.full_name)
+        .replace(/{id_no}/g, data.student_id)
+        .replace(/{amount}/g, Number(amountPaid).toFixed(2))
+        .replace(/{due_name}/g, data.due_name)
+        .replace(/{receipt_no}/g, receiptNumber)
+        .replace(/{url}/g, verifyUrl);
+      smsMsg = enforcePublicUrlInText(smsMsg);
+
+      if (emailEnabled && data.email) {
+        await sendPaymentConfirmationEmail(
+          { full_name: data.full_name, email: data.email },
+          { amount: amountPaid, payment_method: data.payment_method, created_at: data.created_at, due_name: data.due_name },
+          verifyUrl,
+          { receipt_number: receiptNumber, amount_paid: amountPaid },
+          [{ filename: `Receipt-${receiptNumber}.pdf`, path: filepath }]
+        );
+      }
+      if (smsEnabled && data.phone_number) {
+        await sendSMS(data.phone_number, smsMsg, { type: 'payment_receipt', relatedType: 'payment', relatedId: paymentId });
+      }
+    } catch (notifyErr) {
+      console.error('Receipt notification background error:', notifyErr);
+    }
+  };
+
+  if (typeof setImmediate === 'function') setImmediate(run);
+  else setTimeout(run, 0);
+};
+
 exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = null) => {
   try {
     const executor = db && db.wrappedQuery ? db.wrappedQuery.bind(db) : (db ? db.query.bind(db) : pool.query.bind(pool));
@@ -151,37 +192,7 @@ exports.generateReceipt = async (paymentId, studentId, dueId, amountPaid, db = n
       [receiptId, receiptNumber, studentId, dueId, paymentId, amountPaid, balance, totalDueAmount, receiptUrl, qrData, null]
     );
 
-    try {
-      const { sendSMS } = require('./notificationService');
-      const emailEnabledResult = await executor('SELECT `value` FROM settings WHERE `key` = "receipt_email_delivery_enabled"');
-      const smsEnabledResult = await executor('SELECT `value` FROM settings WHERE `key` = "receipt_sms_delivery_enabled"');
-      const emailEnabled = emailEnabledResult.rows[0]?.value !== 'false';
-      const smsEnabled = smsEnabledResult.rows[0]?.value !== 'false';
-
-      const templateResult = await executor('SELECT `value` FROM settings WHERE `key` = "sms_payment_template"');
-      let smsMsg = templateResult.rows[0]?.value || `Hello {name}, your payment of GHS {amount} for {due_name} has been confirmed. Receipt: {receipt_no}. Verify: {url}`;
-      smsMsg = smsMsg
-        .replace(/{name}/g, data.full_name)
-        .replace(/{id_no}/g, data.student_id)
-        .replace(/{amount}/g, Number(amountPaid).toFixed(2))
-        .replace(/{due_name}/g, data.due_name)
-        .replace(/{receipt_no}/g, receiptNumber)
-        .replace(/{url}/g, verifyUrl);
-      smsMsg = enforcePublicUrlInText(smsMsg);
-
-      if (emailEnabled && data.email) {
-        await sendPaymentConfirmationEmail(
-          { full_name: data.full_name, email: data.email },
-          { amount: amountPaid, payment_method: data.payment_method, created_at: data.created_at, due_name: data.due_name },
-          verifyUrl,
-          { receipt_number: receiptNumber, amount_paid: amountPaid },
-          [{ filename: `Receipt-${receiptNumber}.pdf`, path: filepath }]
-        );
-      }
-      if (smsEnabled && data.phone_number) await sendSMS(data.phone_number, smsMsg, { type: 'payment_receipt', relatedType: 'payment', relatedId: paymentId });
-    } catch (notifyErr) {
-      console.error('Notification error after receipt generation:', notifyErr);
-    }
+    queueReceiptNotifications({ data, amountPaid, receiptNumber, verifyUrl, filepath, paymentId });
 
     const result = await executor('SELECT id, receipt_number, receipt_url FROM receipts WHERE id = ?', [receiptId]);
     return result.rows[0];
