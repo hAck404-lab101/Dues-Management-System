@@ -1,6 +1,7 @@
 const axios = require('axios');
 const { query } = require('../config/database');
 const { decrypt } = require('../utils/encryption');
+const { buildPublicPath, enforcePublicUrlInText } = require('../utils/publicUrl');
 
 const getPaystackKey = async () => {
   const { rows } = await query('SELECT value FROM settings WHERE `key` = "paystack_secret_key"');
@@ -21,19 +22,25 @@ const getPaystackAxios = async () => {
   });
 };
 
+const getCallbackUrl = () => enforcePublicUrlInText(buildPublicPath('/payment/callback'));
+
 // Initialize transaction
 exports.initializeTransaction = async (email, amount, reference, metadata = {}) => {
   try {
     const amountInKobo = Math.round(amount * 100);
     const paystackAxios = await getPaystackAxios();
+    const callbackUrl = getCallbackUrl();
 
     const response = await paystackAxios.post('/transaction/initialize', {
       email,
       amount: amountInKobo,
       reference,
       currency: 'GHS',
-      metadata,
-      callback_url: `${process.env.BASE_URL || 'http://localhost:3000'}/payment/callback`
+      metadata: {
+        ...metadata,
+        callback_url: callbackUrl
+      },
+      callback_url: callbackUrl
     });
 
     return {
