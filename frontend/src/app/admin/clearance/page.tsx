@@ -18,11 +18,14 @@ interface ClearanceData {
     totalBalance: number;
 }
 
+const RECENT_CLEARANCE_KEY = 'admin_recent_clearance_students';
+
 export default function ClearancePage() {
     const router = useRouter();
     const { user, loading } = useAuth();
 
     const [students, setStudents] = useState<any[]>([]);
+    const [recentStudents, setRecentStudents] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [selected, setSelected] = useState<any>(null);
@@ -34,6 +37,39 @@ export default function ClearancePage() {
     useEffect(() => {
         if (!loading && (!user || user.role === 'student')) router.push('/admin/login');
     }, [user, loading, router]);
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(RECENT_CLEARANCE_KEY);
+            if (stored) setRecentStudents(JSON.parse(stored));
+        } catch {
+            setRecentStudents([]);
+        }
+    }, []);
+
+    const saveRecentStudent = (student: any) => {
+        const item = {
+            id: student.id,
+            full_name: student.full_name,
+            student_id: student.student_id,
+            programme: student.programme,
+            level: student.level,
+            email: student.email,
+            viewed_at: new Date().toISOString()
+        };
+
+        setRecentStudents(prev => {
+            const next = [item, ...prev.filter(s => s.id !== item.id)].slice(0, 8);
+            try { localStorage.setItem(RECENT_CLEARANCE_KEY, JSON.stringify(next)); } catch {}
+            return next;
+        });
+    };
+
+    const clearRecentHistory = () => {
+        setRecentStudents([]);
+        try { localStorage.removeItem(RECENT_CLEARANCE_KEY); } catch {}
+        toast.success('Clearance search history cleared');
+    };
 
     const searchStudents = useCallback(async () => {
         if (search.length < 2) return;
@@ -59,6 +95,7 @@ export default function ClearancePage() {
         setSearch(s.full_name);
         setLoadingClearance(true);
         setClearance(null);
+        saveRecentStudent(s);
         try {
             const res = await api.get(`/admin/students/${s.id}/clearance`);
             if (res.data.success) setClearance(res.data.data);
@@ -130,6 +167,48 @@ export default function ClearancePage() {
                         )}
                     </div>
                 </div>
+
+                {!clearance && !loadingClearance && recentStudents.length > 0 && (
+                    <div className="card p-5 space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 className="font-bold text-primary">Recent Clearance Checks</h3>
+                                <p className="text-xs text-gray-500 mt-1">Quickly reopen students you recently searched for clearance.</p>
+                            </div>
+                            <button type="button" onClick={clearRecentHistory} className="text-xs font-bold text-red-500 hover:text-red-700 whitespace-nowrap">
+                                Clear History
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {recentStudents.map((s) => (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => selectStudent(s)}
+                                    className="text-left p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-primary/30 hover:shadow-sm transition-all"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="font-bold text-sm text-primary truncate">{s.full_name}</p>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-gray-500 border shrink-0">Level {s.level}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1 truncate">{s.student_id} · {s.programme}</p>
+                                    {s.viewed_at && <p className="text-[10px] text-gray-400 mt-2">Last opened {new Date(s.viewed_at).toLocaleDateString()}</p>}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {!clearance && !loadingClearance && recentStudents.length === 0 && (
+                    <div className="card p-8 text-center border-dashed border-2 border-gray-100 bg-white/70">
+                        <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/5 text-primary flex items-center justify-center mb-4">
+                            <span className="w-7 h-7"><AcademicCapIcon /></span>
+                        </div>
+                        <h3 className="font-bold text-primary">No clearance history yet</h3>
+                        <p className="text-sm text-gray-500 mt-2 max-w-md mx-auto">Search for a student above. Recently checked students will appear here for quick access.</p>
+                    </div>
+                )}
 
                 {loadingClearance && (
                     <div className="space-y-5">
