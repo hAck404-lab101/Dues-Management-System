@@ -28,6 +28,7 @@ const migrateSettingsV2 = async () => {
 
             // SYSTEM - MAINTENANCE
             ['maintenance_mode', 'off', 'sys_maintenance', 'Enable/disable maintenance mode'],
+            ['homepage_variant', 'portal', 'sys_maintenance', 'Homepage style shown to students. Options: portal or classic'],
 
             // STUDENT PORTAL
             ['available_courses', 'Computer Science, Information Technology', 'portal', 'Comma-separated list of courses'],
