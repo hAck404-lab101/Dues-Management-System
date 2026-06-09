@@ -3,52 +3,42 @@
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useBranding } from '@/contexts/BrandingContext';
-import { CardIcon, ReceiptIcon, SmsIcon, ShieldIcon, CertificateIcon, WalletIcon } from '@/components/Icons';
+import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, CertificateIcon, WalletIcon } from '@/components/Icons';
 
-const features = [
-  {
-    title: 'View Your Dues',
-    text: 'Check assigned dues and see what has been paid or is still outstanding.',
-    icon: WalletIcon,
-  },
-  {
-    title: 'Make Payment',
-    text: 'Pay online or follow the approved manual payment process provided by your department.',
-    icon: CardIcon,
-  },
-  {
-    title: 'Download Receipts',
-    text: 'Access official receipts after confirmed payments and keep them for your records.',
-    icon: ReceiptIcon,
-  },
-  {
-    title: 'Check Clearance',
-    text: 'Use payment records to know whether you are cleared or still have a balance to settle.',
-    icon: CertificateIcon,
-  },
-  {
-    title: 'Receive Updates',
-    text: 'Get important account and payment updates through your registered contact details.',
-    icon: SmsIcon,
-  },
-  {
-    title: 'Protected Records',
-    text: 'Your dues, payments, and receipts are handled inside a secure student portal.',
-    icon: ShieldIcon,
-  },
+const portalFeatures = [
+  { title: 'View Your Dues', text: 'Check assigned dues and see what has been paid or is still outstanding.', icon: WalletIcon },
+  { title: 'Make Payment', text: 'Pay online or follow the approved manual payment process provided by your department.', icon: CardIcon },
+  { title: 'Download Receipts', text: 'Access official receipts after confirmed payments and keep them for your records.', icon: ReceiptIcon },
+  { title: 'Check Clearance', text: 'Use payment records to know whether you are cleared or still have a balance to settle.', icon: CertificateIcon },
+  { title: 'Receive Updates', text: 'Get important account and payment updates through your registered contact details.', icon: SmsIcon },
+  { title: 'Protected Records', text: 'Your dues, payments, and receipts are handled inside a secure student portal.', icon: ShieldIcon },
+];
+
+const classicFeatures = [
+  { title: 'Secure Payments', text: 'Make secure online payments using supported mobile money and card options.', icon: CardIcon },
+  { title: 'Track Dues', text: 'View assigned dues, payment history, and outstanding balances in one dashboard.', icon: ChartIcon },
+  { title: 'Digital Receipts', text: 'Automatic receipt generation. Download and verify receipts anytime.', icon: ReceiptIcon },
+  { title: 'Mobile Friendly', text: 'Access the portal on desktop, tablet, or mobile devices.', icon: SmsIcon },
+  { title: 'Payment Updates', text: 'Receive updates about payment confirmations, dues, and account activity.', icon: ClockIcon },
+  { title: 'Secure Records', text: 'Transactions are recorded securely for proper accountability.', icon: ShieldIcon },
 ];
 
 export default function Home() {
+  const { homepageVariant } = useBranding();
+  return homepageVariant === 'classic' ? <ClassicHomepage /> : <PortalHomepage />;
+}
+
+function PortalHomepage() {
   const { appName } = useBranding();
 
   return (
     <div className="min-h-screen bg-neutral">
       <Navbar />
 
-      <main className="container mx-auto px-4 py-8 sm:py-10">
-        <section className="card overflow-hidden p-0 border border-gray-100">
+      <main className="container mx-auto px-0 sm:px-4 py-0 sm:py-10">
+        <section className="bg-white sm:rounded-2xl sm:shadow-sm sm:border sm:border-gray-100 overflow-hidden">
           <div className="h-2 bg-secondary" />
-          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-12 items-center p-5 sm:p-8 lg:p-10">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-7 lg:gap-12 items-center p-5 sm:p-8 lg:p-10">
             <div>
               <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-3">{appName}</p>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight text-primary mb-4">
@@ -59,7 +49,7 @@ export default function Home() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/login" className="btn-primary px-6 py-3 font-bold">Student Login</Link>
+                <Link href="/login" className="btn-primary px-6 py-3 font-bold text-center">Student Login</Link>
                 <Link href="/verify-receipt" className="bg-secondary text-primary px-6 py-3 rounded-lg font-extrabold text-center hover:opacity-90 transition-opacity">Verify Receipt</Link>
               </div>
             </div>
@@ -101,20 +91,18 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="features" className="py-8 sm:py-10">
+        <section id="features" className="px-4 sm:px-0 py-8 sm:py-10">
           <div className="mb-5 sm:mb-6 border-l-4 border-secondary pl-4">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-primary">Student services</h2>
             <p className="text-sm text-gray-500 mt-2">Common actions available in the student portal.</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
-            ))}
+            {portalFeatures.map((feature) => <FeatureCard key={feature.title} {...feature} />)}
           </div>
         </section>
 
-        <section className="card overflow-hidden p-0 mb-8 border border-gray-100">
+        <section className="mx-4 sm:mx-0 bg-white sm:rounded-2xl sm:border sm:border-gray-100 sm:shadow-sm overflow-hidden mb-8">
           <div className="h-2 bg-secondary" />
           <div className="grid lg:grid-cols-[1fr_auto] gap-5 items-center p-5 sm:p-6">
             <div>
@@ -128,33 +116,63 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-primary-dark text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <h3 className="text-xl font-bold mb-4">{appName}</h3>
-              <p className="text-sm opacity-90">A student portal for dues, receipts, and clearance records.</p>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/#features" className="hover:text-secondary transition-colors">Student Services</Link></li>
-                <li><Link href="/verify-receipt" className="hover:text-secondary transition-colors">Verify Receipt</Link></li>
-                <li><Link href="/login" className="hover:text-secondary transition-colors">Student Login</Link></li>
-                <li><Link href="/privacy" className="hover:text-secondary transition-colors">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="hover:text-secondary transition-colors">Terms & Conditions</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold mb-4">Support</h3>
-              <p className="text-sm opacity-90">For help with dues or payment records, contact the official department representative.</p>
-            </div>
-          </div>
-          <div className="border-t border-primary-light pt-8 text-center text-sm opacity-75">
-            <p>© {new Date().getFullYear()} {appName}. All rights reserved.</p>
+      <StudentFooter appName={appName} />
+    </div>
+  );
+}
+
+function ClassicHomepage() {
+  const { appName } = useBranding();
+
+  return (
+    <div className="min-h-screen bg-neutral">
+      <Navbar />
+
+      <section className="bg-primary text-white py-20">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4">{appName}</h1>
+          <p className="text-xl md:text-2xl mb-2">Management System</p>
+          <p className="text-lg opacity-90 mb-8">A secure student dues payment and records portal</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register" className="btn-secondary text-lg px-8 py-3">Get Started</Link>
+            <Link href="/login" className="bg-white text-primary hover:opacity-90 text-lg px-8 py-3 rounded-lg font-bold transition-opacity">Student Login</Link>
           </div>
         </div>
-      </footer>
+      </section>
+
+      <section id="features" className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-primary text-center mb-12">Features</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {classicFeatures.map((feature) => <ClassicFeatureCard key={feature.title} {...feature} />)}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-neutral">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-primary text-center mb-12">How It Works</h2>
+          <div className="grid md:grid-cols-4 gap-8">
+            <Step number="1" title="Register" text="Create your account with your student details" />
+            <Step number="2" title="View Dues" text="Check assigned dues and outstanding balances" />
+            <Step number="3" title="Make Payment" text="Pay online or submit approved manual proof" />
+            <Step number="4" title="Get Receipt" text="Receive and verify your official receipt" />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-primary text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
+          <p className="text-xl mb-8 opacity-90">Manage your dues, payments, and receipts efficiently</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/register" className="btn-secondary text-lg px-8 py-3">Create Account</Link>
+            <Link href="/login" className="bg-white text-primary hover:opacity-90 text-lg px-8 py-3 rounded-lg font-bold transition-opacity">Login to Dashboard</Link>
+          </div>
+        </div>
+      </section>
+
+      <StudentFooter appName={appName} />
     </div>
   );
 }
@@ -171,11 +189,63 @@ function FeatureCard({ title, text, icon: Icon }: any) {
   );
 }
 
+function ClassicFeatureCard({ title, text, icon: Icon }: any) {
+  return (
+    <div className="card text-center hover:shadow-lg transition-shadow flex flex-col items-center">
+      <div className="w-12 h-12 text-primary mb-4"><Icon /></div>
+      <h3 className="text-2xl font-bold text-primary mb-3">{title}</h3>
+      <p className="text-gray-600">{text}</p>
+    </div>
+  );
+}
+
+function Step({ number, title, text }: { number: string; title: string; text: string }) {
+  return (
+    <div className="text-center">
+      <div className="bg-primary text-white rounded-full w-16 h-16 flex items-center justify-center text-2xl font-bold mx-auto mb-4">{number}</div>
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="text-gray-600">{text}</p>
+    </div>
+  );
+}
+
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white/10 rounded-xl p-4">
       <p className="text-xs font-bold uppercase tracking-wider text-white/55">{label}</p>
       <p className="font-extrabold text-secondary mt-1">{value}</p>
     </div>
+  );
+}
+
+function StudentFooter({ appName }: { appName: string }) {
+  return (
+    <footer className="bg-primary-dark text-white py-8">
+      <div className="container mx-auto px-4">
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
+          <div>
+            <h3 className="text-xl font-bold mb-4">{appName}</h3>
+            <p className="text-sm opacity-90">A student portal for dues, receipts, and clearance records.</p>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold mb-4">Quick Links</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link href="/#features" className="hover:text-secondary transition-colors">Student Services</Link></li>
+              <li><Link href="/verify-receipt" className="hover:text-secondary transition-colors">Verify Receipt</Link></li>
+              <li><Link href="/login" className="hover:text-secondary transition-colors">Student Login</Link></li>
+              <li><Link href="/privacy" className="hover:text-secondary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-secondary transition-colors">Terms & Conditions</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold mb-4">Support</h3>
+            <p className="text-sm opacity-90">For help with dues or payment records, contact the official department representative.</p>
+          </div>
+        </div>
+        <div className="border-t border-primary-light pt-8 text-center text-sm opacity-75">
+          <p>© {new Date().getFullYear()} {appName}. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
   );
 }
