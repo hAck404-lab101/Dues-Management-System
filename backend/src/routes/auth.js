@@ -26,17 +26,13 @@ const registerValidation = [
 ];
 
 const forgotPasswordValidation = [
-  body().custom((value) => {
-    if (!value.identity && !value.indexNumber && !value.phoneNumber) {
-      throw new Error('Index number or phone number is required');
-    }
-    return true;
-  })
+  body('indexNumber').notEmpty().withMessage('Index number is required'),
+  body('phoneNumber').notEmpty().withMessage('Registered phone number is required')
 ];
 
 const verifyOTPValidation = [
   body('identity').notEmpty().withMessage('Identity is required'),
-  body('otp').isLength({ min: 4, max: 6 }).withMessage('Invalid OTP format')
+  body('otp').matches(/^\d{6}$/).withMessage('Invalid OTP format')
 ];
 
 const changePasswordValidation = [
