@@ -8,8 +8,22 @@ const SENSITIVE_KEYS = [
     'paystack_webhook_secret'
 ];
 
+const DEFAULT_SETTINGS = [
+    ['homepage_variant', 'portal', 'sys_maintenance', 'Homepage style shown to students. Options: portal or classic']
+];
+
+const ensureDefaultSettings = async () => {
+    for (const [key, value, category, description] of DEFAULT_SETTINGS) {
+        await query(
+            'INSERT IGNORE INTO settings (`key`, `value`, `category`, `description`) VALUES (?, ?, ?, ?)',
+            [key, value, category, description]
+        );
+    }
+};
+
 exports.getSettings = async (req, res) => {
     try {
+        await ensureDefaultSettings();
         const { rows } = await query('SELECT * FROM settings');
 
         const settingsMap = {};
@@ -43,6 +57,7 @@ exports.updateSettings = async (req, res) => {
     }
 
     try {
+        await ensureDefaultSettings();
         const keys = Object.keys(settings);
 
         for (const key of keys) {
@@ -63,6 +78,7 @@ exports.updateSettings = async (req, res) => {
 
 exports.getSettingsByCategory = async (req, res) => {
     try {
+        await ensureDefaultSettings();
         const { category } = req.params;
         const { rows } = await query('SELECT * FROM settings WHERE category = ?', [category]);
 
@@ -90,6 +106,7 @@ exports.getSettingsByCategory = async (req, res) => {
 
 exports.getPublicSettings = async (req, res) => {
     try {
+        await ensureDefaultSettings();
         const publicCategories = [
             'sys_general',
             'sys_appearance',
@@ -115,6 +132,9 @@ exports.getPublicSettings = async (req, res) => {
         if (pkRes.rows.length > 0) {
             settingsMap['paystack_public_key'] = pkRes.rows[0].value;
         }
+
+        const homepageRes = await query('SELECT value FROM settings WHERE `key` = "homepage_variant"');
+        settingsMap.homepage_variant = homepageRes.rows[0]?.value || 'portal';
 
         res.json({ success: true, data: settingsMap });
     } catch (error) {
