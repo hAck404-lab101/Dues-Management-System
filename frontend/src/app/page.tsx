@@ -8,7 +8,7 @@ import { CardIcon, ReceiptIcon, SmsIcon, ShieldIcon, CertificateIcon, WalletIcon
 const features = [
   {
     title: 'View Your Dues',
-    text: 'Check the dues assigned to your account and see what has been paid or is still outstanding.',
+    text: 'Check assigned dues and see what has been paid or is still outstanding.',
     icon: WalletIcon,
   },
   {
@@ -23,17 +23,17 @@ const features = [
   },
   {
     title: 'Check Clearance',
-    text: 'Use your payment records to know whether you are cleared or still have a balance to settle.',
+    text: 'Use payment records to know whether you are cleared or still have a balance to settle.',
     icon: CertificateIcon,
   },
   {
     title: 'Receive Updates',
-    text: 'Get important payment and account updates through the official contact details on your profile.',
+    text: 'Get important account and payment updates through your registered contact details.',
     icon: SmsIcon,
   },
   {
     title: 'Protected Records',
-    text: 'Your payment information and receipts are handled through a secure student portal.',
+    text: 'Your dues, payments, and receipts are handled inside a secure student portal.',
     icon: ShieldIcon,
   },
 ];
@@ -45,97 +45,86 @@ export default function Home() {
     <div className="min-h-screen bg-neutral">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-primary text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(242,169,0,0.22),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.1),transparent_30%)]" />
-        <div className="container mx-auto px-4 py-16 sm:py-20 lg:py-24 relative z-10">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-14 items-center">
+      <main className="container mx-auto px-4 py-8 sm:py-10">
+        <section className="card p-5 sm:p-8 lg:p-10 border border-gray-100">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 lg:gap-12 items-center">
             <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.03] tracking-tight mb-5">
-                Pay Dues. Track Receipts. Get Cleared Faster.
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{appName}</p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight text-primary mb-4">
+                Pay dues, view receipts, and check your records.
               </h1>
-              <p className="text-base sm:text-lg text-white/80 leading-relaxed max-w-2xl mb-8">
-                {appName} gives students a simple place to view assigned dues, make payments, download receipts, and check payment records.
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-2xl mb-6">
+                Use your student account to view assigned dues, make payments, download official receipts, and follow your clearance status.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 mb-8">
-                <Link href="/login" className="btn-secondary px-6 py-3 font-extrabold">Student Login</Link>
-                <Link href="/verify-receipt" className="px-6 py-3 rounded-lg bg-white/10 border border-white/15 hover:bg-white/15 font-extrabold text-center transition-colors">Verify Receipt</Link>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/login" className="btn-primary px-6 py-3 font-bold">Student Login</Link>
+                <Link href="/verify-receipt" className="btn-outline px-6 py-3 font-bold">Verify Receipt</Link>
               </div>
             </div>
 
-            <div className="relative">
-              <div className="absolute -inset-4 bg-secondary/10 blur-3xl rounded-full" />
-              <div className="relative bg-white text-primary rounded-[2rem] shadow-2xl border border-white/60 overflow-hidden">
-                <div className="p-5 sm:p-6 border-b bg-gray-50 flex items-center justify-between">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center justify-between pb-4 border-b border-gray-200">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Student Account</p>
+                  <h2 className="font-extrabold text-primary text-lg mt-1">Payment Summary</h2>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center">
+                  <span className="w-5 h-5"><WalletIcon /></span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 py-4">
+                <SummaryCard label="Dues" value="Assigned" />
+                <SummaryCard label="Receipts" value="Available" />
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-100 p-4">
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Student Account</p>
-                    <h2 className="font-extrabold text-lg">Payment Summary</h2>
+                    <p className="font-bold text-primary text-sm">Latest payment</p>
+                    <p className="text-xs text-gray-500 mt-1">Receipts appear after payment confirmation.</p>
                   </div>
-                  <div className="w-11 h-11 rounded-2xl bg-primary text-white flex items-center justify-center">
-                    <span className="w-6 h-6"><WalletIcon /></span>
-                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold">Confirmed</span>
                 </div>
-                <div className="p-5 sm:p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <DashCard label="Dues" value="Assigned" tone="warning" />
-                    <DashCard label="Receipts" value="Available" tone="success" />
-                  </div>
-                  <div className="rounded-2xl border border-gray-100 p-4">
-                    <div className="flex justify-between items-center mb-3 gap-4">
-                      <div>
-                        <p className="font-bold text-sm">Latest Payment</p>
-                        <p className="text-xs text-gray-500">Receipts appear after confirmation</p>
-                      </div>
-                      <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold">Confirmed</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full w-4/5 bg-secondary rounded-full" />
-                    </div>
-                  </div>
-                  <div className="rounded-2xl bg-primary text-white p-4 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-white/60 text-xs font-bold uppercase tracking-wider">Receipt Check</p>
-                      <p className="font-extrabold">Verify with receipt number</p>
-                    </div>
-                    <span className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center"><ReceiptIcon /></span>
-                  </div>
+              </div>
+
+              <div className="bg-white rounded-xl border border-gray-100 p-4 mt-3 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-primary text-sm">Receipt verification</p>
+                  <p className="text-xs text-gray-500 mt-1">Confirm a receipt using its receipt number.</p>
                 </div>
+                <span className="w-9 h-9 rounded-lg bg-primary/5 text-primary flex items-center justify-center shrink-0"><ReceiptIcon /></span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="features" className="py-14 sm:py-18 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-primary">What students can do</h2>
-            <p className="text-gray-500 mt-3">Everything on this page is focused on student payments, receipts, and clearance records.</p>
+        <section id="features" className="py-8 sm:py-10">
+          <div className="mb-5 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-primary">Student services</h2>
+            <p className="text-sm text-gray-500 mt-2">Common actions available in the student portal.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((feature) => (
               <FeatureCard key={feature.title} {...feature} />
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="py-14 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="rounded-[2rem] bg-primary text-white p-6 sm:p-10 relative overflow-hidden">
-            <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-secondary/20" />
-            <div className="absolute right-20 -bottom-20 w-64 h-64 rounded-full bg-white/10" />
-            <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-6 items-center">
-              <div>
-                <h2 className="text-2xl sm:text-4xl font-extrabold mb-3">Verify a receipt</h2>
-                <p className="text-white/75 max-w-2xl">Use the receipt number from your SMS or downloaded receipt to confirm that the payment record exists in the system.</p>
-              </div>
-              <Link href="/verify-receipt" className="btn-secondary px-6 py-3 font-extrabold whitespace-nowrap">Verify Receipt</Link>
+        <section className="card p-5 sm:p-6 border border-gray-100 mb-8">
+          <div className="grid lg:grid-cols-[1fr_auto] gap-5 items-center">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-primary">Verify a receipt</h2>
+              <p className="text-sm text-gray-500 mt-2 max-w-2xl">
+                Use the receipt number from your SMS or downloaded receipt to confirm that the payment record exists in the system.
+              </p>
             </div>
+            <Link href="/verify-receipt" className="btn-primary px-6 py-3 font-bold text-center">Verify Receipt</Link>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <footer className="bg-primary-dark text-white py-8">
         <div className="container mx-auto px-4">
@@ -147,7 +136,7 @@ export default function Home() {
             <div>
               <h3 className="text-xl font-bold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/#features" className="hover:text-secondary transition-colors">Student Features</Link></li>
+                <li><Link href="/#features" className="hover:text-secondary transition-colors">Student Services</Link></li>
                 <li><Link href="/verify-receipt" className="hover:text-secondary transition-colors">Verify Receipt</Link></li>
                 <li><Link href="/login" className="hover:text-secondary transition-colors">Student Login</Link></li>
                 <li><Link href="/privacy" className="hover:text-secondary transition-colors">Privacy Policy</Link></li>
@@ -170,21 +159,21 @@ export default function Home() {
 
 function FeatureCard({ title, text, icon: Icon }: any) {
   return (
-    <div className="card p-6 border border-gray-100 hover:shadow-lg transition-all group">
-      <div className="w-12 h-12 rounded-2xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors flex items-center justify-center mb-5">
-        <span className="w-6 h-6"><Icon /></span>
+    <div className="card p-5 border border-gray-100 shadow-sm">
+      <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary flex items-center justify-center mb-4">
+        <span className="w-5 h-5"><Icon /></span>
       </div>
-      <h3 className="text-lg font-extrabold text-primary mb-2">{title}</h3>
+      <h3 className="text-base font-extrabold text-primary mb-2">{title}</h3>
       <p className="text-sm text-gray-500 leading-relaxed">{text}</p>
     </div>
   );
 }
 
-function DashCard({ label, value, tone }: { label: string; value: string; tone: 'warning' | 'success' }) {
+function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-gray-50 p-4 border border-gray-100">
+    <div className="bg-white rounded-xl p-4 border border-gray-100">
       <p className="text-xs font-bold uppercase tracking-wider text-gray-400">{label}</p>
-      <p className={`font-extrabold mt-1 ${tone === 'success' ? 'text-green-700' : 'text-secondary'}`}>{value}</p>
+      <p className="font-extrabold text-primary mt-1">{value}</p>
     </div>
   );
 }
