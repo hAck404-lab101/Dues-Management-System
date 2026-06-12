@@ -8,6 +8,38 @@ const { buildReceiptVerifyUrl, enforcePublicUrlInText } = require('../utils/publ
 
 const adminRoles = ['admin', 'financial_secretary', 'treasurer', 'president'];
 
+const roundMoney = (value) => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+
+const getSettingValue = async (key, fallback = '') => {
+  const { rows } = await pool.query('SELECT value FROM settings WHERE `key` = ? LIMIT 1', [key]);
+  return rows[0]?.value ?? fallback;
+};
+
+const calculateServiceFee = async (paymentAmount) => {
+  const amount = roundMoney(paymentAmount);
+  const enabled = (await getSettingValue('service_charge_enabled', 'true')) === 'true';
+  if (!enabled) {
+    return { fee: 0, type: 'disabled', rate: 0 };
+  }
+
+  const type = (await getSettingValue('service_charge_type', 'fixed')).toLowerCase();
+  const rawValue = parseFloat(await getSettingValue('payment_service_fee', '0')) || 0;
+
+  if (type === 'percentage') {
+    return {
+      fee: roundMoney((amount * rawValue) / 100),
+      type: 'percentage',
+      rate: rawValue
+    };
+  }
+
+  return {
+    fee: roundMoney(rawValue),
+    type: 'fixed',
+    rate: rawValue
+  };
+};
+
 const completePaymentAndNotify = async ({ payment, transactionId = null, approvedBy = null, status = 'completed' }) => {
   const connection = await pool.getConnection();
   await connection.beginTransaction();
@@ -57,19 +89,28 @@ exports.initializePayment = async (req, res) => {
       `SELECT COALESCE(SUM(amount), 0) as total_paid FROM payments WHERE due_id = ? AND student_id = ? AND status IN ('approved', 'completed')`,
       [dueId, student.id]
     );
-    const balance = parseFloat(assignmentResult.rows[0].assigned_amount) - parseFloat(paidResult.rows[0].total_paid);
-    const paymentAmount = parseFloat(amount || balance);
+    const balance = roundMoney(parseFloat(assignmentResult.rows[0].assigned_amount) - parseFloat(paidResult.rows[0].total_paid));
+    const paymentAmount = roundMoney(parseFloat(amount || balance));
     if (!paymentAmount || paymentAmount <= 0) return res.status(400).json({ success: false, message: 'Amount must be greater than 0' });
     if (paymentAmount > balance) return res.status(400).json({ success: false, message: `Amount exceeds balance. Balance: GHS ${balance}` });
 
     const reference = `DMS-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;
-    const feeResult = await pool.query('SELECT value FROM settings WHERE `key` = "payment_service_fee"');
-    const serviceFee = parseFloat(feeResult.rows[0]?.value || '0');
+    const serviceCharge = await calculateServiceFee(paymentAmount);
+    const serviceFee = serviceCharge.fee;
+    const totalCharge = roundMoney(paymentAmount + serviceFee);
+
     const paystackResult = await paystackService.initializeTransaction(
       student.email,
-      paymentAmount + serviceFee,
+      totalCharge,
       reference,
-      { student_id: student.id, due_id: dueId, student_name: student.full_name, service_fee: serviceFee }
+      {
+        student_id: student.id,
+        due_id: dueId,
+        student_name: student.full_name,
+        service_fee: serviceFee,
+        service_charge_type: serviceCharge.type,
+        service_charge_rate: serviceCharge.rate
+      }
     );
     if (!paystackResult.success) return res.status(400).json({ success: false, message: paystackResult.error });
 
@@ -84,6 +125,13 @@ exports.initializePayment = async (req, res) => {
       success: true,
       message: 'Payment initialized successfully',
       payment: createdPayment.rows[0],
+      charge_summary: {
+        amount: paymentAmount,
+        service_fee: serviceFee,
+        total: totalCharge,
+        service_charge_type: serviceCharge.type,
+        service_charge_rate: serviceCharge.rate
+      },
       paystack: {
         authorization_url: paystackResult.data.authorization_url,
         access_code: paystackResult.data.access_code,
@@ -154,8 +202,8 @@ exports.createManualPayment = async (req, res) => {
       `SELECT COALESCE(SUM(amount), 0) as total_paid FROM payments WHERE due_id = ? AND student_id = ? AND status IN ('approved', 'completed')`,
       [dueId, student.id]
     );
-    const balance = parseFloat(assignmentResult.rows[0].assigned_amount) - parseFloat(totalPaidResult.rows[0].total_paid);
-    const paymentAmount = parseFloat(amount);
+    const balance = roundMoney(parseFloat(assignmentResult.rows[0].assigned_amount) - parseFloat(totalPaidResult.rows[0].total_paid));
+    const paymentAmount = roundMoney(parseFloat(amount));
     if (!paymentAmount || paymentAmount <= 0) return res.status(400).json({ success: false, message: 'Amount must be greater than 0' });
     if (paymentAmount > balance) return res.status(400).json({ success: false, message: `Amount exceeds balance. Balance: GHS ${balance}` });
     const paymentId = generateUUID();
@@ -178,7 +226,7 @@ exports.getPayments = async (req, res) => {
     const userRole = req.user.role;
     const userId = req.user.id;
     let sql = `
-      SELECT p.id, p.amount, p.payment_method, p.payment_type, p.status,
+      SELECT p.id, p.amount, p.service_fee, p.payment_method, p.payment_type, p.status,
              p.paystack_reference, p.proof_image_url, p.notes, p.created_at, p.approved_at,
              s.student_id, s.full_name as student_name, s.email as student_email, s.phone_number as student_phone,
              d.name as due_name,
