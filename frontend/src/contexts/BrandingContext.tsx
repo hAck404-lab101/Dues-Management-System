@@ -32,8 +32,12 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     };
 
     const fetchBranding = async () => {
+        setLoading(true);
         try {
-            const res = await api.get('/settings/public');
+            const res = await api.get('/settings/public', {
+                params: { _t: Date.now() },
+                headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+            });
             if (res.data.success) {
                 const { app_name, app_logo, app_logo_secondary, app_favicon, homepage_variant } = res.data.data;
                 const configuredName = app_name?.trim() || DEFAULT_APP_NAME;
