@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -130,7 +130,7 @@ export default function AdminSettingsPage() {
         setSettings(prev => ({ ...prev, [key]: { ...prev[key], value } }));
     };
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+    const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>, key: string) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -419,7 +419,7 @@ export default function AdminSettingsPage() {
     );
 }
 
-function SettingBlock({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function SettingBlock({ title, description, children }: { title: string; description: string; children: ReactNode }) {
     return <div className="p-4 sm:p-6 bg-gray-50 border rounded-lg"><h4 className="font-bold text-primary text-sm mb-1 uppercase tracking-tight">{title}</h4><p className="text-xs text-gray-500 mb-4">{description}</p>{children}</div>;
 }
 
