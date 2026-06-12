@@ -106,6 +106,10 @@ exports.getSettingsByCategory = async (req, res) => {
 
 exports.getPublicSettings = async (req, res) => {
     try {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+
         await ensureDefaultSettings();
         const publicCategories = [
             'sys_general',
