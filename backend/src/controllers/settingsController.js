@@ -8,9 +8,31 @@ const SENSITIVE_KEYS = [
     'paystack_webhook_secret'
 ];
 
+const DEFAULT_APP_NAME = process.env.DEFAULT_APP_NAME || 'Dues Management System';
+
 const DEFAULT_SETTINGS = [
-    ['homepage_variant', 'portal', 'sys_maintenance', 'Homepage style shown to students. Options: portal or classic']
+    ['homepage_variant', 'portal', 'sys_maintenance', 'Homepage style shown to students. Options: portal or classic'],
+    ['app_name', DEFAULT_APP_NAME, 'sys_general', 'Application name'],
+    ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DUES', 'comm_sms', 'SMS sender ID'],
+    ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, 'comm_email', 'Email sender display name']
 ];
+
+const cleanOldUccBranding = async () => {
+    const replacements = [
+        ['app_name', DEFAULT_APP_NAME, '%UCC%'],
+        ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DUES', '%UCC%'],
+        ['email_from', process.env.DEFAULT_EMAIL_FROM || 'no-reply@example.com', '%ucc%'],
+        ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, '%UCC%'],
+        ['manual_payment_bank', process.env.DEFAULT_MANUAL_PAYMENT_BANK || 'Bank Account: 1234567890, Branch: Main', '%UCC%']
+    ];
+
+    for (const [key, value, match] of replacements) {
+        await query('UPDATE settings SET `value` = ? WHERE `key` = ? AND `value` LIKE ?', [value, key, match]);
+    }
+
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC Dues', 'Dues') WHERE `value` LIKE '%UCC Dues%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC', '') WHERE `value` LIKE '%UCC%'");
+};
 
 const ensureDefaultSettings = async () => {
     for (const [key, value, category, description] of DEFAULT_SETTINGS) {
@@ -19,6 +41,8 @@ const ensureDefaultSettings = async () => {
             [key, value, category, description]
         );
     }
+
+    await cleanOldUccBranding();
 };
 
 exports.getSettings = async (req, res) => {
@@ -68,6 +92,8 @@ exports.updateSettings = async (req, res) => {
             }
             await query('UPDATE settings SET value = ? WHERE `key` = ?', [value, key]);
         }
+
+        await cleanOldUccBranding();
 
         res.json({ success: true, message: 'Settings updated successfully' });
     } catch (error) {
