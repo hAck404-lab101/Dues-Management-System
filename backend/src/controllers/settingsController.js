@@ -9,20 +9,41 @@ const SENSITIVE_KEYS = [
 ];
 
 const DEFAULT_APP_NAME = process.env.DEFAULT_APP_NAME || 'Dues Management System';
+const DEFAULT_APP_DESCRIPTION = process.env.DEFAULT_APP_DESCRIPTION || 'A secure student portal for dues, payments, receipts, and clearance records.';
 
 const DEFAULT_SETTINGS = [
     ['homepage_variant', 'portal', 'sys_maintenance', 'Homepage style shown to students. Options: portal or classic'],
     ['app_name', DEFAULT_APP_NAME, 'sys_general', 'Application name'],
+    ['app_description', DEFAULT_APP_DESCRIPTION, 'sys_general', 'Application link preview description'],
     ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DUES', 'comm_sms', 'SMS sender ID'],
     ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, 'comm_email', 'Email sender display name']
 ];
 
+const cleanPublicBrandText = (value, fallback = '') => {
+    const text = String(value || fallback || '').trim();
+    if (!text) return fallback;
+    return text
+        .replace(/University of Cape Coast/gi, 'Dues Management System')
+        .replace(/\bUCC\b/gi, 'DMS')
+        .replace(/Ho Technical University/gi, 'Dues Management System')
+        .replace(/\bHTU\b/gi, 'DMS')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+};
+
 const cleanOldUccBranding = async () => {
     const replacements = [
         ['app_name', DEFAULT_APP_NAME, '%UCC%'],
+        ['app_name', DEFAULT_APP_NAME, '%University of Cape Coast%'],
+        ['app_name', DEFAULT_APP_NAME, '%HTU%'],
+        ['app_name', DEFAULT_APP_NAME, '%Ho Technical University%'],
         ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DUES', '%UCC%'],
+        ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DUES', '%HTU%'],
         ['email_from', process.env.DEFAULT_EMAIL_FROM || 'no-reply@example.com', '%ucc%'],
         ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, '%UCC%'],
+        ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, '%University of Cape Coast%'],
+        ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, '%HTU%'],
+        ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, '%Ho Technical University%'],
         ['manual_payment_bank', process.env.DEFAULT_MANUAL_PAYMENT_BANK || 'Bank Account: 1234567890, Branch: Main', '%UCC%']
     ];
 
@@ -31,7 +52,10 @@ const cleanOldUccBranding = async () => {
     }
 
     await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC Dues', 'Dues') WHERE `value` LIKE '%UCC Dues%'");
-    await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC', '') WHERE `value` LIKE '%UCC%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'University of Cape Coast', 'Dues Management System') WHERE `value` LIKE '%University of Cape Coast%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'Ho Technical University', 'Dues Management System') WHERE `value` LIKE '%Ho Technical University%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC', 'DMS') WHERE `value` LIKE '%UCC%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'HTU', 'DMS') WHERE `value` LIKE '%HTU%'");
 };
 
 const ensureDefaultSettings = async () => {
@@ -153,9 +177,13 @@ exports.getPublicSettings = async (req, res) => {
 
         const settingsMap = {};
         rows.forEach(s => {
-            // Include paystack public key too as it's needed for frontend initialization
             settingsMap[s.key] = s.value;
         });
+
+        settingsMap.app_name = cleanPublicBrandText(settingsMap.app_name, DEFAULT_APP_NAME);
+        settingsMap.app_description = cleanPublicBrandText(settingsMap.app_description, DEFAULT_APP_DESCRIPTION);
+        settingsMap.sms_sender_id = cleanPublicBrandText(settingsMap.sms_sender_id, process.env.DEFAULT_SMS_SENDER_ID || 'DUES');
+        settingsMap.email_from_name = cleanPublicBrandText(settingsMap.email_from_name, process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME);
 
         // Explicitly add paystack_public_key if not caught by category filter
         const pkRes = await query('SELECT value FROM settings WHERE `key` = "paystack_public_key"');
@@ -196,47 +224,5 @@ exports.uploadLogo = async (req, res) => {
     } catch (error) {
         console.error('Upload logo error:', error);
         res.status(500).json({ success: false, message: 'Failed to upload image' });
-    }
-};
-
-exports.resetSite = async (req, res) => {
-    if (!['admin', 'treasurer', 'president'].includes(req.user.role)) {
-        return res.status(403).json({ success: false, message: 'Unauthorized.' });
-    }
-
-    const { pool } = require('../config/database');
-    const connection = await pool.getConnection();
-
-    try {
-        await connection.beginTransaction();
-
-        const tablesToClear = [
-            'receipts',
-            'audit_logs',
-            'email_notifications',
-            'payments',
-            'due_assignments',
-            'dues',
-            'students'
-        ];
-
-        for (const table of tablesToClear) {
-            await connection.query(`DELETE FROM ${table}`);
-        }
-
-        await connection.query("DELETE FROM users WHERE role = 'student'");
-
-        await connection.commit();
-
-        res.json({
-            success: true,
-            message: 'Site data successfully reset.'
-        });
-    } catch (error) {
-        await connection.rollback();
-        console.error('Reset site error:', error);
-        res.status(500).json({ success: false, message: 'Failed to reset site data' });
-    } finally {
-        connection.release();
     }
 };
