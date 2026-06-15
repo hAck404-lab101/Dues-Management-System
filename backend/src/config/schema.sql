@@ -1,4 +1,4 @@
--- HTU Departmental Dues Management System Database Schema (MySQL)
+-- Departmental Dues Management System Database Schema (MySQL)
 
 -- Users table (for authentication)
 CREATE TABLE IF NOT EXISTS users (
@@ -186,7 +186,7 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'sms_provider', 'gonlinesites', 'comm_sms', 'SMS provider name'),
 (UUID(), 'sms_api_url', 'https://sms.gonlinesites.com/app/smsapi/index.php', 'comm_sms', 'SMS provider API URL'),
 (UUID(), 'sms_api_key', '', 'comm_sms', 'Encrypted SMS provider API key'),
-(UUID(), 'sms_sender_id', 'HTU DUES', 'comm_sms', 'SMS sender ID'),
+(UUID(), 'sms_sender_id', 'DMS', 'comm_sms', 'SMS sender ID'),
 (UUID(), 'sms_payment_template', 'Hello {name}, your payment of GHS {amount} for {due_name} has been received. Receipt: {receipt_no}. Download: {url}', 'comm_sms', 'Payment SMS template'),
 (UUID(), 'sms_credentials_template', 'Hello {name}, your student portal login has been reset. Login ID: {login}. Temporary password: {password}. Please change it after login.', 'comm_sms', 'Student credential reset SMS template'),
 (UUID(), 'email_host', '', 'comm_email', 'SMTP host'),
@@ -194,8 +194,9 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'email_user', '', 'comm_email', 'SMTP username'),
 (UUID(), 'email_pass', '', 'comm_email', 'Encrypted SMTP password'),
 (UUID(), 'email_from', '', 'comm_email', 'Email sender address'),
-(UUID(), 'email_from_name', 'HTU Dues Management', 'comm_email', 'Email sender display name'),
-(UUID(), 'app_name', 'HTU Dues Management System', 'sys_general', 'Application name'),
+(UUID(), 'email_from_name', 'Dues Management System', 'comm_email', 'Email sender display name'),
+(UUID(), 'app_name', 'Dues Management System', 'sys_general', 'Application name'),
+(UUID(), 'app_description', 'A secure student portal for dues, payments, receipts, and clearance records.', 'sys_general', 'Application link preview description'),
 (UUID(), 'app_logo', '', 'sys_appearance', 'Primary app logo'),
 (UUID(), 'app_logo_secondary', '', 'sys_appearance', 'Secondary app logo'),
 (UUID(), 'app_favicon', '', 'sys_appearance', 'Application favicon');
@@ -205,6 +206,9 @@ UPDATE settings SET category = 'comm_sms' WHERE `key` IN ('sms_provider', 'sms_a
 UPDATE settings SET category = 'comm_email' WHERE `key` IN ('email_host', 'email_port', 'email_user', 'email_pass', 'email_from', 'email_from_name');
 UPDATE settings SET `value` = 'gonlinesites' WHERE `key` = 'sms_provider' AND (`value` IS NULL OR `value` = '' OR `value` = 'arkesel');
 UPDATE settings SET `value` = 'https://sms.gonlinesites.com/app/smsapi/index.php' WHERE `key` = 'sms_api_url' AND (`value` IS NULL OR `value` = '');
+UPDATE settings SET `value` = 'Dues Management System' WHERE `key` = 'app_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
+UPDATE settings SET `value` = 'DMS' WHERE `key` = 'sms_sender_id' AND (`value` LIKE '%UCC%' OR `value` LIKE '%HTU%');
+UPDATE settings SET `value` = 'Dues Management System' WHERE `key` = 'email_from_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
 
 -- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so migrate.js skips duplicate errors)
 CREATE INDEX idx_users_email ON users(email);
