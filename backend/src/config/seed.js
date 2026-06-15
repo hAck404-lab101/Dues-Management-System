@@ -9,17 +9,21 @@ async function seed() {
     connection = await pool.getConnection();
     const hashedPassword = await bcrypt.hash('Admin123!', 10);
 
+    const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
+    const treasurerEmail = process.env.DEFAULT_TREASURER_EMAIL || 'treasurer@example.com';
+    const financialSecretaryEmail = process.env.DEFAULT_FINANCIAL_SECRETARY_EMAIL || 'fsecretary@example.com';
+
     // Create default admin user
     const [adminResult] = await connection.query(
       `INSERT INTO users (id, email, password_hash, role, is_active)
        VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE email = email`,
-      [uuidv4(), 'admin@ucc.edu.gh', hashedPassword, 'president', true]
+      [uuidv4(), adminEmail, hashedPassword, 'president', true]
     );
 
     if (adminResult.affectedRows > 0) {
       console.log('Default admin user created:');
-      console.log('Email: admin@ucc.edu.gh');
+      console.log(`Email: ${adminEmail}`);
       console.log('Password: Admin123!');
     } else {
       console.log('Admin user already exists');
@@ -30,7 +34,7 @@ async function seed() {
       `INSERT INTO users (id, email, password_hash, role, is_active)
        VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE email = email`,
-      [uuidv4(), 'treasurer@ucc.edu.gh', hashedPassword, 'treasurer', true]
+      [uuidv4(), treasurerEmail, hashedPassword, 'treasurer', true]
     );
 
     // Create financial secretary user
@@ -38,7 +42,7 @@ async function seed() {
       `INSERT INTO users (id, email, password_hash, role, is_active)
        VALUES (?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE email = email`,
-      [uuidv4(), 'fsecretary@ucc.edu.gh', hashedPassword, 'financial_secretary', true]
+      [uuidv4(), financialSecretaryEmail, hashedPassword, 'financial_secretary', true]
     );
 
     console.log('Database seeding completed successfully');
