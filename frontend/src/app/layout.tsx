@@ -13,11 +13,22 @@ const DEFAULT_DESCRIPTION = process.env.NEXT_PUBLIC_DEFAULT_APP_DESCRIPTION || '
 const normalizeUrl = (value?: string | null) => {
   if (!value) return undefined
   const trimmed = value.trim()
-  if (!trimmed) return undefined
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return undefined
   return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
 }
 
+const toUrl = (value?: string | null) => {
+  const normalized = normalizeUrl(value)
+  if (!normalized) return undefined
+  try {
+    return new URL(normalized)
+  } catch {
+    return undefined
+  }
+}
+
 const SITE_URL = normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL)
+const METADATA_BASE = toUrl(SITE_URL)
 
 const cleanBrandText = (value?: string | null, fallback = '') => {
   const text = (value || fallback || '').trim()
@@ -37,7 +48,7 @@ const appDescription = cleanBrandText(DEFAULT_DESCRIPTION, 'A secure student por
 export const metadata: Metadata = {
   title: appTitle,
   description: appDescription,
-  metadataBase: SITE_URL ? new URL(SITE_URL) : undefined,
+  metadataBase: METADATA_BASE,
   icons: {
     icon: '/favicon.png',
     shortcut: '/favicon.png',
@@ -59,7 +70,7 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({
-  children,
+  children
 }: {
   children: React.ReactNode
 }) {
