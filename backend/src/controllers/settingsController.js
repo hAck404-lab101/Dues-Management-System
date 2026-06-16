@@ -77,13 +77,12 @@ exports.getSettings = async (req, res) => {
         const settingsMap = {};
         rows.forEach(s => {
             let value = s.value;
-            // Decrypt sensitive data for the admin UI
             if (SENSITIVE_KEYS.includes(s.key)) {
                 value = decrypt(value);
             }
 
             settingsMap[s.key] = {
-                value: value,
+                value,
                 category: s.category,
                 description: s.description,
                 updated_at: s.updated_at
@@ -110,7 +109,6 @@ exports.updateSettings = async (req, res) => {
 
         for (const key of keys) {
             let value = settings[key];
-            // Encrypt sensitive data before saving
             if (SENSITIVE_KEYS.includes(key)) {
                 value = encrypt(value);
             }
@@ -140,7 +138,7 @@ exports.getSettingsByCategory = async (req, res) => {
             }
 
             settingsMap[s.key] = {
-                value: value,
+                value,
                 category: s.category,
                 description: s.description,
                 updated_at: s.updated_at
@@ -169,7 +167,6 @@ exports.getPublicSettings = async (req, res) => {
             'pay_charges'
         ];
 
-        // We only fetch non-sensitive keys for public use
         const { rows } = await query(
             'SELECT `key`, `value` FROM settings WHERE category IN (?) AND `key` NOT IN (?)',
             [publicCategories, SENSITIVE_KEYS]
@@ -185,10 +182,9 @@ exports.getPublicSettings = async (req, res) => {
         settingsMap.sms_sender_id = cleanPublicBrandText(settingsMap.sms_sender_id, process.env.DEFAULT_SMS_SENDER_ID || 'DUES');
         settingsMap.email_from_name = cleanPublicBrandText(settingsMap.email_from_name, process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME);
 
-        // Explicitly add paystack_public_key if not caught by category filter
         const pkRes = await query('SELECT value FROM settings WHERE `key` = "paystack_public_key"');
         if (pkRes.rows.length > 0) {
-            settingsMap['paystack_public_key'] = pkRes.rows[0].value;
+            settingsMap.paystack_public_key = pkRes.rows[0].value;
         }
 
         const homepageRes = await query('SELECT value FROM settings WHERE `key` = "homepage_variant"');
@@ -207,7 +203,7 @@ exports.uploadLogo = async (req, res) => {
             return res.status(400).json({ success: false, message: 'No file uploaded' });
         }
 
-        const { type } = req.body; // 'primary', 'secondary', 'favicon'
+        const { type } = req.body;
         const logoUrl = `/uploads/brand/${req.file.filename}`;
 
         let settingKey = 'app_logo';
@@ -224,5 +220,43 @@ exports.uploadLogo = async (req, res) => {
     } catch (error) {
         console.error('Upload logo error:', error);
         res.status(500).json({ success: false, message: 'Failed to upload image' });
+    }
+};
+
+exports.resetSite = async (req, res) => {
+    if (!['admin', 'treasurer', 'president'].includes(req.user.role)) {
+        return res.status(403).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    const { pool } = require('../config/database');
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        const tablesToClear = [
+            'receipts',
+            'audit_logs',
+            'email_notifications',
+            'payments',
+            'due_assignments',
+            'dues',
+            'students'
+        ];
+
+        for (const table of tablesToClear) {
+            await connection.query(`DELETE FROM ${table}`);
+        }
+
+        await connection.query("DELETE FROM users WHERE role = 'student'");
+        await connection.commit();
+
+        res.json({ success: true, message: 'Site data successfully reset.' });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Reset site error:', error);
+        res.status(500).json({ success: false, message: 'Failed to reset site data' });
+    } finally {
+        connection.release();
     }
 };
