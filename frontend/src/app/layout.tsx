@@ -15,8 +15,15 @@ const getApiBase = () => {
   return apiUrl.replace(/\/api\/?$/, '')
 }
 
+const normalizeUrl = (value?: string | null) => {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`
+}
+
 const getSiteUrl = () => {
-  return process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined
+  return normalizeUrl(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL)
 }
 
 const cleanBrandText = (value?: string | null, fallback = '') => {
@@ -27,24 +34,29 @@ const cleanBrandText = (value?: string | null, fallback = '') => {
     .replace(/\bUCC\b/gi, 'DMS')
     .replace(/Ho Technical University/gi, 'Dues Management System')
     .replace(/\bHTU\b/gi, 'DMS')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 const makeAbsoluteUrl = (value?: string | null) => {
   if (!value) return null
   if (value.startsWith('http')) return value
-  const base = getApiBase()
+  const base = getApiBase() || getSiteUrl()
   return base ? `${base}${value.startsWith('/') ? value : `/${value}`}` : value
 }
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const apiBase = getApiBase()
+    const siteUrl = getSiteUrl()
+
     if (!apiBase) {
       return {
         title: DEFAULT_TITLE,
         description: DEFAULT_DESCRIPTION,
+        metadataBase: siteUrl ? new URL(siteUrl) : undefined,
         icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
-        openGraph: { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, type: 'website' },
+        openGraph: { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, type: 'website', siteName: DEFAULT_TITLE },
         twitter: { card: 'summary_large_image', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION }
       }
     }
@@ -67,7 +79,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: appName,
       description,
-      metadataBase: getSiteUrl() ? new URL(getSiteUrl() as string) : undefined,
+      metadataBase: siteUrl ? new URL(siteUrl) : undefined,
       icons: {
         icon: favicon,
         shortcut: favicon,
@@ -88,9 +100,11 @@ export async function generateMetadata(): Promise<Metadata> {
       }
     }
   } catch {
+    const siteUrl = getSiteUrl()
     return {
       title: DEFAULT_TITLE,
       description: DEFAULT_DESCRIPTION,
+      metadataBase: siteUrl ? new URL(siteUrl) : undefined,
       icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
       openGraph: { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, type: 'website', siteName: DEFAULT_TITLE },
       twitter: { card: 'summary_large_image', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION }
