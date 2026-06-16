@@ -45,25 +45,36 @@ const makeAbsoluteUrl = (value?: string | null) => {
   return base ? `${base}${value.startsWith('/') ? value : `/${value}`}` : value
 }
 
+const fallbackMetadata = (): Metadata => {
+  const siteUrl = getSiteUrl()
+  return {
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+    icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
+    openGraph: {
+      title: DEFAULT_TITLE,
+      description: DEFAULT_DESCRIPTION,
+      type: 'website',
+      siteName: DEFAULT_TITLE
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: DEFAULT_TITLE,
+      description: DEFAULT_DESCRIPTION
+    }
+  }
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const apiBase = getApiBase()
     const siteUrl = getSiteUrl()
 
-    if (!apiBase) {
-      return {
-        title: DEFAULT_TITLE,
-        description: DEFAULT_DESCRIPTION,
-        metadataBase: siteUrl ? new URL(siteUrl) : undefined,
-        icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
-        openGraph: { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, type: 'website', siteName: DEFAULT_TITLE },
-        twitter: { card: 'summary_large_image', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION }
-      }
-    }
+    if (!apiBase) return fallbackMetadata()
 
     const response = await fetch(`${apiBase}/api/settings/public`, {
       cache: 'no-store',
-      next: { revalidate: 0 },
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
     })
 
@@ -100,15 +111,7 @@ export async function generateMetadata(): Promise<Metadata> {
       }
     }
   } catch {
-    const siteUrl = getSiteUrl()
-    return {
-      title: DEFAULT_TITLE,
-      description: DEFAULT_DESCRIPTION,
-      metadataBase: siteUrl ? new URL(siteUrl) : undefined,
-      icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
-      openGraph: { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION, type: 'website', siteName: DEFAULT_TITLE },
-      twitter: { card: 'summary_large_image', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION }
-    }
+    return fallbackMetadata()
   }
 }
 
