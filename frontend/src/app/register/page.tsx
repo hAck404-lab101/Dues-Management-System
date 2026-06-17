@@ -8,10 +8,30 @@ import { useBranding } from '@/contexts/BrandingContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
+interface RegisterFormData {
+  indexNumber: string;
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  programme: string;
+  academicYear: string;
+}
+
+interface InputProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  type?: string;
+  required?: boolean;
+}
+
 export default function RegisterPage() {
   const { setUser } = useAuth();
   const { appName, appLogo } = useBranding();
-  const [formData, setFormData] = useState({ indexNumber: '', fullName: '', phoneNumber: '', email: '', password: '', confirmPassword: '', programme: '', academicYear: '' });
+  const [formData, setFormData] = useState<RegisterFormData>({ indexNumber: '', fullName: '', phoneNumber: '', email: '', password: '', confirmPassword: '', programme: '', academicYear: '' });
   const [availableProgrammes, setAvailableProgrammes] = useState<string[]>([]);
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,6 +60,10 @@ export default function RegisterPage() {
     };
     fetchPublicSettings();
   }, []);
+
+  const updateFormField = (field: keyof RegisterFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,14 +124,14 @@ export default function RegisterPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Index Number *" value={formData.indexNumber} onChange={v => setFormData({ ...formData, indexNumber: v })} placeholder="Enter your index number" required />
-                <Input label="Full Name *" value={formData.fullName} onChange={v => setFormData({ ...formData, fullName: v })} placeholder="Enter your full name" required />
-                <Input label="Phone Number *" type="tel" value={formData.phoneNumber} onChange={v => setFormData({ ...formData, phoneNumber: v })} placeholder="e.g., 0244123456" required />
-                <Input label="Email Address *" type="email" value={formData.email} onChange={v => setFormData({ ...formData, email: v })} placeholder="your.email@example.com" required />
-                <Input label="Password *" type="password" value={formData.password} onChange={v => setFormData({ ...formData, password: v })} placeholder="Minimum 6 characters" required />
-                <Input label="Confirm Password *" type="password" value={formData.confirmPassword} onChange={v => setFormData({ ...formData, confirmPassword: v })} placeholder="Re-enter your password" required />
-                <div><label className="label">Programme *</label><select required className="input-field" value={formData.programme} onChange={e => setFormData({ ...formData, programme: e.target.value })}><option value="">Select Programme</option>{availableProgrammes.map(prog => <option key={prog} value={prog}>{prog}</option>)}</select></div>
-                <div><label className="label">Academic Year *</label><select required className="input-field" value={formData.academicYear} onChange={e => setFormData({ ...formData, academicYear: e.target.value })}><option value="">Select Academic Year</option>{availableYears.map(year => <option key={year} value={year}>{year}</option>)}</select></div>
+                <Input label="Index Number *" value={formData.indexNumber} onChange={(value) => updateFormField('indexNumber', value)} placeholder="Enter your index number" required />
+                <Input label="Full Name *" value={formData.fullName} onChange={(value) => updateFormField('fullName', value)} placeholder="Enter your full name" required />
+                <Input label="Phone Number *" type="tel" value={formData.phoneNumber} onChange={(value) => updateFormField('phoneNumber', value)} placeholder="e.g., 0244123456" required />
+                <Input label="Email Address *" type="email" value={formData.email} onChange={(value) => updateFormField('email', value)} placeholder="your.email@example.com" required />
+                <Input label="Password *" type="password" value={formData.password} onChange={(value) => updateFormField('password', value)} placeholder="Minimum 6 characters" required />
+                <Input label="Confirm Password *" type="password" value={formData.confirmPassword} onChange={(value) => updateFormField('confirmPassword', value)} placeholder="Re-enter your password" required />
+                <div><label className="label">Programme *</label><select required className="input-field" value={formData.programme} onChange={e => updateFormField('programme', e.target.value)}><option value="">Select Programme</option>{availableProgrammes.map(prog => <option key={prog} value={prog}>{prog}</option>)}</select></div>
+                <div><label className="label">Academic Year *</label><select required className="input-field" value={formData.academicYear} onChange={e => updateFormField('academicYear', e.target.value)}><option value="">Select Academic Year</option>{availableYears.map(year => <option key={year} value={year}>{year}</option>)}</select></div>
               </div>
 
               <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
@@ -128,6 +152,6 @@ export default function RegisterPage() {
   );
 }
 
-function Input({ label, value, onChange, placeholder, type = 'text', required = false }: any) {
+function Input({ label, value, onChange, placeholder, type = 'text', required = false }: InputProps) {
   return <div><label className="label">{label}</label><input type={type} required={required} className="input-field" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} /></div>;
 }
