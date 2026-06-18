@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -60,7 +60,7 @@ export default function AuditLogPage() {
     const ACTIONS = ['CREATE_STUDENT', 'UPDATE_STUDENT', 'ACTIVATE_STUDENT', 'DEACTIVATE_STUDENT', 'APPROVE_PAYMENT', 'REJECT_PAYMENT', 'RESEND_SMS', 'BULK_IMPORT_STUDENTS', 'BULK_SMS', 'RESET_STUDENT_CREDENTIALS'];
 
     return (
-        <Layout title="Audit Log">
+        <AdminLayout title="Audit Log">
             <div className="space-y-5">
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                     <div>
@@ -156,6 +156,6 @@ export default function AuditLogPage() {
                     )}
                 </div>
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }

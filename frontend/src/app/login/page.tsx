@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { login } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranding } from '@/contexts/BrandingContext';
+import { EyeIcon, EyeSlashIcon } from '@/components/Icons';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const { appName, appLogo } = useBranding();
   const [formData, setFormData] = useState({ indexNumber: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +22,11 @@ export default function LoginPage() {
       const res = await login(formData.indexNumber, formData.password);
       setUser(res.user);
       toast.success('Login successful!');
-      window.location.href = '/student/dashboard';
+      if (res.user && ['admin', 'treasurer', 'financial_secretary', 'president'].includes(res.user.role)) {
+        window.location.href = '/admin/dashboard';
+      } else {
+        window.location.href = '/student/dashboard';
+      }
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -29,47 +35,144 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-6">
-        <div className="flex items-center justify-between text-sm">
-          <Link href="/" className="text-primary font-semibold hover:underline">← Home</Link>
-          <Link href="/register" className="text-primary font-semibold hover:underline">Create account</Link>
+    <div className="flex min-h-screen bg-neutral">
+      
+      {/* Left Side - Hero / Branding (Hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-primary overflow-hidden flex-col justify-between p-12 text-white">
+        {/* Abstract Background Pattern */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <svg className="w-full h-full" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+             <path d="M-100,-100 L400,-100 L800,300 L800,900 L-100,900 Z" fill="url(#grad1)" />
+             <path d="M400,-100 L900,-100 L900,400 L0,900 L-100,600 Z" fill="url(#grad2)" />
+             <defs>
+               <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.1" />
+                 <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+               </linearGradient>
+               <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                 <stop offset="0%" stopColor="#ffffff" stopOpacity="0.15" />
+                 <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+               </linearGradient>
+             </defs>
+          </svg>
         </div>
 
-        <div className="text-center">
+        <div className="relative z-10">
           {appLogo ? (
-            <img src={appLogo.startsWith('http') ? appLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${appLogo}`} alt="Logo" className="mx-auto h-20 w-auto mb-4 drop-shadow-lg" />
+            <img src={appLogo.startsWith('http') ? appLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${appLogo}`} alt="Logo" className="h-8 w-auto mb-4" />
           ) : (
-            <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl mb-4">
-              <svg className="w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <div className="flex items-center gap-2 mb-4">
+               <div className="w-8 h-8 bg-white/20 rounded flex items-center justify-center">
+                 <span className="font-bold text-white text-xs">DM</span>
+               </div>
+               <span className="font-bold tracking-wide">{appName}</span>
             </div>
           )}
-          <h2 className="text-3xl font-extrabold text-primary">{appName}</h2>
-          <p className="mt-2 text-sm text-gray-600">Student Portal Login</p>
         </div>
 
-        <form className="space-y-6 card" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="indexNumber" className="label">Index Number</label>
-              <input id="indexNumber" name="indexNumber" type="text" required className="input-field" placeholder="Enter your index number" value={formData.indexNumber} onChange={(e) => setFormData({ ...formData, indexNumber: e.target.value })} />
+        <div className="relative z-10 max-w-lg">
+          <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight mb-6">
+            Pay Smarter.<br/>Track Faster.<br/>Clear Anywhere.
+          </h1>
+          <p className="text-lg text-white/80 leading-relaxed">
+            From quick due checks to full payment history, our student portal lets you handle your department records seamlessly across devices.
+          </p>
+          <div className="mt-8 flex items-center gap-2">
+            <span className="w-8 h-1 bg-secondary rounded-full block"></span>
+            <span className="w-2 h-1 bg-white/30 rounded-full block"></span>
+            <span className="w-2 h-1 bg-white/30 rounded-full block"></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
+        <div className="absolute top-6 left-6 lg:hidden">
+            <Link href="/" className="flex items-center gap-2 text-primary font-bold text-sm hover:underline">
+              ← Back to Website
+            </Link>
+        </div>
+        
+        <div className="absolute top-6 right-6 hidden lg:block">
+            <Link href="/" className="flex items-center gap-2 text-gray-500 font-medium text-sm hover:text-primary transition-colors">
+              ← Back to Website
+            </Link>
+        </div>
+
+        <div className="w-full max-w-md bg-white p-8 sm:p-10 rounded-3xl shadow-2xl shadow-primary/5 border border-gray-100 relative z-10">
+          
+          {/* Mobile Logo Fallback */}
+          <div className="lg:hidden text-center mb-8">
+            <h2 className="text-2xl font-extrabold text-primary">{appName}</h2>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome Back!</h2>
+            <p className="text-sm text-gray-500 font-medium">Log in to your student portal to view and pay dues.</p>
+          </div>
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="indexNumber" className="block text-sm font-semibold text-gray-700 mb-1.5">Index Number</label>
+                <input 
+                  id="indexNumber" 
+                  name="indexNumber" 
+                  type="text" 
+                  required 
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none text-gray-900 placeholder-gray-400" 
+                  placeholder="Input your index number" 
+                  value={formData.indexNumber} 
+                  onChange={(e) => setFormData({ ...formData, indexNumber: e.target.value })} 
+                />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label htmlFor="password" className="block text-sm font-semibold text-gray-700">Password</label>
+                  <Link href="/forgot-password" className="text-sm font-bold text-secondary hover:text-secondary-dark transition-colors">Forgot Password?</Link>
+                </div>
+                <div className="relative">
+                  <input 
+                    id="password" 
+                    name="password" 
+                    type={showPassword ? "text" : "password"} 
+                    required 
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors outline-none text-gray-900 placeholder-gray-400" 
+                    placeholder="Input your password"
+                    value={formData.password} 
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-primary transition-colors"
+                  >
+                    <div className="w-5 h-5">
+                      {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+                    </div>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div>
-              <label htmlFor="password" className="label">Password</label>
-              <input id="password" name="password" type="password" required className="input-field" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-black/10 flex justify-center items-center"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                'Login'
+              )}
+            </button>
+
+            <div className="text-center text-sm font-medium text-gray-500 pt-2">
+              Don't have an account? <Link href="/register" className="text-gray-900 font-bold hover:underline">Sign up here</Link>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <Link href="/forgot-password" className="text-primary hover:underline text-sm font-medium">Forgot password?</Link>
-          </div>
-
-          <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? 'Signing in...' : 'Sign in'}</button>
-
-          <div className="text-center text-sm">
-            <p className="text-gray-600">Don't have an account? <Link href="/register" className="text-primary hover:underline font-medium">Register here</Link></p>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

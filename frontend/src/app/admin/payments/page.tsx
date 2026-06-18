@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -176,7 +176,7 @@ export default function AdminPaymentsPage() {
 
   return (
     <>
-      <Layout title="Manage Payments">
+      <AdminLayout title="Manage Payments">
         <div className="card p-5 mb-6 space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-end gap-4">
             <div className="flex-1 min-w-[220px]">
@@ -305,7 +305,7 @@ export default function AdminPaymentsPage() {
             </div>
           )}
         </div>
-      </Layout>
+      </AdminLayout>
 
       {rejectId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4" onClick={() => setRejectId(null)}>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -83,7 +83,7 @@ export default function BulkSMSPage() {
     const smsPages = Math.ceil(charCount / 160) || 1;
 
     return (
-        <Layout title="Bulk SMS">
+        <AdminLayout title="Bulk SMS">
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="card p-6">
                     <h2 className="text-xl font-bold text-primary flex items-center gap-2">
@@ -201,6 +201,6 @@ export default function BulkSMSPage() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }

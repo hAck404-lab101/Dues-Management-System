@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -227,7 +227,7 @@ export default function AdminStudentsPage() {
 
   return (
     <>
-      <Layout title="Manage Students">
+      <AdminLayout title="Manage Students">
         <div className="flex flex-col sm:flex-row gap-4 mb-6 items-start sm:items-center justify-between">
           <div className="flex gap-3 flex-wrap items-center">
             <input
@@ -352,7 +352,7 @@ export default function AdminStudentsPage() {
             </div>
           )}
         </div>
-      </Layout>
+      </AdminLayout>
 
       {showAddModal && (
         <Modal title="Add New Student" onClose={() => setShowAddModal(false)}>

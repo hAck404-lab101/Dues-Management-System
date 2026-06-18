@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -93,7 +93,7 @@ export default function TeamManagementPage() {
     };
 
     return (
-        <Layout title="Team Management">
+        <AdminLayout title="Team Management">
             <div className="max-w-5xl mx-auto space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
@@ -184,6 +184,6 @@ export default function TeamManagementPage() {
                     </form>
                 </div>
             )}
-        </Layout>
+        </AdminLayout>
     );
 }

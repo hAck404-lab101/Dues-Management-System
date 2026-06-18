@@ -35,10 +35,11 @@ export default function Navbar() {
   };
 
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin/login';
+  const isAdminRoute = pathname.startsWith('/admin');
   const authenticated = isClient && !!user;
   const canUseBackup = ['admin', 'treasurer', 'president'].includes(user?.role || '');
 
-  if (isAuthPage) return null;
+  if (isAuthPage || isAdminRoute) return null;
 
   return (
     <nav className="bg-primary text-white shadow-xl sticky top-0 z-[100]">

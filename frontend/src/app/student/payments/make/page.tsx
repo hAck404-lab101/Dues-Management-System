@@ -26,8 +26,12 @@ export default function MakePaymentPage() {
   const [loadingDue, setLoadingDue] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else if (user.role !== 'student') {
+        router.push('/admin/dashboard');
+      }
     }
   }, [user, loading, router]);
 

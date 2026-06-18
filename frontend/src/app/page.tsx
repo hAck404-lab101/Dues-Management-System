@@ -66,7 +66,7 @@ function PortalHomepage() {
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link href="/login" className="btn-primary px-6 py-3 font-bold text-center">Student Login</Link>
-                <Link href="/verify-receipt" className="btn-primary px-6 py-3 font-bold text-center">Verify Receipt</Link>
+                <Link href="/verify-receipt" className="btn-secondary px-6 py-3 font-bold text-center">Verify Receipt</Link>
               </div>
             </div>
 
@@ -150,7 +150,7 @@ function ClassicHomepage() {
           <p className="text-lg opacity-90 mb-8">A secure student dues payment and records portal</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register" className="btn-secondary text-lg px-8 py-3">Get Started</Link>
-            <Link href="/login" className="bg-white text-primary hover:opacity-90 text-lg px-8 py-3 rounded-lg font-bold transition-opacity">Student Login</Link>
+            <Link href="/login" className="bg-white text-primary hover:bg-gray-50 text-lg px-8 py-3 rounded-lg font-bold transition-colors">Student Login</Link>
           </div>
         </div>
       </section>
@@ -182,7 +182,7 @@ function ClassicHomepage() {
           <p className="text-xl mb-8 opacity-90">Manage your dues, payments, and receipts efficiently</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register" className="btn-secondary text-lg px-8 py-3">Create Account</Link>
-            <Link href="/login" className="bg-white text-primary hover:opacity-90 text-lg px-8 py-3 rounded-lg font-bold transition-opacity">Login to Dashboard</Link>
+            <Link href="/login" className="bg-white text-primary hover:bg-gray-50 text-lg px-8 py-3 rounded-lg font-bold transition-colors">Student Login</Link>
           </div>
         </div>
       </section>
@@ -248,6 +248,7 @@ function StudentFooter({ appName }: { appName: string }) {
               <li><Link href="/#features" className="hover:text-secondary transition-colors">Student Services</Link></li>
               <li><Link href="/verify-receipt" className="hover:text-secondary transition-colors">Verify Receipt</Link></li>
               <li><Link href="/login" className="hover:text-secondary transition-colors">Student Login</Link></li>
+              <li><Link href="/admin/login" className="hover:text-secondary transition-colors">Admin Login</Link></li>
               <li><Link href="/privacy" className="hover:text-secondary transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-secondary transition-colors">Terms & Conditions</Link></li>
             </ul>

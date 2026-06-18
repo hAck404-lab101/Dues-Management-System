@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -138,7 +138,7 @@ export default function ClearancePage() {
     };
 
     return (
-        <Layout title="Clearance Certificate">
+        <AdminLayout title="Clearance Certificate">
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="card p-6 space-y-4">
                     <h2 className="text-xl font-bold text-primary flex items-center gap-2">
@@ -288,6 +288,6 @@ export default function ClearancePage() {
                     </>
                 )}
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }

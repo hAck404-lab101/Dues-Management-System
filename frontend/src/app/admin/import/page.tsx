@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -113,7 +113,7 @@ export default function BulkImportPage() {
     };
 
     return (
-        <Layout title="Bulk Import Students">
+        <AdminLayout title="Bulk Import Students">
             <div className="max-w-5xl mx-auto space-y-6">
 
                 <div className="card p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -274,6 +274,6 @@ export default function BulkImportPage() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }

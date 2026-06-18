@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { register } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranding } from '@/contexts/BrandingContext';
+import { EyeIcon, EyeSlashIcon } from '@/components/Icons';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -153,5 +154,34 @@ export default function RegisterPage() {
 }
 
 function Input({ label, value, onChange, placeholder, type = 'text', required = false }: InputProps) {
-  return <div><label className="label">{label}</label><input type={type} required={required} className="input-field" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)} /></div>;
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === 'password';
+  const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
+
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <div className="relative">
+        <input 
+          type={inputType} 
+          required={required} 
+          className="input-field" 
+          placeholder={placeholder} 
+          value={value} 
+          onChange={e => onChange(e.target.value)} 
+        />
+        {isPassword && (
+          <button 
+            type="button" 
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-primary transition-colors"
+          >
+            <div className="w-5 h-5">
+              {showPassword ? <EyeSlashIcon /> : <EyeIcon />}
+            </div>
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }

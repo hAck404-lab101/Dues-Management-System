@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -110,7 +110,7 @@ export default function AdminReportsPage() {
   ];
 
   return (
-    <Layout title="Reports">
+    <AdminLayout title="Reports">
       {/* Tab Bar */}
       <div className="flex flex-wrap gap-2 mb-6 border-b pb-4">
         {tabs.map(t => (
@@ -287,7 +287,7 @@ export default function AdminReportsPage() {
           </>
         )}
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }
 

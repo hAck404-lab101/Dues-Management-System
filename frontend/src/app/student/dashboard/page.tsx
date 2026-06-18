@@ -32,7 +32,13 @@ export default function StudentDashboard() {
   const [downloadingReceipt, setDownloadingReceipt] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login');
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+      } else if (user.role !== 'student') {
+        router.push('/admin/dashboard');
+      }
+    }
   }, [user, loading, router]);
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -60,7 +60,7 @@ export default function SmsLogsPage() {
   }, [user, fetchLogs]);
 
   return (
-    <Layout title="SMS Logs">
+    <AdminLayout title="SMS Logs">
       <div className="space-y-5">
         <div className="card p-5 flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
           <div>
@@ -158,6 +158,6 @@ export default function SmsLogsPage() {
           )}
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBranding } from '@/contexts/BrandingContext';
 import api from '@/lib/api';
@@ -359,11 +359,11 @@ export default function AdminSettingsPage() {
     };
 
     if (loading || loadingData) {
-        return <Layout title="System Settings"><div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div></Layout>;
+        return <AdminLayout title="System Settings"><div className="flex items-center justify-center min-h-[60vh]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div></AdminLayout>;
     }
 
     return (
-        <Layout title="System Administration">
+        <AdminLayout title="System Administration">
             <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
                 <div className="lg:hidden card p-3">
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Settings Section</label>
@@ -415,7 +415,7 @@ export default function AdminSettingsPage() {
                     </div>
                 </div>
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }
 

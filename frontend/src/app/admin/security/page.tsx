@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -50,14 +50,14 @@ export default function AdminSecurityPage() {
 
   if (loading) {
     return (
-      <Layout title="Account Security">
+      <AdminLayout title="Account Security">
         <div className="text-center py-12">Loading...</div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout title="Account Security">
+    <AdminLayout title="Account Security">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="card overflow-hidden p-0">
           <div className="bg-primary text-white p-6 flex items-start gap-4">
@@ -135,6 +135,6 @@ export default function AdminSecurityPage() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

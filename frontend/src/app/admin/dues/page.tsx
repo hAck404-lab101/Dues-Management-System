@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -232,7 +232,7 @@ export default function AdminDuesPage() {
 
   return (
     <>
-      <Layout title="Manage Dues">
+      <AdminLayout title="Manage Dues">
         <div className="flex justify-end mb-6">
           <button onClick={() => { setForm(emptyForm); setShowCreateModal(true); }} className="btn-primary">+ Create Due</button>
         </div>
@@ -284,7 +284,7 @@ export default function AdminDuesPage() {
             </table>
           )}
         </div>
-      </Layout>
+      </AdminLayout>
 
       {showCreateModal && (
         <Modal title="Create New Due" onClose={() => setShowCreateModal(false)}>
