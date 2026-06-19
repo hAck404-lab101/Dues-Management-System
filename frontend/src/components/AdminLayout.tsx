@@ -98,27 +98,13 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           {canUseBackup && <NavLink href="/admin/backup" icon={<ShieldIcon />} label="Backup & Recovery" active={pathname === '/admin/backup'} />}
           {user.role === 'admin' && <NavLink href="/admin/team" icon={<GroupIcon />} label="Team" active={pathname === '/admin/team'} />}
           <NavLink href="/admin/settings" icon={<SettingsIcon />} label="Settings" active={pathname === '/admin/settings'} />
-        </div>
-
-        {/* Bottom Upgrade / Info Card */}
-        <div className="p-6 shrink-0">
-          <div className="bg-white/5 border border-white/10 rounded-[24px] p-6 text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <span className="w-24 h-24 block"><SparklesIcon /></span>
-            </div>
-            <div className="relative z-10">
-              <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center mb-4">
-                <span className="w-5 h-5 text-white"><ShieldIcon /></span>
-              </div>
-              <h4 className="font-bold text-lg mb-1">Secure Portal</h4>
-              <p className="text-xs text-white/70 mb-4 leading-relaxed">
-                You are operating within the secure admin zone. Ensure all approvals are valid.
-              </p>
-              <button onClick={handleLogout} className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-                <LogoutIcon /> Logout
-              </button>
-            </div>
-          </div>
+          <button 
+            onClick={handleLogout} 
+            className="sidebar-item mt-auto mb-4 text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors"
+          >
+            <span className="w-5 h-5"><LogoutIcon /></span>
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
