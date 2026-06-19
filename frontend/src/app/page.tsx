@@ -1,514 +1,797 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useBranding } from '@/contexts/BrandingContext';
-import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, CertificateIcon, WalletIcon } from '@/components/Icons';
+import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, CertificateIcon, WalletIcon, CheckCircleIcon, XCircleIcon } from '@/components/Icons';
 
 export default function Home() {
   const { appName, loading } = useBranding();
+  const [showMatrix, setShowMatrix] = useState(true);
 
-  // Target Counter: Starting collection amounts
-  const [collectionRaised, setCollectionRaised] = useState(12450);
-  const collectionTarget = 15000;
+  // Helper List Check Icon (pure SVG, no emojis)
+  const ListCheck = ({ isWhite = false }: { isWhite?: boolean }) => (
+    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${isWhite ? 'bg-white/20 text-white' : 'bg-[#10B981]/15 text-[#10B981]'}`}>
+      <svg className="w-2.5 h-2.5 stroke-[3.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+      </svg>
+    </span>
+  );
 
-  // Slowly increment total raised over time to keep page active
-  useEffect(() => {
-    const amounts = [50, 80, 100, 120, 150];
-    const interval = setInterval(() => {
-      const randomAmount = amounts[Math.floor(Math.random() * amounts.length)];
-      setCollectionRaised(prev => {
-        const next = prev + randomAmount;
-        return next >= collectionTarget ? 12000 : next; // Reset loop if exceeds target
-      });
-    }, 8000);
+  // Helper Table Check Component
+  const TableCheck = ({ label = "Yes" }: { label?: string }) => (
+    <span className="inline-flex items-center gap-1.5 text-[#10B981] font-bold">
+      <span className="w-4 h-4"><CheckCircleIcon /></span>
+      <span>{label}</span>
+    </span>
+  );
 
-    return () => clearInterval(interval);
-  }, []);
+  // Helper Table Cross Component
+  const TableCross = ({ label = "No" }: { label?: string }) => (
+    <span className="inline-flex items-center gap-1.5 text-gray-400 font-semibold">
+      <span className="w-4 h-4 text-gray-300"><XCircleIcon /></span>
+      <span>{label}</span>
+    </span>
+  );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F0F4FF] flex items-center justify-center">
+      <div className="min-h-screen bg-[#06120D] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#2563EB]/20 border-t-[#2563EB] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-semibold text-[#1E3A5F]">Loading portal...</p>
+          <div className="w-12 h-12 border-4 border-[#10B981]/20 border-t-[#10B981] rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-semibold text-[#10B981]">Loading DuesPay...</p>
         </div>
       </div>
     );
   }
 
-  const progressPercentage = Math.min(Math.round((collectionRaised / collectionTarget) * 100), 100);
+  // Helper custom badges with elegant icon
+  const Badge = ({ text }: { text: string }) => (
+    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#10B981]/20 bg-[#E6FDF5] text-xs font-bold text-[#059669] shadow-sm select-none">
+      <svg className="w-3.5 h-3.5 text-[#10B981] fill-current animate-pulse" viewBox="0 0 24 24">
+        <path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/>
+      </svg>
+      <span className="uppercase tracking-wider text-[10px]">{text}</span>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-[#F0F4FF] text-[#1E3A5F]">
+    <div className="min-h-screen bg-white text-gray-800 antialiased overflow-x-hidden">
       
-      {/* 1. STICKY NAV */}
-      <header className="sticky top-0 z-50 bg-[#0A1628]/95 backdrop-blur-md border-b border-[#1E3A5F]/40 py-4 px-6 sm:px-12 flex justify-between items-center transition-all">
+      {/* 1. STICKY GLASSMORPHIC NAVIGATION */}
+      <header className="sticky top-0 z-50 bg-[#06120D]/90 backdrop-blur-md border-b border-white/5 py-4 px-6 sm:px-12 flex justify-between items-center transition-all">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#2563EB] to-[#3B82F6] flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-[#2563EB]/25">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#10B981] to-[#A3E635] flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-[#10B981]/25">
             D
           </div>
           <span className="font-display font-black text-xl text-white tracking-tight">{appName}</span>
         </div>
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-white/80">
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-          <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-          <Link href="/verify-receipt" className="hover:text-white transition-colors">Verify Receipt</Link>
+          <a href="#features" className="hover:text-[#A3E635] transition-colors">Features</a>
+          <a href="#how-it-works" className="hover:text-[#A3E635] transition-colors">How it Works</a>
+          <a href="#blog" className="hover:text-[#A3E635] transition-colors">Articles</a>
+          <a href="#pricing" className="hover:text-[#A3E635] transition-colors">Pricing</a>
+          <Link href="/verify-receipt" className="hover:text-[#A3E635] transition-colors">Verify Receipt</Link>
         </nav>
         <div className="flex items-center gap-3">
-          <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-white/80 transition-colors">
+          <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#A3E635] transition-colors">
             Login
           </Link>
-          <Link href="/register" className="px-5 py-2.5 text-sm font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-xl shadow-lg shadow-[#2563EB]/20 transition-all active:scale-95">
+          <Link href="/register" className="px-5 py-2.5 text-sm font-bold text-[#06120D] bg-[#A3E635] hover:bg-[#86EFAC] rounded-xl shadow-lg shadow-[#A3E635]/25 transition-all hover:scale-105 active:scale-95">
             Get Started
           </Link>
         </div>
       </header>
 
       {/* 2. HERO SECTION */}
-      <section className="bg-gradient-to-b from-[#0A1628] to-[#1E3A5F] text-white pt-16 pb-20 px-6 sm:px-12 lg:px-24">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Left Column: Heading and CTA */}
-          <div className="lg:col-span-7 space-y-8">
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white">
-              The simplest way to collect <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#3B82F6] to-[#60A5FA]">departmental & organization</span> dues.
-            </h1>
-            
-            <p className="text-base sm:text-lg text-white/70 leading-relaxed max-w-2xl">
-              DuesPay bridges the gap between administrators and members. Pay securely via Mobile Money or cards, automate receipt generation, and track clearances in real-time.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Link href="/register" className="px-8 py-4 bg-[#2563EB] hover:bg-[#1D4ED8] font-bold rounded-xl shadow-xl shadow-[#2563EB]/30 transition-all active:scale-95 text-center">
-                Create Organization Portal
-              </Link>
-              <Link href="/login" className="px-8 py-4 bg-white/10 hover:bg-white/15 border border-white/20 font-bold rounded-xl text-center backdrop-blur-sm transition-all active:scale-95">
-                Member Login
-              </Link>
-            </div>
+      <section className="relative bg-[#06120D] text-white pt-28 pb-32 px-6 sm:px-12 lg:px-24 grid-bg-dark overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl pointer-events-none radial-glow animate-pulse-glow" />
+        
+        <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 text-xs font-semibold text-[#A3E635]">
+            <span>Welcome to a Modern Dues Experience</span>
           </div>
 
-          {/* Right Column: Mobile Phone Dashboard Mockup & Live Progress */}
-          <div className="lg:col-span-5 space-y-6 flex flex-col items-center">
-            
-            {/* Live Progress Widget */}
-            <div className="w-full max-w-sm bg-[#1E3A5F]/90 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h4 className="text-xs font-bold text-white/60 tracking-wider uppercase">Academic Year Target</h4>
-                  <p className="font-display font-extrabold text-white mt-0.5">2024/2025 General Collection</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-baseline mb-2">
-                <div className="text-2xl font-black text-white">GHS {collectionRaised.toLocaleString()}</div>
-                <div className="text-sm text-white/50">of GHS {collectionTarget.toLocaleString()}</div>
-              </div>
+          <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight text-white uppercase">
+            <span className="text-[#A3E635]">SAVE</span> YOUR TIME & <br className="hidden sm:inline" />
+            <span className="text-[#A3E635]">LESS EXPENSE</span>
+          </h1>
 
-              <div className="w-full h-3 bg-black/20 rounded-full overflow-hidden mb-2">
-                <div 
-                  className="h-full bg-gradient-to-r from-[#2563EB] to-[#10B981] rounded-full transition-all duration-1000"
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
-              <p className="text-[11px] text-white/40 font-semibold tracking-wider uppercase text-right">Updates Live Every 8 Seconds</p>
-            </div>
-
-            {/* Mobile View Mockup (High-fidelity HTML/CSS phone) */}
-            <div className="relative w-[280px] h-[540px] rounded-[40px] border-[8px] border-[#0A1628] bg-white shadow-2xl overflow-hidden shrink-0">
-              
-              {/* Phone Speaker & Camera Notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-[#0A1628] rounded-b-2xl z-20 flex items-center justify-center">
-                <div className="w-10 h-1 bg-white/20 rounded-full mb-1"></div>
-              </div>
-
-              {/* Mobile Screen Content */}
-              <div className="h-full pt-6 pb-12 flex flex-col justify-between overflow-y-auto bg-gray-50 text-[#1E3A5F]">
-                
-                {/* Dashboard Header */}
-                <div className="px-4 py-3 flex justify-between items-center bg-white border-b border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-xs">D</div>
-                    <div>
-                      <h5 className="text-[10px] font-black tracking-tight text-[#0A1628]">{appName}</h5>
-                      <p className="text-[8px] text-[#64748B] font-semibold">Level 300 · CS Dept</p>
-                    </div>
-                  </div>
-                  <div className="w-6 h-6 rounded-full bg-[#F0F4FF] flex items-center justify-center text-[9px] font-bold text-[#2563EB]">
-                    KM
-                  </div>
-                </div>
-
-                {/* Mobile Dashboard Body */}
-                <div className="flex-1 p-3 space-y-3">
-                  
-                  {/* Greeting */}
-                  <div className="text-left">
-                    <h6 className="text-xs font-black text-[#0A1628]">Hello, Kwame 👋</h6>
-                    <p className="text-[9px] text-[#64748B] mt-0.5">Academic Year: 2024/2025</p>
-                  </div>
-
-                  {/* Active Due Alert Card */}
-                  <div className="bg-gradient-to-tr from-[#0A1628] to-[#1E3A5F] text-white p-3 rounded-xl shadow-sm space-y-2.5">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[8px] font-bold tracking-widest text-white/50 uppercase">Active Due</span>
-                      <span className="text-[8px] font-extrabold text-amber-400">UNPAID</span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black">Welfare Fund Levy</p>
-                      <p className="text-base font-extrabold mt-0.5">GHS 80.00</p>
-                    </div>
-                    <Link href="/login" className="block w-full py-1.5 text-center text-[9px] font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg transition-colors shadow-md shadow-[#2563EB]/25">
-                      Pay via MoMo
-                    </Link>
-                  </div>
-
-                  {/* Quick summary grids */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white p-2.5 rounded-xl border border-gray-100">
-                      <p className="text-[8px] font-bold text-[#64748B] uppercase">Total Dues</p>
-                      <p className="text-xs font-black text-[#0A1628] mt-0.5">GHS 280.00</p>
-                    </div>
-                    <div className="bg-[#E6FDF5] p-2.5 rounded-xl border border-emerald-100">
-                      <p className="text-[8px] font-bold text-emerald-700 uppercase">Paid Dues</p>
-                      <p className="text-xs font-black text-[#09261C] mt-0.5">GHS 200.00</p>
-                    </div>
-                  </div>
-
-                  {/* Recent Payments log list */}
-                  <div className="space-y-1.5">
-                    <p className="text-[8px] font-bold text-[#64748B] uppercase tracking-wider">Recent Payments</p>
-                    
-                    <div className="flex justify-between items-center p-2 bg-white border border-gray-100 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center text-[10px]">
-                          <WalletIcon />
-                        </span>
-                        <div>
-                          <p className="text-[9px] font-bold text-[#0A1628]">Dept Dues</p>
-                          <p className="text-[7px] text-[#64748B]">Approved</p>
-                        </div>
-                      </div>
-                      <p className="text-[9px] font-black text-[#0A1628]">GHS 150.00</p>
-                    </div>
-
-                    <div className="flex justify-between items-center p-2 bg-white border border-gray-100 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center text-[10px]">
-                          <WalletIcon />
-                        </span>
-                        <div>
-                          <p className="text-[9px] font-bold text-[#0A1628]">SRC Levy</p>
-                          <p className="text-[7px] text-[#64748B]">Approved</p>
-                        </div>
-                      </div>
-                      <p className="text-[9px] font-black text-[#0A1628]">GHS 50.00</p>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Mobile Bottom Navigation Bar */}
-                <div className="absolute bottom-0 left-0 right-0 h-11 bg-white border-t border-gray-100 flex justify-around items-center px-2">
-                  <div className="flex flex-col items-center text-[#2563EB]">
-                    <span className="w-4 h-4"><WalletIcon /></span>
-                    <span className="text-[7px] font-bold mt-0.5">Home</span>
-                  </div>
-                  <div className="flex flex-col items-center text-gray-400 hover:text-[#2563EB] transition-colors cursor-pointer">
-                    <span className="w-4 h-4"><CardIcon /></span>
-                    <span className="text-[7px] font-semibold mt-0.5">Payments</span>
-                  </div>
-                  <div className="flex flex-col items-center text-gray-400 hover:text-[#2563EB] transition-colors cursor-pointer">
-                    <span className="w-4 h-4"><ReceiptIcon /></span>
-                    <span className="text-[7px] font-semibold mt-0.5">Receipts</span>
-                  </div>
-                  <div className="flex flex-col items-center text-gray-400 hover:text-[#2563EB] transition-colors cursor-pointer">
-                    <span className="w-4 h-4"><SmsIcon /></span>
-                    <span className="text-[7px] font-semibold mt-0.5">Clearance</span>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* 3. SOCIAL PROOF STATS BAR */}
-      <section className="bg-[#0A1628] text-white py-12 px-6 sm:px-12 border-y border-[#1E3A5F]/40">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-[#2563EB] font-display">10,000+</div>
-            <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Active Members</p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-[#2563EB] font-display">GHS 250k+</div>
-            <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Secured Collections</p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-[#2563EB] font-display">99.9%</div>
-            <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Instant Verification</p>
-          </div>
-          <div className="space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-[#2563EB] font-display">100+</div>
-            <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Organizations</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. FEATURES GRID */}
-      <section id="features" className="py-24 px-6 sm:px-12 max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h2 className="font-display text-3xl sm:text-4xl font-black text-[#0A1628] tracking-tight">
-            Designed for secure collection and easy accountability
-          </h2>
-          <p className="text-base text-[#64748B]">
-            DuesPay replaces chaotic bank spreadsheets, paper booklets, and manual tracking queues with an all-in-one digital platform.
+          <p className="text-base sm:text-lg text-white/70 leading-relaxed max-w-2xl mx-auto">
+            DuesPay bridges the gap between administrators and members. Pay securely via Mobile Money, automate receipt generation, and track clearances in real-time.
           </p>
-        </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm shadow-[#2563EB]/5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#2563EB] flex items-center justify-center mb-6">
-              <span className="w-5 h-5"><CardIcon /></span>
-            </div>
-            <h3 className="text-lg font-bold text-[#0A1628] mb-2">Instant MoMo & Card Payments</h3>
-            <p className="text-sm text-[#64748B] leading-relaxed">
-              Pay quickly using MTN Mobile Money, Telecel Cash, AirtelTigo Money, or credit cards via local gateways.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm shadow-[#2563EB]/5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#2563EB] flex items-center justify-center mb-6">
-              <span className="w-5 h-5"><ReceiptIcon /></span>
-            </div>
-            <h3 className="text-lg font-bold text-[#0A1628] mb-2">Automated Digital Receipts</h3>
-            <p className="text-sm text-[#64748B] leading-relaxed">
-              Download PDF receipts and view your balance instantly. Admin review verifies manual transaction proofs immediately.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm shadow-[#2563EB]/5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#2563EB] flex items-center justify-center mb-6">
-              <span className="w-5 h-5"><SmsIcon /></span>
-            </div>
-            <h3 className="text-lg font-bold text-[#0A1628] mb-2">SMS & Email Notifications</h3>
-            <p className="text-sm text-[#64748B] leading-relaxed">
-              Receive automatic alerts when your payments are approved, credentials are reset, or deadline reminders are sent.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm shadow-[#2563EB]/5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#2563EB] flex items-center justify-center mb-6">
-              <span className="w-5 h-5"><CertificateIcon /></span>
-            </div>
-            <h3 className="text-lg font-bold text-[#0A1628] mb-2">Real-Time Clearance Logs</h3>
-            <p className="text-sm text-[#64748B] leading-relaxed">
-              Clear members instantly. Our system logs payments against specific classes, departments, and academic years.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm shadow-[#2563EB]/5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#2563EB] flex items-center justify-center mb-6">
-              <span className="w-5 h-5"><ShieldIcon /></span>
-            </div>
-            <h3 className="text-lg font-bold text-[#0A1628] mb-2">Audit-Safe Action Logs</h3>
-            <p className="text-sm text-[#64748B] leading-relaxed">
-              All admin actions (approval of manual proofs, settings updates, imports) require automatic secure audit trails.
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm shadow-[#2563EB]/5 hover:shadow-md transition-shadow">
-            <div className="w-10 h-10 rounded-xl bg-[#F0F4FF] text-[#2563EB] flex items-center justify-center mb-6">
-              <span className="w-5 h-5"><ChartIcon /></span>
-            </div>
-            <h3 className="text-lg font-bold text-[#0A1628] mb-2">Financial Dashboards</h3>
-            <p className="text-sm text-[#64748B] leading-relaxed">
-              Generate monthly graphs, track expected revenue, list active defaulters, and export data directly to CSV.
-            </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+            <Link href="/register" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#06120D] font-bold rounded-full shadow-xl shadow-[#A3E635]/25 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
+              Download Now
+            </Link>
+            <a href="#how-it-works" className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-full backdrop-blur-sm transition-all hover:scale-105 active:scale-95 min-w-[200px]">
+              <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <span>See How it works</span>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* 5. HOW IT WORKS */}
-      <section id="how-it-works" className="bg-[#0A1628] text-white py-24 px-6 sm:px-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="font-display text-3xl sm:text-4xl font-black text-white tracking-tight">How DuesPay Works</h2>
-            <p className="text-sm text-white/60">Simple and direct onboarding for both members and administration.</p>
+      {/* 3. BENEFITS SECTION */}
+      <section id="features" className="py-24 px-6 sm:px-12 bg-white relative z-10">
+        <div className="max-w-7xl mx-auto space-y-16">
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <Badge text="Awesome Benefit From Us" />
+            <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
+              Experience the Future of Dues - <span className="text-[#10B981]">DuesPay</span>
+            </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center bg-[#1E3A5F]/40 border border-white/5 p-8 rounded-2xl relative">
-              <div className="w-12 h-12 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6">1</div>
-              <h3 className="text-lg font-bold text-white mb-3">Register Members</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                Admins upload a student spreadsheet or allow students to register directly using their indices.
-              </p>
-            </div>
-
-            <div className="text-center bg-[#1E3A5F]/40 border border-white/5 p-8 rounded-2xl relative">
-              <div className="w-12 h-12 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6">2</div>
-              <h3 className="text-lg font-bold text-white mb-3">Members Submit Payments</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                Members login to their portal, view assigned dues, and complete payments via MoMo or card.
-              </p>
-            </div>
-
-            <div className="text-center bg-[#1E3A5F]/40 border border-white/5 p-8 rounded-2xl relative">
-              <div className="w-12 h-12 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6">3</div>
-              <h3 className="text-lg font-bold text-white mb-3">Download Verification</h3>
-              <p className="text-sm text-white/70 leading-relaxed">
-                Digital receipts are generated immediately. Admins view, reconcile, and verify clearance certificates.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. TESTIMONIALS */}
-      <section className="py-24 px-6 sm:px-12 max-w-7xl mx-auto">
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <h2 className="font-display text-3xl sm:text-4xl font-black text-[#0A1628] tracking-tight">Trust by Organization Treasurers</h2>
-          <p className="text-sm text-[#64748B]">Real reviews from student leaders and department administrators in West Africa.</p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative flex flex-col justify-between">
-            <p className="text-sm text-[#64748B] italic leading-relaxed">
-              &ldquo;Managing departmental dues was a nightmare of paper receipts. DuesPay changed everything. Now our students pay via MoMo and are cleared instantly.&rdquo;
-            </p>
-            <div className="mt-6 border-t border-gray-50 pt-4">
-              <p className="font-bold text-[#0A1628] text-sm">Ebenezer Mensah</p>
-              <p className="text-[10px] text-[#64748B] font-semibold">Department President · KNUST CS</p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative flex flex-col justify-between">
-            <p className="text-sm text-[#64748B] italic leading-relaxed">
-              &ldquo;The SMS notifications are excellent. I knew my payment was approved the second the transaction went through. No more queues at the department office.&rdquo;
-            </p>
-            <div className="mt-6 border-t border-gray-50 pt-4">
-              <p className="font-bold text-[#0A1628] text-sm">Abigail Osei</p>
-              <p className="text-[10px] text-[#64748B] font-semibold">Student · HTU</p>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative flex flex-col justify-between">
-            <p className="text-sm text-[#64748B] italic leading-relaxed">
-              &ldquo;For audit purposes, the automated clearance logs and downloadable CSV reports have saved our treasury team countless hours. Highly recommend DuesPay.&rdquo;
-            </p>
-            <div className="mt-6 border-t border-gray-50 pt-4">
-              <p className="font-bold text-[#0A1628] text-sm">Clement Appiah</p>
-              <p className="text-[10px] text-[#64748B] font-semibold">Treasurer · GhACCA Student Chapter</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. PRICING TEASER */}
-      <section id="pricing" className="bg-[#F0F4FF] py-24 px-6 sm:px-12 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="font-display text-3xl sm:text-4xl font-black text-[#0A1628] tracking-tight">Simple, Transparent Pricing</h2>
-            <p className="text-sm text-[#64748B]">Start small, and scale up as your department or college grows.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            
-            {/* Free Plan */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm flex flex-col justify-between relative">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Card 1 */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
               <div>
-                <h3 className="text-lg font-bold text-[#0A1628] mb-1">Free</h3>
-                <p className="text-xs text-[#64748B] mb-6">Perfect for small student associations</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-3xl font-extrabold text-[#0A1628] font-display">GHS 0</span>
-                  <span className="text-xs text-[#64748B]">/month</span>
+                <div className="w-12 h-12 rounded-full bg-gray-50 text-gray-700 flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
-                <ul className="space-y-3.5 text-xs text-[#64748B] border-t border-gray-50 pt-6">
-                  <li className="flex items-center gap-2">✔ Up to 100 students</li>
-                  <li className="flex items-center gap-2">Log in and view details</li>
-                  <li className="flex items-center gap-2">✔ Standard payment integration</li>
-                  <li className="flex items-center gap-2">✔ Manual payment approvals</li>
-                </ul>
+                <h3 className="text-lg font-black text-gray-950 mb-3">Fast and Secure Transactions</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Pay instantly using MTN MoMo, Telecel Cash, or cards with immediate status reflection.
+                </p>
               </div>
-              <Link href="/register" className="mt-8 block w-full py-3 text-center text-xs font-bold bg-[#F0F4FF] hover:bg-[#E0EBFF] text-[#2563EB] rounded-xl transition-colors">
+            </div>
+
+            {/* Card 2 (Vibrant highlight card) */}
+            <div className="bg-[#10B981] rounded-[2rem] p-8 shadow-lg shadow-[#10B981]/25 text-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-black text-white mb-3">24/7 Customer Support</h3>
+                <p className="text-sm text-white/90 leading-relaxed">
+                  Receive instant confirmation SMS alerts, transaction details, and dedicated support anytime.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-full bg-gray-50 text-gray-700 flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-black text-gray-950 mb-3">Easy Financial Management</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Track payments, check expected revenue, and export files instantly from the admin panels.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 4 */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-full bg-gray-50 text-gray-700 flex items-center justify-center mb-6">
+                  <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-black text-gray-950 mb-3">Exclusive Clearance Verification</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Generate secure clearance receipts and verify credentials via the public page.
+                  </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* 4. SHOWCASE SECTION 1 (Transactions Showcase) */}
+      <section className="py-24 px-6 sm:px-12 bg-[#F9FAFB] border-t border-gray-100 relative z-10 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-16 items-center">
+          
+          {/* Left Side: Mockup Frame inside a colored circle */}
+          <div className="lg:col-span-6 flex justify-center relative">
+            <div className="absolute w-[360px] h-[360px] rounded-full bg-[#A3E635]/20 blur-2xl pointer-events-none" />
+            <div className="w-[360px] h-[360px] rounded-full bg-[#10B981] flex items-center justify-center relative shadow-xl">
+              
+              {/* Floating Phone Mockup */}
+              <div className="absolute w-[220px] h-[400px] rounded-[30px] border-[6px] border-[#0a1628] bg-white shadow-2xl overflow-hidden animate-float">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-[#0a1628] rounded-b-xl z-20 flex items-center justify-center">
+                  <div className="w-6 h-0.5 bg-white/20 rounded-full mb-0.5"></div>
+                </div>
+                
+                <div className="h-full pt-5 pb-8 flex flex-col justify-between bg-gray-50 p-3 text-xs overflow-y-auto">
+                  <div className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+                    <p className="text-[7px] font-bold text-gray-400 uppercase">Current Balance</p>
+                    <p className="text-sm font-black text-gray-900 mt-0.5">GHS 200.00</p>
+                    <div className="mt-3 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#10B981] w-[71%]" />
+                    </div>
+                  </div>
+
+                  {/* Transaction Bar Chart graphic inside mockup */}
+                  <div className="bg-white p-2.5 rounded-xl border border-gray-100 space-y-2">
+                    <p className="text-[7px] font-bold text-gray-400 uppercase">Analysis</p>
+                    <div className="flex justify-around items-end h-16 pt-2">
+                      <div className="w-3 bg-[#10B981] rounded-t-sm h-8"></div>
+                      <div className="w-3 bg-gray-200 rounded-t-sm h-12"></div>
+                      <div className="w-3 bg-[#10B981] rounded-t-sm h-6"></div>
+                      <div className="w-3 bg-[#A3E635] rounded-t-sm h-14"></div>
+                      <div className="w-3 bg-gray-200 rounded-t-sm h-9"></div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button className="flex-1 py-1 text-center bg-[#10B981] text-white rounded-md text-[8px] font-bold">Pay</button>
+                    <button className="flex-1 py-1 text-center bg-gray-100 text-gray-700 rounded-md text-[8px] font-bold">Receipt</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Right Side: Text details */}
+          <div className="lg:col-span-6 space-y-6 text-left">
+            <Badge text="Anywhere, Anytime with DuesPay" />
+            <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight leading-tight">
+              All <span className="text-[#10B981]">Transactions</span> Easily on Your Mobile
+            </h2>
+            <p className="text-base text-gray-500 leading-relaxed">
+              Paying for dues is as easy as a tap. With DuesPay, you can effortlessly handle a wide range of transactions, from bill payments and online receipts to barcoded clearances in commerce.
+            </p>
+            <div className="pt-2">
+              <Link href="/login" className="inline-block px-8 py-3.5 bg-[#06120D] hover:bg-black text-[#A3E635] font-bold rounded-full transition-colors">
                 Get Started
               </Link>
             </div>
+          </div>
 
-            {/* Growth Plan */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm flex flex-col justify-between relative">
-              <div>
-                <h3 className="text-lg font-bold text-[#0A1628] mb-1">Growth</h3>
-                <p className="text-xs text-[#64748B] mb-6">Ideal for departments & colleges</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-3xl font-extrabold text-[#0A1628] font-display">GHS 149</span>
-                  <span className="text-xs text-[#64748B]">/month</span>
-                </div>
-                <ul className="space-y-3.5 text-xs text-[#64748B] border-t border-gray-50 pt-6">
-                  <li className="flex items-center gap-2">✔ Unlimited students</li>
-                  <li className="flex items-center gap-2">✔ Automated SMS & Email alerts</li>
-                  <li className="flex items-center gap-2">✔ Financial clearance reports</li>
-                  <li className="flex items-center gap-2">✔ Dedicated support representative</li>
-                </ul>
+        </div>
+      </section>
+
+      {/* 5. SHOWCASE SECTION 2 (Empowering Journey) */}
+      <section className="py-24 px-6 sm:px-12 bg-white border-t border-gray-100 relative z-10 overflow-hidden">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-16 items-center">
+          
+          {/* Left Side: Text details and metrics */}
+          <div className="lg:col-span-6 space-y-6 text-left order-2 lg:order-1">
+            <Badge text="Empowering with Organization" />
+            <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight leading-tight">
+              Empowering Your <span className="text-[#10B981]">Financial</span> Journey
+            </h2>
+            <p className="text-base text-gray-500 leading-relaxed">
+              Transforming collection experiences, empower your finances with DuesPay, where security meets simplicity for seamless online administration.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+              <div className="space-y-1">
+                <div className="text-3xl font-black text-gray-900">10,000+</div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Members</p>
               </div>
-              <Link href="/register" className="mt-8 block w-full py-3 text-center text-xs font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl shadow-lg shadow-[#2563EB]/20 transition-all">
-                Start Growth Plan
-              </Link>
+              <div className="space-y-1">
+                <div className="text-3xl font-black text-gray-900">GHS 250k+</div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Collections</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side: Mockup Frame inside a colored circle */}
+          <div className="lg:col-span-6 flex justify-center relative order-1 lg:order-2">
+            <div className="absolute w-[360px] h-[360px] rounded-full bg-[#10B981]/10 blur-2xl pointer-events-none" />
+            <div className="w-[360px] h-[360px] rounded-full bg-[#A3E635] flex items-center justify-center relative shadow-xl">
+              
+              {/* Floating Phone Mockup */}
+              <div className="absolute w-[220px] h-[400px] rounded-[30px] border-[6px] border-[#0a1628] bg-white shadow-2xl overflow-hidden animate-float" style={{ animationDelay: '1.5s' }}>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-[#0a1628] rounded-b-xl z-20 flex items-center justify-center">
+                  <div className="w-6 h-0.5 bg-white/20 rounded-full mb-0.5"></div>
+                </div>
+                
+                <div className="h-full pt-6 bg-gray-50 p-3 text-xs overflow-y-auto">
+                  <div className="bg-[#06120D] text-white p-3.5 rounded-xl space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[7px] font-bold text-white/50 tracking-wider">CLEARANCE CARD</span>
+                      <span className="text-[7px] font-bold text-[#A3E635]">ACTIVE</span>
+                    </div>
+                    <div>
+                      <p className="text-[6px] text-white/60 uppercase">Student Name</p>
+                      <p className="text-[10px] font-bold mt-0.5">KWAME MENSAH</p>
+                    </div>
+                    <div>
+                      <p className="text-[6px] text-white/60 uppercase">Clearance Status</p>
+                      <p className="text-xs font-extrabold text-[#A3E635] mt-0.5">GHS 0.00 Outstanding</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-white border border-gray-100 rounded-lg text-center space-y-2">
+                    <p className="text-[8px] font-bold text-gray-500">Official Receipt QR</p>
+                    <div className="w-16 h-16 bg-gray-100 mx-auto flex items-center justify-center rounded">
+                      <div className="grid grid-cols-4 gap-1 p-2 bg-white rounded">
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-white"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        
+                        <div className="w-2.5 h-2.5 bg-white"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-white"></div>
+
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-white"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                        <div className="w-2.5 h-2.5 bg-white"></div>
+                        <div className="w-2.5 h-2.5 bg-gray-900"></div>
+                      </div>
+                    </div>
+                    <p className="text-[7px] text-gray-400">Scan to Verify Receipt</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 6. HOW IT WORKS */}
+      <section id="how-it-works" className="bg-[#06120D] text-white py-24 px-6 sm:px-12 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
+            <Badge text="Simple Steps" />
+            <h2 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight">How DuesPay Works</h2>
+            <p className="text-base text-white/60">Automated onboarding for both members and administration.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center bg-[#10B981]/5 border border-white/5 p-8 rounded-[2rem] relative">
+              <div className="w-12 h-12 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#10B981]/25">1</div>
+              <h3 className="text-xl font-bold text-white mb-3">Register Members</h3>
+              <p className="text-sm text-white/70 leading-relaxed">
+                Admins upload member spreadsheets or allow students to register directly using official index numbers.
+              </p>
             </div>
 
-            {/* Enterprise Plan */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm flex flex-col justify-between relative">
-              <div>
-                <h3 className="text-lg font-bold text-[#0A1628] mb-1">Enterprise</h3>
-                <p className="text-xs text-[#64748B] mb-6">For institutions and large associations</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-3xl font-extrabold text-[#0A1628] font-display">Custom</span>
-                </div>
-                <ul className="space-y-3.5 text-xs text-[#64748B] border-t border-gray-50 pt-6">
-                  <li className="flex items-center gap-2">✔ Multiple departments</li>
-                  <li className="flex items-center gap-2">✔ Custom institutional domain</li>
-                  <li className="flex items-center gap-2">✔ Full API integration access</li>
-                  <li className="flex items-center gap-2">✔ Dedicated SLA support</li>
-                </ul>
-              </div>
-              <Link href="/register" className="mt-8 block w-full py-3 text-center text-xs font-bold bg-[#F0F4FF] hover:bg-[#E0EBFF] text-[#2563EB] rounded-xl transition-colors">
-                Contact Sales
-              </Link>
+            <div className="text-center bg-[#10B981]/5 border border-white/5 p-8 rounded-[2rem] relative">
+              <div className="w-12 h-12 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#10B981]/25">2</div>
+              <h3 className="text-xl font-bold text-white mb-3">Submit Payments</h3>
+              <p className="text-sm text-white/70 leading-relaxed">
+                Members login to their dashboard, review assigned dues, and complete payments via MoMo or card.
+              </p>
             </div>
 
+            <div className="text-center bg-[#10B981]/5 border border-white/5 p-8 rounded-[2rem] relative">
+              <div className="w-12 h-12 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#10B981]/25">3</div>
+              <h3 className="text-xl font-bold text-white mb-3">Download Verification</h3>
+              <p className="text-sm text-white/70 leading-relaxed">
+                Digital receipts verify collections immediately. Defaulter listings clear automatic clearances online.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 8. FINAL CTA BANNER */}
-      <section className="bg-gradient-to-r from-[#0A1628] to-[#1E3A5F] text-white py-20 px-6 sm:px-12 text-center border-t border-[#1E3A5F]/40">
+      {/* 7. TESTIMONIALS */}
+      <section className="py-24 px-6 sm:px-12 max-w-7xl mx-auto relative z-10">
+        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+          <Badge text="Testimonials" />
+          <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-900 tracking-tight">
+            What Our <span className="text-[#10B981]">Happy User</span> Says
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="bg-white border border-gray-100 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <p className="text-sm text-gray-500 italic leading-relaxed">
+              &ldquo;Managing departmental dues was a nightmare of paper receipts. DuesPay changed everything. Now our students pay via MoMo and are cleared instantly.&rdquo;
+            </p>
+            <div className="mt-8 border-t border-gray-50 pt-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#10B981] font-bold text-sm">EM</div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Ebenezer Mensah</p>
+                <p className="text-[10px] text-gray-400 font-semibold">Department President · KNUST CS</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <p className="text-sm text-gray-500 italic leading-relaxed">
+              &ldquo;The SMS notifications are excellent. I knew my payment was approved the second the transaction went through. No more queues at the department office.&rdquo;
+            </p>
+            <div className="mt-8 border-t border-gray-50 pt-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#10B981] font-bold text-sm">AO</div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Abigail Osei</p>
+                <p className="text-[10px] text-gray-400 font-semibold">Student · HTU</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-[2rem] p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+            <p className="text-sm text-gray-500 italic leading-relaxed">
+              &ldquo;For audit purposes, the automated clearance logs and downloadable CSV reports have saved our treasury team countless hours. Highly recommend DuesPay.&rdquo;
+            </p>
+            <div className="mt-8 border-t border-gray-50 pt-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#10B981] font-bold text-sm">CA</div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">Clement Appiah</p>
+                <p className="text-[10px] text-gray-400 font-semibold">Treasurer · GhACCA Student Chapter</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. ARTICLES & RESOURCES SECTION [NEW] */}
+      <section id="blog" className="py-24 px-6 sm:px-12 bg-[#F9FAFB] border-t border-b border-gray-100 relative z-10">
+        <div className="max-w-7xl mx-auto space-y-16">
+          <div className="text-center max-w-3xl mx-auto space-y-4">
+            <Badge text="Learning Blog" />
+            <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
+              Take a look at our <span className="text-[#10B981]">articles & resources</span>
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Blog Card 1 */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="p-4 bg-gray-50 border-b border-gray-100 h-48 flex items-center justify-center relative overflow-hidden">
+                {/* Visual HTML mockup of laptop/code instead of placeholder image */}
+                <div className="w-40 h-28 bg-[#06120D] rounded-lg border border-white/10 shadow-lg p-2 space-y-1">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  </div>
+                  <div className="text-[5px] text-white/50 font-mono space-y-0.5 mt-2">
+                    <p className="text-[#10B981]">const checkReceipt = async (receiptNum) =&gt; &#123;</p>
+                    <p className="pl-2">const status = await api.get(`/verify/$&#123;receiptNum&#125;`);</p>
+                    <p className="pl-2">if (status.data.valid) return "CLEARED";</p>
+                    <p className="text-[#A3E635]">&#125;</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-8 space-y-4">
+                <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-wider">Clearance</span>
+                <h3 className="text-lg font-black text-gray-950">How to verify and validate clearance receipts instantly</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Learn how administrators can confirm transaction records using the public verification portal to avoid document fraud.
+                </p>
+              </div>
+            </div>
+
+            {/* Blog Card 2 */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="p-4 bg-gray-50 border-b border-gray-100 h-48 flex items-center justify-center relative overflow-hidden">
+                {/* Phone screenshot mockup in HTML */}
+                <div className="w-36 h-36 rounded-2xl bg-white border border-gray-200 shadow-md p-2 space-y-2">
+                  <div className="flex justify-between items-center text-[7px] text-gray-400 font-bold border-b pb-1">
+                    <span>MTN MoMo Integration</span>
+                    <span className="text-emerald-500">Active</span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[6px] text-gray-400 font-semibold">Callback URL</p>
+                    <p className="text-[6px] font-mono bg-gray-50 p-1 rounded border overflow-x-auto whitespace-nowrap">https://api.duespay.org/momo-callback</p>
+                  </div>
+                  <div className="text-[8px] font-bold text-gray-900">GHS 250,000 Volume</div>
+                </div>
+              </div>
+              <div className="p-8 space-y-4">
+                <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-wider">Payments</span>
+                <h3 className="text-lg font-black text-gray-950">MTN Mobile Money & Card payment integration guide</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Step-by-step setup overview for securing organization bank accounts and enabling card/Momo payment channels.
+                </p>
+              </div>
+            </div>
+
+            {/* Blog Card 3 */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="p-4 bg-gray-50 border-b border-gray-100 h-48 flex items-center justify-center relative overflow-hidden">
+                {/* Visual mockup of terminal key/shield */}
+                <div className="w-24 h-24 rounded-full bg-[#10B981]/10 flex items-center justify-center relative shadow-inner">
+                  <div className="w-16 h-16 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-2xl shadow">
+                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div className="p-8 space-y-4">
+                <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-wider">Security</span>
+                <h3 className="text-lg font-black text-gray-950">Ensuring audit trails and security logs in accounts</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Understand how audit log tracking logs settings modifications and manual proof approvals to secure member funds.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. PRICING SECTION (Saasplex X Inspired Layout) */}
+      <section id="pricing" className="py-24 px-6 sm:px-12 bg-white relative z-10">
+        <div className="max-w-7xl mx-auto space-y-16">
+          <div className="text-center max-w-2xl mx-auto space-y-4">
+            <h2 className="font-display text-4xl sm:text-5xl font-black text-gray-950 tracking-tight">Pricing</h2>
+            <p className="text-base text-gray-500 max-w-lg mx-auto">
+              Select the plan that fits your organization's collection needs. No hidden charges.
+            </p>
+          </div>
+
+          {/* Pricing cards wrapper */}
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
+            
+            {/* Startup Plan */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative">
+              <div className="space-y-6">
+                <div className="flex gap-4 items-center">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#10B981]">
+                    <span className="w-6 h-6"><WalletIcon /></span>
+                  </div>
+                  <h3 className="text-xl font-black text-gray-950">Startup</h3>
+                </div>
+                
+                <div className="flex items-baseline gap-1 pt-2">
+                  <span className="text-4xl font-black text-gray-950 font-display">GHS 0</span>
+                  <span className="text-sm text-gray-400">/ month</span>
+                </div>
+                
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Perfect for small student groups, clubs, and individual classes.
+                </p>
+
+                <ul className="space-y-4 text-xs text-gray-500 border-t border-gray-100 pt-6">
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>All member portal actions</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Standard payment integration</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Manual payment approvals</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Normal support</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="pt-8 space-y-3">
+                <Link href="/register" className="block w-full py-3.5 text-center text-sm font-bold bg-[#10B981] hover:bg-[#059669] text-white rounded-full transition-colors shadow-sm">
+                  Get started
+                </Link>
+                <p className="text-[10px] text-gray-400 text-center font-bold">No credit card required</p>
+              </div>
+            </div>
+
+            {/* Growth Plan (Highlighted center card) */}
+            <div className="bg-[#10B981] rounded-[2rem] p-8 shadow-xl shadow-[#10B981]/25 text-white hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative scale-105 z-10 border border-[#10B981]">
+              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#A3E635] text-[#06120D] text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-md">Popular</div>
+              
+              <div className="space-y-6">
+                <div className="flex gap-4 items-center">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-white">
+                    <span className="w-6 h-6"><ChartIcon /></span>
+                  </div>
+                  <h3 className="text-xl font-black text-white">Growth</h3>
+                </div>
+                
+                <div className="flex items-baseline gap-1 pt-2">
+                  <span className="text-4xl font-black text-white font-display">GHS 149</span>
+                  <span className="text-sm text-white/70">/ month</span>
+                </div>
+                
+                <p className="text-sm text-white/80 leading-relaxed">
+                  Ideal for department associations, large student unions, and teams.
+                </p>
+
+                <ul className="space-y-4 text-xs text-white/80 border-t border-white/20 pt-6">
+                  <li className="flex items-center gap-3">
+                    <ListCheck isWhite />
+                    <span>Everything on Startup plan</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck isWhite />
+                    <span>Unlimited members</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck isWhite />
+                    <span>Automated SMS & Email alerts</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck isWhite />
+                    <span>Premium Support</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="pt-8 space-y-3">
+                <Link href="/register" className="block w-full py-3.5 text-center text-sm font-bold bg-white text-[#10B981] hover:bg-gray-50 rounded-full transition-colors shadow-md">
+                  Get started
+                </Link>
+                <p className="text-[10px] text-white/70 text-center font-bold">No credit card required</p>
+              </div>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative">
+              <div className="space-y-6">
+                <div className="flex gap-4 items-center">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#10B981]">
+                    <span className="w-6 h-6"><ShieldIcon /></span>
+                  </div>
+                  <h3 className="text-xl font-black text-gray-950">Enterprise</h3>
+                </div>
+                
+                <div className="flex items-baseline gap-1 pt-2">
+                  <span className="text-4xl font-black text-gray-950 font-display">Custom</span>
+                </div>
+                
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  For large institutions, multiple departments, or college-wide setups.
+                </p>
+
+                <ul className="space-y-4 text-xs text-gray-500 border-t border-gray-100 pt-6">
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Everything on Growth plan</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Multiple departments</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Custom institutional domains</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <ListCheck />
+                    <span>Dedicated Support</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="pt-8 space-y-3">
+                <Link href="/register" className="block w-full py-3.5 text-center text-sm font-bold bg-[#10B981] hover:bg-[#059669] text-white rounded-full transition-colors shadow-sm">
+                  Get started
+                </Link>
+                <p className="text-[10px] text-gray-400 text-center font-bold">Contact our team</p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Toggle comparison matrix button */}
+          <div className="text-center pt-8">
+            <button 
+              type="button" 
+              onClick={() => setShowMatrix(!showMatrix)}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-50 hover:bg-gray-100 text-sm font-bold text-[#10B981] transition-all"
+            >
+              <span>{showMatrix ? 'Hide plans comparison' : 'View plans comparison'}</span>
+              <svg className={`w-4 h-4 transform transition-transform ${showMatrix ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Comparison Matrix Table */}
+          {showMatrix && (
+            <div className="max-w-5xl mx-auto border border-gray-100 rounded-[2rem] overflow-hidden shadow-sm bg-white pt-6 pb-2 transition-all">
+              <div className="px-8 pb-6 border-b border-gray-100">
+                <h3 className="text-2xl font-black text-gray-950">Plans comparison</h3>
+                <p className="text-sm text-gray-500">Compare details of our core dues management features side-by-side.</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[600px]">
+                  <thead>
+                    <tr className="bg-gray-50/50 text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                      <th className="p-6 pl-8">Features</th>
+                      <th className="p-6">Startup</th>
+                      <th className="p-6 text-[#10B981]">Growth</th>
+                      <th className="p-6">Enterprise</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 text-sm text-gray-600 font-semibold">
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">Monthly Cost</td>
+                      <td className="p-6">GHS 0</td>
+                      <td className="p-6 text-[#10B981] font-bold">GHS 149</td>
+                      <td className="p-6">Custom Quote</td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">Member Limit</td>
+                      <td className="p-6">Up to 100</td>
+                      <td className="p-6 text-[#10B981]">Unlimited</td>
+                      <td className="p-6">Unlimited</td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">MoMo Online Integration</td>
+                      <td className="p-6"><TableCheck /></td>
+                      <td className="p-6"><TableCheck /></td>
+                      <td className="p-6"><TableCheck /></td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">Manual Payment Verification</td>
+                      <td className="p-6"><TableCheck /></td>
+                      <td className="p-6"><TableCheck /></td>
+                      <td className="p-6"><TableCheck /></td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">SMS / Email Notification Alerts</td>
+                      <td className="p-6 text-gray-400">Standard limit</td>
+                      <td className="p-6"><TableCheck label="Unlimited" /></td>
+                      <td className="p-6"><TableCheck label="Unlimited" /></td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">Clearance Reports & Logs</td>
+                      <td className="p-6 text-gray-500 font-medium">Basic</td>
+                      <td className="p-6"><TableCheck label="Advanced" /></td>
+                      <td className="p-6"><TableCheck label="Custom" /></td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">Multiple Department Portals</td>
+                      <td className="p-6"><TableCross /></td>
+                      <td className="p-6"><TableCross /></td>
+                      <td className="p-6"><TableCheck /></td>
+                    </tr>
+                    <tr>
+                      <td className="p-6 pl-8 font-bold text-gray-900">Custom Domains</td>
+                      <td className="p-6"><TableCross /></td>
+                      <td className="p-6"><TableCross /></td>
+                      <td className="p-6"><TableCheck /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </section>
+
+      {/* 10. FINAL CTA BANNER */}
+      <section className="bg-gradient-to-r from-[#06120D] to-[#0B1F17] text-white py-24 px-6 sm:px-12 text-center border-t border-white/5 relative z-10">
         <div className="max-w-4xl mx-auto space-y-6">
-          <h2 className="font-display text-3xl sm:text-4xl font-black text-white tracking-tight">Ready to modernize your organizational dues?</h2>
-          <p className="text-base text-white/70 max-w-2xl mx-auto">
+          <h2 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight">
+            Ready to modernize your organizational dues?
+          </h2>
+          <p className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto leading-relaxed">
             Set up your organization's portal in under 5 minutes. Start accepting secure payments and issue official clearance records today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link href="/register" className="px-8 py-4 bg-[#2563EB] hover:bg-[#1D4ED8] font-bold rounded-xl shadow-xl shadow-[#2563EB]/30 transition-all active:scale-95">
+            <Link href="/register" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#06120D] font-bold rounded-xl shadow-xl shadow-[#A3E635]/20 transition-all hover:scale-105 active:scale-95">
               Create Organization Portal
             </Link>
-            <Link href="/verify-receipt" className="px-8 py-4 bg-white/10 hover:bg-white/15 border border-white/20 font-bold rounded-xl backdrop-blur-sm transition-all active:scale-95">
+            <Link href="/verify-receipt" className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-xl backdrop-blur-sm transition-all hover:scale-105 active:scale-95">
               Verify Clearance Receipt
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 9. FOOTER */}
-      <footer className="bg-[#0A1628] text-white/65 py-16 px-6 sm:px-12 border-t border-white/5">
+      {/* 11. FOOTER */}
+      <footer className="bg-[#06120D] text-white/65 py-16 px-6 sm:px-12 border-t border-white/5 relative z-10">
         <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-10">
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
+              <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
                 D
               </div>
               <span className="font-display font-black text-lg text-white tracking-tight">{appName}</span>
@@ -521,18 +804,18 @@ export default function Home() {
           <div className="md:col-span-3 space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-widest">Quick Links</h4>
             <ul className="space-y-2.5 text-xs text-white/60">
-              <li><a href="#features" className="hover:text-[#2563EB] transition-colors">Features</a></li>
-              <li><a href="#how-it-works" className="hover:text-[#2563EB] transition-colors">How it Works</a></li>
-              <li><Link href="/login" className="hover:text-[#2563EB] transition-colors">Member Login</Link></li>
-              <li><Link href="/admin/login" className="hover:text-[#2563EB] transition-colors">Admin Login</Link></li>
+              <li><a href="#features" className="hover:text-[#A3E635] transition-colors">Features</a></li>
+              <li><a href="#how-it-works" className="hover:text-[#A3E635] transition-colors">How it Works</a></li>
+              <li><Link href="/login" className="hover:text-[#A3E635] transition-colors">Member Login</Link></li>
+              <li><Link href="/admin/login" className="hover:text-[#A3E635] transition-colors">Admin Login</Link></li>
             </ul>
           </div>
 
           <div className="md:col-span-4 space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-widest">Legal & Privacy</h4>
             <ul className="space-y-2.5 text-xs text-white/60">
-              <li><Link href="/privacy" className="hover:text-[#2563EB] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-[#2563EB] transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-[#A3E635] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-[#A3E635] transition-colors">Terms & Conditions</Link></li>
             </ul>
             <p className="text-[10px] text-white/40 leading-relaxed pt-2">
               Payment processing services are powered securely by licensed payment providers.
