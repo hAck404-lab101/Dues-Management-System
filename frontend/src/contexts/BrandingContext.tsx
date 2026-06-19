@@ -14,16 +14,16 @@ interface BrandingContextType {
 }
 
 const BrandingContext = createContext<BrandingContextType | undefined>(undefined);
-const DEFAULT_APP_NAME = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'Dues Management System';
+const DEFAULT_APP_NAME = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'DuesPay';
 
 const cleanBrandText = (value?: string | null, fallback = DEFAULT_APP_NAME) => {
     const text = String(value || fallback || '').trim();
     if (!text) return fallback;
     return text
-        .replace(/University of Cape Coast/gi, 'Dues Management System')
-        .replace(/\bUCC\b/gi, 'DMS')
-        .replace(/Ho Technical University/gi, 'Dues Management System')
-        .replace(/\bHTU\b/gi, 'DMS')
+        .replace(/University of Cape Coast/gi, 'DuesPay')
+        .replace(/\bUCC\b/gi, 'DuesPay')
+        .replace(/Ho Technical University/gi, 'DuesPay')
+        .replace(/\bHTU\b/gi, 'DuesPay')
         .replace(/\s{2,}/g, ' ')
         .trim();
 };

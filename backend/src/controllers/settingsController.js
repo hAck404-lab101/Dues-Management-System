@@ -8,7 +8,7 @@ const SENSITIVE_KEYS = [
     'paystack_webhook_secret'
 ];
 
-const DEFAULT_APP_NAME = process.env.DEFAULT_APP_NAME || 'Dues Management System';
+const DEFAULT_APP_NAME = process.env.DEFAULT_APP_NAME || 'DuesPay';
 const DEFAULT_APP_DESCRIPTION = process.env.DEFAULT_APP_DESCRIPTION || 'A secure student portal for dues, payments, receipts, and clearance records.';
 
 const DEFAULT_SETTINGS = [
@@ -23,10 +23,10 @@ const cleanPublicBrandText = (value, fallback = '') => {
     const text = String(value || fallback || '').trim();
     if (!text) return fallback;
     return text
-        .replace(/University of Cape Coast/gi, 'Dues Management System')
-        .replace(/\bUCC\b/gi, 'DMS')
-        .replace(/Ho Technical University/gi, 'Dues Management System')
-        .replace(/\bHTU\b/gi, 'DMS')
+        .replace(/University of Cape Coast/gi, 'DuesPay')
+        .replace(/\bUCC\b/gi, 'DuesPay')
+        .replace(/Ho Technical University/gi, 'DuesPay')
+        .replace(/\bHTU\b/gi, 'DuesPay')
         .replace(/\s{2,}/g, ' ')
         .trim();
 };
@@ -52,10 +52,11 @@ const cleanOldUccBranding = async () => {
     }
 
     await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC Dues', 'Dues') WHERE `value` LIKE '%UCC Dues%'");
-    await query("UPDATE settings SET `value` = REPLACE(`value`, 'University of Cape Coast', 'Dues Management System') WHERE `value` LIKE '%University of Cape Coast%'");
-    await query("UPDATE settings SET `value` = REPLACE(`value`, 'Ho Technical University', 'Dues Management System') WHERE `value` LIKE '%Ho Technical University%'");
-    await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC', 'DMS') WHERE `value` LIKE '%UCC%'");
-    await query("UPDATE settings SET `value` = REPLACE(`value`, 'HTU', 'DMS') WHERE `value` LIKE '%HTU%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'University of Cape Coast', 'DuesPay') WHERE `value` LIKE '%University of Cape Coast%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'Ho Technical University', 'DuesPay') WHERE `value` LIKE '%Ho Technical University%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'UCC', 'DuesPay') WHERE `value` LIKE '%UCC%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'HTU', 'DuesPay') WHERE `value` LIKE '%HTU%'");
+    await query("UPDATE settings SET `value` = REPLACE(`value`, 'Dues Management System', 'DuesPay') WHERE `value` LIKE '%Dues Management System%'");
 };
 
 const ensureDefaultSettings = async () => {

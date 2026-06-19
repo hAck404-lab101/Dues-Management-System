@@ -1,23 +1,33 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { BrandingProvider } from '@/contexts/BrandingContext'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap'
+})
 
-const DEFAULT_TITLE = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'Dues Management System'
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap'
+})
+
+const DEFAULT_TITLE = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'DuesPay'
 const DEFAULT_DESCRIPTION = process.env.NEXT_PUBLIC_DEFAULT_APP_DESCRIPTION || 'A secure student portal for dues, payments, receipts, and clearance records.'
 
 const cleanBrandText = (value?: string | null, fallback = '') => {
   const text = (value || fallback || '').trim()
   if (!text) return fallback
   return text
-    .replace(/University of Cape Coast/gi, 'Dues Management System')
-    .replace(/\bUCC\b/gi, 'DMS')
-    .replace(/Ho Technical University/gi, 'Dues Management System')
-    .replace(/\bHTU\b/gi, 'DMS')
+    .replace(/University of Cape Coast/gi, 'DuesPay')
+    .replace(/\bUCC\b/gi, 'DuesPay')
+    .replace(/Ho Technical University/gi, 'DuesPay')
+    .replace(/\bHTU\b/gi, 'DuesPay')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
@@ -35,7 +45,7 @@ const makeAbsoluteUrl = (value?: string | null) => {
 }
 
 const fallbackMetadata = (): Metadata => {
-  const appTitle = cleanBrandText(DEFAULT_TITLE, 'Dues Management System')
+  const appTitle = cleanBrandText(DEFAULT_TITLE, 'DuesPay')
   const appDescription = cleanBrandText(DEFAULT_DESCRIPTION, 'A secure student portal for dues, payments, receipts, and clearance records.')
 
   return {
@@ -114,7 +124,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${plusJakartaSans.variable} font-sans`}>
         <BrandingProvider>
           <AuthProvider>
             {children}
