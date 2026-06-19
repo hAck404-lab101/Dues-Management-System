@@ -69,7 +69,7 @@
 
 /* --- Admin Layout Container --- */
 .admin-layout {
-  @apply min-h-screen bg-primary text-gray-900 flex overflow-hidden;
+  @apply h-screen bg-primary text-gray-900 flex overflow-hidden;
 }
 
 /* Sidebar Overlay for Mobile */
