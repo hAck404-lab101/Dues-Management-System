@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --primary: #0A2540;
-  --primary-dark: #071C30;
-  --primary-light: #153457;
-  --secondary: #3B82F6;
-  --secondary-dark: #2563EB;
-  --secondary-light: #60A5FA;
+  --primary: #0020B2;
+  --primary-dark: #001780;
+  --primary-light: #1A3DF5;
+  --secondary: #001150;
+  --secondary-dark: #000B33;
+  --secondary-light: #0022A3;
   --neutral: #F4F6F8;
   --neutral-dark: #E2E8F0;
-  --sidebar: #061426;
+  --sidebar: #001150;
   --sidebar-hover: rgba(255, 255, 255, 0.04);
-  --sidebar-active: #EF4444;
+  --sidebar-active: #E60000;
 }
 
 @layer base {
@@ -30,15 +30,15 @@
 
   /* --- Buttons --- */
   .btn {
-    @apply inline-flex items-center justify-center font-bold rounded-full px-6 py-2.5 transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#0A2540]/20;
+    @apply inline-flex items-center justify-center font-bold rounded-full px-6 py-2.5 transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#0020B2]/20;
   }
   .btn-primary { @apply btn bg-primary text-white hover:bg-primary-dark; }
-  .btn-secondary { @apply btn bg-secondary text-white hover:bg-secondary-dark focus:ring-[#3B82F6]/20; }
-  .btn-outline { @apply btn border-2 border-primary text-primary hover:bg-[#0A2540]/5 shadow-none hover:shadow-none; }
+  .btn-secondary { @apply btn bg-secondary text-white hover:bg-secondary-dark focus:ring-[#001150]/20; }
+  .btn-outline { @apply btn border-2 border-primary text-primary hover:bg-[#0020B2]/5 shadow-none hover:shadow-none; }
 
   /* --- Forms & Inputs --- */
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0A2540]/20 focus:border-primary transition-colors outline-none text-gray-900 placeholder-gray-400 bg-white;
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0020B2]/20 focus:border-primary transition-colors outline-none text-gray-900 placeholder-gray-400 bg-white;
   }
   .label { @apply block text-sm font-semibold text-gray-700 mb-1.5; }
 
@@ -52,9 +52,9 @@
   .status-badge .dot { @apply w-1.5 h-1.5 rounded-full; }
   
   .status-badge.paid, .status-badge.completed, .status-badge.approved {
-    @apply bg-blue-50 text-blue-700 border-blue-100;
+    @apply bg-blue-50/70 text-blue-700 border-none;
   }
-  .status-badge.paid .dot, .status-badge.completed .dot, .status-badge.approved .dot { @apply bg-blue-500; }
+  .status-badge.paid .dot, .status-badge.completed .dot, .status-badge.approved .dot { @apply bg-[#0020B2]; }
   
   .status-badge.pending, .status-badge.partial {
     @apply bg-amber-50 text-amber-700 border-amber-100;

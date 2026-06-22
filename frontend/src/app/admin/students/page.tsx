@@ -278,7 +278,7 @@ export default function AdminStudentsPage() {
                   <th className="py-4 px-4 w-10">
                     <input
                       type="checkbox"
-                      className="rounded border-gray-300 text-[#0A2540] focus:ring-[#0A2540] h-4 w-4"
+                      className="rounded border-gray-300 text-[#0020B2] focus:ring-[#0020B2] h-4 w-4"
                       checked={students.length > 0 && selectedIds.length === students.length}
                       onChange={toggleSelectAll}
                     />
@@ -298,7 +298,7 @@ export default function AdminStudentsPage() {
                     <td className="py-4 px-4">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-[#0A2540] focus:ring-[#0A2540] h-4 w-4"
+                        className="rounded border-gray-300 text-[#0020B2] focus:ring-[#0020B2] h-4 w-4"
                         checked={selectedIds.includes(s.id)}
                         onChange={() => toggleSelect(s.id)}
                       />
