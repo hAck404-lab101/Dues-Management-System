@@ -43,7 +43,7 @@
   .label { @apply block text-sm font-semibold text-gray-700 mb-1.5; }
 
   /* --- Cards --- */
-  .card { @apply bg-white rounded-2xl shadow-[0_10px_35px_rgba(0,0,0,0.03)] p-8; }
+  .card { @apply bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.015),0_30px_60px_rgba(0,0,0,0.015)] p-8 border-none outline-none; }
 
   /* --- Status Badges --- */
   .status-badge {
@@ -125,11 +125,11 @@
 
 /* --- Dashboard Specific Styles --- */
 .kpi-card {
-  @apply bg-white rounded-2xl p-7 shadow-[0_10px_35px_rgba(0,0,0,0.03)] flex flex-col justify-between transition-all duration-300 hover:shadow-[0_15px_45px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 min-h-[170px];
+  @apply bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.015),0_30px_60px_rgba(0,0,0,0.015)] flex flex-col justify-between transition-all duration-300 hover:shadow-[0_15px_45px_rgba(0,0,0,0.03)] hover:-translate-y-0.5 min-h-[180px] border-none outline-none;
 }
 
 .kpi-card.solid-primary {
-  @apply bg-primary text-white border-none shadow-[0_12px_40px_rgba(9,38,28,0.12)];
+  @apply bg-primary text-white border-none outline-none shadow-[0_12px_40px_rgba(9,38,28,0.06)];
 }
 
 .kpi-card.solid-primary p.kpi-label {
@@ -154,11 +154,11 @@
 }
 
 .dashboard-card {
-  @apply bg-white rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)];
+  @apply bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.015),0_30px_60px_rgba(0,0,0,0.015)] border-none outline-none;
 }
 
 .chart-card {
-  @apply bg-white rounded-2xl p-8 shadow-[0_10px_35px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_15px_45px_rgba(0,0,0,0.06)] hover:-translate-y-0.5;
+  @apply bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.015),0_30px_60px_rgba(0,0,0,0.015)] transition-all duration-300 hover:shadow-[0_15px_45px_rgba(0,0,0,0.03)] hover:-translate-y-0.5 border-none outline-none;
 }
 
 .chart-card h3 {
@@ -170,7 +170,7 @@
 }
 
 .gradient-card {
-  @apply rounded-xl p-6 shadow-xl border border-white/10;
+  @apply rounded-3xl p-8 shadow-[0_12px_40px_rgba(16,185,129,0.08)] border-none outline-none;
   background: linear-gradient(135deg, var(--secondary) 0%, var(--primary-dark) 100%);
   color: white;
 }
@@ -179,6 +179,38 @@
 }
 .gradient-card p.chart-subtitle {
   @apply text-white/80 mb-6 text-sm;
+}
+
+/* --- Shimmer Skeleton Loader --- */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-bg {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.shimmer-bg-dark {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* --- Loader Animation --- */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.6; transform: scale(0.97); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
 }
 
 /* --- Background Grid Pattern Utilities --- */

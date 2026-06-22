@@ -1,10 +1,12 @@
 import Layout from '@/components/Layout';
-import { DashboardSkeleton } from '@/components/Skeletons';
+import Loader from '@/components/Loader';
 
 export default function StudentLoading() {
   return (
     <Layout title="Loading Student Area">
-      <DashboardSkeleton />
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader />
+      </div>
     </Layout>
   );
 }

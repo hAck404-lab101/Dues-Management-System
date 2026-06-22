@@ -1,10 +1,12 @@
 import AdminLayout from '@/components/AdminLayout';
-import { DashboardSkeleton } from '@/components/Skeletons';
+import Loader from '@/components/Loader';
 
 export default function AdminLoading() {
   return (
     <AdminLayout title="Loading Admin Area">
-      <DashboardSkeleton />
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader />
+      </div>
     </AdminLayout>
   );
 }

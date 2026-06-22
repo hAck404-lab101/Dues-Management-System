@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { DashboardSkeleton } from '@/components/Skeletons';
+import { WalletIcon, LandmarkIcon, UsersIcon, CardIcon } from '@/components/Icons';
 
 interface DashboardData {
   student: any;
@@ -147,11 +148,71 @@ export default function StudentDashboard() {
         <div className="absolute right-12 -bottom-16 w-48 h-48 rounded-full bg-secondary/20" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="card bg-primary text-white"><h3 className="text-sm font-medium opacity-90">Total Dues</h3><p className="text-3xl font-bold mt-2">{data.summary.totalDues}</p></div>
-        <div className="card bg-secondary text-white"><h3 className="text-sm font-medium opacity-90">Total Amount</h3><p className="text-3xl font-bold mt-2">GHS {data.summary.totalDuesAmount.toFixed(2)}</p></div>
-        <div className="card bg-green-600 text-white"><h3 className="text-sm font-medium opacity-90">Total Paid</h3><p className="text-3xl font-bold mt-2">GHS {data.summary.totalPaid.toFixed(2)}</p></div>
-        <div className="card bg-red-600 text-white"><h3 className="text-sm font-medium opacity-90">Outstanding</h3><p className="text-3xl font-bold mt-2">GHS {data.summary.outstandingBalance.toFixed(2)}</p></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Card 1: Total Dues */}
+        <div className="kpi-card solid-primary">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white">
+              <span className="w-6 h-6"><WalletIcon /></span>
+            </div>
+            <span className="percent-pill bg-white/20 text-white border border-white/30">Total</span>
+          </div>
+          <div>
+            <p className="kpi-label text-sm font-semibold mb-1">Total Dues</p>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-3xl font-extrabold">{data.summary.totalDues}</h3>
+              <span className="text-xs text-white/60">Dues</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Total Amount */}
+        <div className="kpi-card">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
+              <span className="w-6 h-6"><LandmarkIcon /></span>
+            </div>
+            <span className="percent-pill bg-emerald-50 text-emerald-700">Assigned</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-500 mb-1">Total Amount</p>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-3xl font-extrabold text-gray-900">GHS {data.summary.totalDuesAmount.toFixed(2)}</h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Total Paid */}
+        <div className="kpi-card">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
+              <span className="w-6 h-6"><UsersIcon /></span>
+            </div>
+            <span className="percent-pill bg-blue-50 text-blue-700">Paid</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-500 mb-1">Total Paid</p>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-3xl font-extrabold text-gray-900">GHS {data.summary.totalPaid.toFixed(2)}</h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Outstanding Balance */}
+        <div className="kpi-card">
+          <div className="flex justify-between items-start mb-6">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
+              <span className="w-6 h-6"><CardIcon /></span>
+            </div>
+            <span className="percent-pill bg-rose-50 text-rose-700">Outstanding</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-500 mb-1">Outstanding</p>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-3xl font-extrabold text-gray-900">GHS {data.summary.outstandingBalance.toFixed(2)}</h3>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -159,15 +220,24 @@ export default function StudentDashboard() {
           <h2 className="text-xl font-bold text-primary mb-4">My Dues</h2>
           <div className="space-y-3">
             {data.dues.map((due) => (
-              <div key={due.id} className="border rounded-lg p-4">
+              <div key={due.id} className="bg-gray-50/60 hover:bg-gray-50/90 transition-colors rounded-2xl p-5 border-none outline-none">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">{due.name}</h3>
-                  <span className={`px-2 py-1 rounded text-xs ${due.payment_status === 'paid' ? 'bg-green-100 text-green-800' : due.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{due.payment_status}</span>
+                  <h3 className="font-bold text-gray-900">{due.name}</h3>
+                  <span className={`status-badge ${due.payment_status}`}>
+                    <span className="dot"></span>
+                    {due.payment_status.charAt(0).toUpperCase() + due.payment_status.slice(1)}
+                  </span>
                 </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>Assigned: GHS {due.assigned_amount.toFixed(2)}</p><p>Paid: GHS {due.total_paid.toFixed(2)}</p><p>Balance: GHS {due.balance.toFixed(2)}</p>
+                <div className="text-sm text-gray-600 space-y-1 mt-3">
+                  <div className="flex justify-between border-b border-gray-100/50 pb-1.5"><span className="font-medium">Assigned Amount:</span><span className="font-bold text-gray-900">GHS {due.assigned_amount.toFixed(2)}</span></div>
+                  <div className="flex justify-between border-b border-gray-100/50 py-1.5"><span className="font-medium">Amount Paid:</span><span className="font-bold text-emerald-600">GHS {due.total_paid.toFixed(2)}</span></div>
+                  <div className="flex justify-between pt-1.5"><span className="font-medium">Remaining Balance:</span><span className="font-bold text-rose-600">GHS {due.balance.toFixed(2)}</span></div>
                 </div>
-                {due.balance > 0 && <Link href={`/student/payments/make?dueId=${due.id}`}><button className="btn-primary mt-3 w-full">Make Payment</button></Link>}
+                {due.balance > 0 && (
+                  <Link href={`/student/payments/make?dueId=${due.id}`}>
+                    <button className="btn-primary mt-4 w-full">Make Payment</button>
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -176,14 +246,24 @@ export default function StudentDashboard() {
         <div className="card">
           <h2 className="text-xl font-bold text-primary mb-4">Recent Payments</h2>
           <div className="space-y-3">
-            {data.recentPayments.length === 0 ? <p className="text-gray-500">No payments yet</p> : data.recentPayments.map((payment) => (
-              <div key={payment.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div><h3 className="font-semibold">{payment.due_name}</h3><p className="text-sm text-gray-600">GHS {Number(payment.amount).toFixed(2)}</p></div>
-                  <span className={`px-2 py-1 rounded text-xs ${payment.status === 'completed' || payment.status === 'approved' ? 'bg-green-100 text-green-800' : payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>{payment.status}</span>
+            {data.recentPayments.length === 0 ? (
+              <p className="text-gray-500 text-center py-6">No payments yet</p>
+            ) : (
+              data.recentPayments.map((payment) => (
+                <div key={payment.id} className="bg-gray-50/60 hover:bg-gray-50/90 transition-colors rounded-2xl p-5 border-none outline-none">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-bold text-gray-900">{payment.due_name}</h3>
+                      <p className="text-sm font-bold text-gray-500 mt-1">GHS {Number(payment.amount).toFixed(2)}</p>
+                    </div>
+                    <span className={`status-badge ${payment.status}`}>
+                      <span className="dot"></span>
+                      {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -191,23 +271,27 @@ export default function StudentDashboard() {
       <div className="card">
         <h2 className="text-xl font-bold text-primary mb-4">Recent Receipts</h2>
         <div className="space-y-3">
-          {data.recentReceipts.length === 0 ? <p className="text-gray-500">No receipts yet</p> : data.recentReceipts.map((receipt) => (
-            <div key={receipt.id} className="border rounded-lg p-4 flex justify-between items-center gap-4">
-              <div>
-                <h3 className="font-semibold">{receipt.due_name}</h3>
-                <p className="text-sm text-gray-600">Receipt: {receipt.receipt_number}</p>
-                <p className="text-sm text-gray-600">Amount: GHS {Number(receipt.amount_paid).toFixed(2)}</p>
+          {data.recentReceipts.length === 0 ? (
+            <p className="text-gray-500 text-center py-6">No receipts yet</p>
+          ) : (
+            data.recentReceipts.map((receipt) => (
+              <div key={receipt.id} className="bg-gray-50/60 hover:bg-gray-50/90 transition-colors rounded-2xl p-5 border-none outline-none flex justify-between items-center gap-4">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-gray-900">{receipt.due_name}</h3>
+                  <p className="text-xs text-gray-500 font-semibold">Receipt: {receipt.receipt_number}</p>
+                  <p className="text-sm font-bold text-gray-700">Amount: GHS {Number(receipt.amount_paid).toFixed(2)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => downloadReceipt(receipt.receipt_number)}
+                  disabled={downloadingReceipt === receipt.receipt_number}
+                  className="btn-outline whitespace-nowrap disabled:opacity-60 text-xs px-4 py-2"
+                >
+                  {downloadingReceipt === receipt.receipt_number ? 'Downloading...' : 'Download'}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => downloadReceipt(receipt.receipt_number)}
-                disabled={downloadingReceipt === receipt.receipt_number}
-                className="btn-outline whitespace-nowrap disabled:opacity-60"
-              >
-                {downloadingReceipt === receipt.receipt_number ? 'Downloading...' : 'Download'}
-              </button>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </Layout>

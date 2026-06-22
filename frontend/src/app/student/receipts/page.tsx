@@ -76,18 +76,18 @@ export default function ReceiptsPage() {
         ) : (
           <div className="space-y-4">
             {receipts.map((receipt) => (
-              <div key={receipt.id} className="border rounded-lg p-4 flex justify-between items-center gap-4">
+              <div key={receipt.id} className="bg-gray-50/60 hover:bg-gray-50/90 transition-colors rounded-2xl p-5 border-none outline-none flex justify-between items-center gap-4">
                 <div>
-                  <h3 className="font-semibold text-lg">{receipt.due_name}</h3>
-                  <p className="text-sm text-gray-600">Receipt: {receipt.receipt_number}</p>
-                  <p className="text-sm text-gray-600">Amount: GHS {Number(receipt.amount_paid).toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">Date: {new Date(receipt.issued_at).toLocaleDateString()}</p>
+                  <h3 className="font-bold text-gray-900 text-lg">{receipt.due_name}</h3>
+                  <p className="text-xs text-gray-500 font-semibold mt-1">Receipt: {receipt.receipt_number}</p>
+                  <p className="text-sm font-bold text-gray-700">Amount: GHS {Number(receipt.amount_paid).toFixed(2)}</p>
+                  <p className="text-xs text-gray-500 font-semibold mt-1">Date: {new Date(receipt.issued_at).toLocaleDateString()}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => downloadReceipt(receipt.receipt_number)}
                   disabled={downloading === receipt.receipt_number}
-                  className="btn-outline whitespace-nowrap disabled:opacity-60"
+                  className="btn-outline whitespace-nowrap disabled:opacity-60 text-xs px-4 py-2"
                 >
                   {downloading === receipt.receipt_number ? 'Downloading...' : 'Download PDF'}
                 </button>
