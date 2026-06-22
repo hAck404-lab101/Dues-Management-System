@@ -1,17 +1,19 @@
 import type { Metadata } from 'next'
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
+import { Poppins } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { BrandingProvider } from '@/contexts/BrandingContext'
 
-const inter = Inter({ 
+const poppins = Poppins({ 
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
   subsets: ['latin'],
   variable: '--font-sans',
   display: 'swap'
 })
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const poppinsDisplay = Poppins({
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap'
@@ -124,7 +126,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${plusJakartaSans.variable} font-sans`}>
+      <body className={`${poppins.variable} ${poppinsDisplay.variable} font-sans`}>
         <BrandingProvider>
           <AuthProvider>
             {children}

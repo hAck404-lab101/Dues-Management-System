@@ -53,6 +53,9 @@ export default function AdminPaymentsPage() {
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [proofName, setProofName] = useState('Payment proof');
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewPayment, setViewPayment] = useState<Payment | null>(null);
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   useEffect(() => {
     if (rejectId || proofUrl) document.body.style.overflow = 'hidden';
@@ -229,67 +232,155 @@ export default function AdminPaymentsPage() {
           ) : payments.length === 0 ? (
             <p className="text-gray-500 text-center py-10">No payments found.</p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b bg-gray-50 text-left">
-                  <th className="py-3 px-3 font-semibold text-gray-600">Student</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Due</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Amount</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Method</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Type</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Status</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Receipt</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Date</th>
-                  <th className="py-3 px-3 font-semibold text-gray-600">Actions</th>
+                <tr className="border-b border-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                  <th className="py-4 px-4 font-semibold">Student</th>
+                  <th className="py-4 px-4 font-semibold">Due</th>
+                  <th className="py-4 px-4 font-semibold">Amount</th>
+                  <th className="py-4 px-4 font-semibold">Method</th>
+                  <th className="py-4 px-4 font-semibold">Type</th>
+                  <th className="py-4 px-4 font-semibold">Status</th>
+                  <th className="py-4 px-4 font-semibold">Receipt</th>
+                  <th className="py-4 px-4 font-semibold">Date</th>
+                  <th className="py-4 px-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-100/60">
                 {payments.map(p => (
-                  <tr key={p.id} className="border-b hover:bg-gray-50 transition-colors">
-                    <td className="py-3 px-3">
-                      <p className="font-medium">{p.student_name}</p>
-                      <p className="text-xs text-gray-400">{p.student_id}</p>
+                  <tr key={p.id} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="py-4 px-4">
+                      <div className="font-semibold text-gray-900 text-sm">{p.student_name}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{p.student_id}</div>
                       {p.student_phone && <p className="text-[11px] text-gray-400">{p.student_phone}</p>}
                     </td>
-                    <td className="py-3 px-3 max-w-[160px] truncate">{p.due_name}</td>
-                    <td className="py-3 px-3 font-semibold text-primary">GHS {Number(p.amount).toFixed(2)}</td>
-                    <td className="py-3 px-3 capitalize">{p.payment_method.replace(/_/g, ' ')}</td>
-                    <td className="py-3 px-3 capitalize">{p.payment_type}</td>
-                    <td className="py-3 px-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyle(p.status)}`}>{p.status}</span>
+                    <td className="py-4 px-4 text-sm text-gray-700 max-w-[160px] truncate">{p.due_name}</td>
+                    <td className="py-4 px-4 font-semibold text-gray-900 text-sm">GHS {Number(p.amount).toFixed(2)}</td>
+                    <td className="py-4 px-4 text-sm text-gray-600 capitalize">{p.payment_method.replace(/_/g, ' ')}</td>
+                    <td className="py-4 px-4 text-sm text-gray-600 capitalize">{p.payment_type}</td>
+                    <td className="py-4 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 capitalize">
+                        <span className={`w-2 h-2 rounded-full ${
+                          p.status === 'approved' || p.status === 'completed'
+                            ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+                            : p.status === 'pending'
+                            ? 'bg-amber-500 shadow-sm shadow-amber-500/50'
+                            : p.status === 'rejected'
+                            ? 'bg-rose-500 shadow-sm shadow-rose-500/50'
+                            : 'bg-gray-400'
+                        }`} />
+                        <span>{p.status}</span>
+                      </span>
                     </td>
-                    <td className="py-3 px-3">
-                      {p.receipt_number ? <span className="text-xs font-semibold text-green-700">{p.receipt_number}</span> : <span className="text-xs text-gray-400">No receipt yet</span>}
+                    <td className="py-4 px-4 text-sm">
+                      {p.receipt_number ? <span className="font-semibold text-emerald-700">{p.receipt_number}</span> : <span className="text-gray-400">No receipt yet</span>}
                     </td>
-                    <td className="py-3 px-3 text-gray-500 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
-                    <td className="py-3 px-3">
-                      <div className="flex gap-2 flex-wrap">
-                        {p.proof_image_url && p.proof_image_url !== 'null' && (
-                          <button onClick={() => openProof(p)} className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 font-medium">
-                            View Proof
-                          </button>
-                        )}
-                        {p.status === 'pending' && p.payment_type === 'manual' && (
-                          <>
-                            <button onClick={() => handleApprove(p.id)} disabled={submitting === p.id} className="text-xs px-2 py-1 rounded border border-green-400 text-green-700 hover:bg-green-50 font-medium disabled:opacity-50">
-                              {submitting === p.id ? 'Approving…' : 'Approve'}
+                    <td className="py-4 px-4 text-sm text-gray-500 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
+                    <td className="py-4 px-4 text-right relative">
+                      <button
+                        onClick={() => setActiveDropdownId(activeDropdownId === p.id ? null : p.id)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors focus:outline-none inline-flex items-center justify-center"
+                      >
+                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                      </button>
+                      {activeDropdownId === p.id && (
+                        <>
+                          <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)} />
+                          <div className="absolute right-4 mt-1 w-44 bg-white border border-gray-100 rounded-xl shadow-xl z-40 py-1 text-left animate-in fade-in slide-in-from-top-2 duration-100">
+                            <button
+                              onClick={() => {
+                                setViewPayment(p);
+                                setShowViewModal(true);
+                                setActiveDropdownId(null);
+                              }}
+                              className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2 border-b border-gray-50"
+                            >
+                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Details
                             </button>
-                            <button onClick={() => { setRejectId(p.id); setRejectReason(''); }} className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50 font-medium">
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {(p.status === 'approved' || p.status === 'completed') && (
-                          <>
-                            <button onClick={() => handleResendSMS(p)} disabled={submitting === `${p.id}-sms` || !canSendReceipt(p)} className="text-xs px-2 py-1 rounded border border-secondary text-secondary-dark hover:bg-secondary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed" title={canSendReceipt(p) ? 'Send payment receipt SMS again' : 'Receipt must exist before SMS can be resent'}>
-                              {submitting === `${p.id}-sms` ? 'Sending…' : 'Resend SMS'}
-                            </button>
-                            <button onClick={() => handleResendEmail(p)} disabled={submitting === `${p.id}-email` || !canSendReceipt(p)} className="text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-primary/10 font-bold disabled:opacity-50 disabled:cursor-not-allowed">
-                              {submitting === `${p.id}-email` ? 'Sending…' : 'Resend Email'}
-                            </button>
-                          </>
-                        )}
-                      </div>
+                            {p.proof_image_url && p.proof_image_url !== 'null' && (
+                              <button
+                                onClick={() => {
+                                  openProof(p);
+                                  setActiveDropdownId(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2"
+                              >
+                                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                View Proof
+                              </button>
+                            )}
+                            {p.status === 'pending' && p.payment_type === 'manual' && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleApprove(p.id);
+                                    setActiveDropdownId(null);
+                                  }}
+                                  disabled={submitting === p.id}
+                                  className="w-full px-4 py-2.5 text-xs font-semibold text-green-700 hover:bg-green-50 flex items-center gap-2 border-t border-gray-50 disabled:opacity-50"
+                                >
+                                  <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {submitting === p.id ? 'Approving…' : 'Approve'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setRejectId(p.id);
+                                    setRejectReason('');
+                                    setActiveDropdownId(null);
+                                  }}
+                                  className="w-full px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                                >
+                                  <svg className="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {(p.status === 'approved' || p.status === 'completed') && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    handleResendSMS(p);
+                                    setActiveDropdownId(null);
+                                  }}
+                                  disabled={submitting === `${p.id}-sms` || !canSendReceipt(p)}
+                                  className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2 border-t border-gray-50 disabled:opacity-40"
+                                  title={canSendReceipt(p) ? 'Send payment receipt SMS again' : 'Receipt must exist before SMS can be resent'}
+                                >
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                  </svg>
+                                  {submitting === `${p.id}-sms` ? 'Sending…' : 'Resend SMS'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleResendEmail(p);
+                                    setActiveDropdownId(null);
+                                  }}
+                                  disabled={submitting === `${p.id}-email` || !canSendReceipt(p)}
+                                  className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2 disabled:opacity-40"
+                                >
+                                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                  {submitting === `${p.id}-email` ? 'Sending…' : 'Resend Email'}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -347,6 +438,93 @@ export default function AdminPaymentsPage() {
               <a href={proofUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary px-6">Open in New Tab</a>
               <a href={proofUrl} download className="btn-outline border-white text-white hover:bg-white hover:text-primary px-6">Download Proof</a>
               <button onClick={() => setProofUrl(null)} className="btn-outline border-white text-white hover:bg-white hover:text-primary px-6">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showViewModal && viewPayment && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4" onClick={() => { setShowViewModal(false); setViewPayment(null); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white z-10">
+              <h3 className="text-xl font-extrabold text-primary">Payment Details</h3>
+              <button onClick={() => { setShowViewModal(false); setViewPayment(null); }} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-8 space-y-4 text-gray-800 text-sm">
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Student Name:</span>
+                <span className="font-semibold text-gray-900">{viewPayment.student_name}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Student Index No:</span>
+                <span className="font-mono text-gray-900">{viewPayment.student_id}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Email Address:</span>
+                <span className="text-gray-900 font-semibold">{viewPayment.student_email}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Phone Number:</span>
+                <span className="text-gray-900 font-semibold">{viewPayment.student_phone || '—'}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Assigned Due:</span>
+                <span className="text-gray-900 font-semibold">{viewPayment.due_name}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Amount Paid:</span>
+                <span className="text-gray-900 font-bold">GHS {Number(viewPayment.amount).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Payment Method:</span>
+                <span className="text-gray-900 font-semibold capitalize">{viewPayment.payment_method.replace(/_/g, ' ')}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Payment Type:</span>
+                <span className="text-gray-900 font-semibold capitalize">{viewPayment.payment_type}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Receipt No:</span>
+                <span className="text-emerald-700 font-bold">{viewPayment.receipt_number || 'No receipt generated'}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Transaction Date:</span>
+                <span className="text-gray-900 font-semibold">{new Date(viewPayment.created_at).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span className="font-bold text-gray-400">Status:</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-gray-900 capitalize">
+                  <span className={`w-2 h-2 rounded-full ${
+                    viewPayment.status === 'approved' || viewPayment.status === 'completed'
+                      ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+                      : viewPayment.status === 'pending'
+                      ? 'bg-amber-500 shadow-sm shadow-amber-500/50'
+                      : viewPayment.status === 'rejected'
+                      ? 'bg-rose-500 shadow-sm shadow-rose-500/50'
+                      : 'bg-gray-400'
+                  }`} />
+                  <span>{viewPayment.status}</span>
+                </span>
+              </div>
+              {viewPayment.approved_by_email && (
+                <div className="flex justify-between border-b border-gray-100 pb-2">
+                  <span className="font-bold text-gray-400">Approved By:</span>
+                  <span className="text-gray-900 font-semibold">{viewPayment.approved_by_email}</span>
+                </div>
+              )}
+              {viewPayment.notes && (
+                <div className="flex flex-col border-b border-gray-100 pb-2">
+                  <span className="font-bold text-gray-400">Admin Notes:</span>
+                  <span className="text-gray-900 font-semibold mt-1">{viewPayment.notes}</span>
+                </div>
+              )}
+              <div className="pt-2">
+                <button type="button" onClick={() => { setShowViewModal(false); setViewPayment(null); }} className="btn-outline w-full py-2.5">Close Details</button>
+              </div>
             </div>
           </div>
         </div>

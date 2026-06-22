@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useBranding } from '@/contexts/BrandingContext';
 import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, CertificateIcon, WalletIcon, CheckCircleIcon, XCircleIcon } from '@/components/Icons';
@@ -8,6 +8,19 @@ import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, Certi
 export default function Home() {
   const { appName, loading } = useBranding();
   const [showMatrix, setShowMatrix] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Helper List Check Icon (pure SVG, no emojis)
   const ListCheck = ({ isWhite = false }: { isWhite?: boolean }) => (
@@ -59,51 +72,57 @@ export default function Home() {
     <div className="min-h-screen bg-white text-gray-800 antialiased overflow-x-hidden">
       
       {/* 1. STICKY GLASSMORPHIC NAVIGATION */}
-      <header className="sticky top-0 z-50 bg-[#06120D]/90 backdrop-blur-md border-b border-white/5 py-4 px-6 sm:px-12 flex justify-between items-center transition-all">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#10B981] to-[#A3E635] flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-[#10B981]/25">
-            D
+      <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
+        <header className={`w-full max-w-5xl rounded-full border py-2.5 px-3 flex justify-between items-center transition-all duration-300 ${
+          scrolled
+            ? 'bg-[#06120D]/35 backdrop-blur-2xl border-white/10 shadow-[0_12px_45px_-8px_rgba(0,0,0,0.5)]'
+            : 'bg-[#06120D]/20 backdrop-blur-md border-white/5 shadow-none'
+        }`}>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black shadow-md hover:scale-105 transition-transform">
+              <svg className="w-6 h-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5" fill="currentColor" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 14.5c4-2.5 13-7.5 17-5" />
+              </svg>
+            </Link>
+            <span className="font-display font-black text-lg text-white tracking-tight hidden sm:inline">{appName}</span>
           </div>
-          <span className="font-display font-black text-xl text-white tracking-tight">{appName}</span>
-        </div>
-        <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-white/80">
-          <a href="#features" className="hover:text-[#A3E635] transition-colors">Features</a>
-          <a href="#how-it-works" className="hover:text-[#A3E635] transition-colors">How it Works</a>
-          <a href="#blog" className="hover:text-[#A3E635] transition-colors">Articles</a>
-          <a href="#pricing" className="hover:text-[#A3E635] transition-colors">Pricing</a>
-          <Link href="/verify-receipt" className="hover:text-[#A3E635] transition-colors">Verify Receipt</Link>
-        </nav>
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#A3E635] transition-colors">
-            Login
-          </Link>
-          <Link href="/register" className="px-5 py-2.5 text-sm font-bold text-[#06120D] bg-[#A3E635] hover:bg-[#86EFAC] rounded-xl shadow-lg shadow-[#A3E635]/25 transition-all hover:scale-105 active:scale-95">
-            Get Started
-          </Link>
-        </div>
-      </header>
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-white/80">
+            <a href="#features" className="hover:text-[#A3E635] transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-[#A3E635] transition-colors">How it Works</a>
+            <a href="#blog" className="hover:text-[#A3E635] transition-colors">Articles</a>
+            <a href="#pricing" className="hover:text-[#A3E635] transition-colors">Pricing</a>
+            <Link href="/verify-receipt" className="hover:text-[#A3E635] transition-colors">Verify Receipt</Link>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#A3E635] transition-colors">
+              Login
+            </Link>
+            <Link href="/register" className="px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-sm font-bold rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
+              Get Started
+            </Link>
+          </div>
+        </header>
+      </div>
 
       {/* 2. HERO SECTION */}
-      <section className="relative bg-[#06120D] text-white pt-28 pb-32 px-6 sm:px-12 lg:px-24 grid-bg-dark overflow-hidden">
+      <section className="relative bg-[#06120D] text-white min-h-screen flex items-center justify-center py-20 px-6 sm:px-12 lg:px-24 grid-bg-dark overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl pointer-events-none radial-glow animate-pulse-glow" />
         
-        <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#10B981]/30 bg-[#10B981]/10 text-xs font-semibold text-[#A3E635]">
-            <span>Welcome to a Modern Dues Experience</span>
-          </div>
+        <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10 w-full">
 
-          <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-black leading-tight tracking-tight text-white uppercase">
+          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black leading-[1.05] tracking-tight text-white uppercase">
             <span className="text-[#A3E635]">SAVE</span> YOUR TIME & <br className="hidden sm:inline" />
             <span className="text-[#A3E635]">LESS EXPENSE</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-white/70 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-white/70 leading-relaxed max-w-3xl mx-auto">
             DuesPay bridges the gap between administrators and members. Pay securely via Mobile Money, automate receipt generation, and track clearances in real-time.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
             <Link href="/register" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#06120D] font-bold rounded-full shadow-xl shadow-[#A3E635]/25 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
-              Download Now
+              Get Started
             </Link>
             <a href="#how-it-works" className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-full backdrop-blur-sm transition-all hover:scale-105 active:scale-95 min-w-[200px]">
               <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
@@ -119,7 +138,6 @@ export default function Home() {
       <section id="features" className="py-24 px-6 sm:px-12 bg-white relative z-10">
         <div className="max-w-7xl mx-auto space-y-16">
           <div className="text-center max-w-3xl mx-auto space-y-4">
-            <Badge text="Awesome Benefit From Us" />
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
               Experience the Future of Dues - <span className="text-[#10B981]">DuesPay</span>
             </h2>
@@ -239,7 +257,6 @@ export default function Home() {
 
           {/* Right Side: Text details */}
           <div className="lg:col-span-6 space-y-6 text-left">
-            <Badge text="Anywhere, Anytime with DuesPay" />
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight leading-tight">
               All <span className="text-[#10B981]">Transactions</span> Easily on Your Mobile
             </h2>
@@ -262,7 +279,6 @@ export default function Home() {
           
           {/* Left Side: Text details and metrics */}
           <div className="lg:col-span-6 space-y-6 text-left order-2 lg:order-1">
-            <Badge text="Empowering with Organization" />
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight leading-tight">
               Empowering Your <span className="text-[#10B981]">Financial</span> Journey
             </h2>
@@ -349,7 +365,6 @@ export default function Home() {
       <section id="how-it-works" className="bg-[#06120D] text-white py-24 px-6 sm:px-12 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
-            <Badge text="Simple Steps" />
             <h2 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight">How DuesPay Works</h2>
             <p className="text-base text-white/60">Automated onboarding for both members and administration.</p>
           </div>
@@ -385,7 +400,6 @@ export default function Home() {
       {/* 7. TESTIMONIALS */}
       <section className="py-24 px-6 sm:px-12 max-w-7xl mx-auto relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <Badge text="Testimonials" />
           <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-900 tracking-tight">
             What Our <span className="text-[#10B981]">Happy User</span> Says
           </h2>
@@ -437,7 +451,6 @@ export default function Home() {
       <section id="blog" className="py-24 px-6 sm:px-12 bg-[#F9FAFB] border-t border-b border-gray-100 relative z-10">
         <div className="max-w-7xl mx-auto space-y-16">
           <div className="text-center max-w-3xl mx-auto space-y-4">
-            <Badge text="Learning Blog" />
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
               Take a look at our <span className="text-[#10B981]">articles & resources</span>
             </h2>
