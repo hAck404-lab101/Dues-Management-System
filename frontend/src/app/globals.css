@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --primary: #09261C;
-  --primary-dark: #061A13;
-  --primary-light: #124031;
-  --secondary: #10B981;
-  --secondary-dark: #059669;
-  --secondary-light: #34D399;
-  --neutral: #F4F6F5;
-  --neutral-dark: #E6EAE8;
-  --sidebar: #051A13;
-  --sidebar-hover: rgba(255, 255, 255, 0.05);
-  --sidebar-active: #10B981;
+  --primary: #0A2540;
+  --primary-dark: #071C30;
+  --primary-light: #153457;
+  --secondary: #3B82F6;
+  --secondary-dark: #2563EB;
+  --secondary-light: #60A5FA;
+  --neutral: #F4F6F8;
+  --neutral-dark: #E2E8F0;
+  --sidebar: #061426;
+  --sidebar-hover: rgba(255, 255, 255, 0.04);
+  --sidebar-active: #EF4444;
 }
 
 @layer base {
@@ -30,15 +30,15 @@
 
   /* --- Buttons --- */
   .btn {
-    @apply inline-flex items-center justify-center font-bold rounded-full px-6 py-2.5 transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#09261C]/20;
+    @apply inline-flex items-center justify-center font-bold rounded-full px-6 py-2.5 transition-all duration-300 transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#0A2540]/20;
   }
-  .btn-primary { @apply btn bg-primary text-white hover:bg-[#061A13]; }
-  .btn-secondary { @apply btn bg-secondary text-white hover:bg-secondary-dark focus:ring-[#10B981]/20; }
-  .btn-outline { @apply btn border-2 border-primary text-primary hover:bg-[#09261C]/5 shadow-none hover:shadow-none; }
+  .btn-primary { @apply btn bg-primary text-white hover:bg-primary-dark; }
+  .btn-secondary { @apply btn bg-secondary text-white hover:bg-secondary-dark focus:ring-[#3B82F6]/20; }
+  .btn-outline { @apply btn border-2 border-primary text-primary hover:bg-[#0A2540]/5 shadow-none hover:shadow-none; }
 
   /* --- Forms & Inputs --- */
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#09261C]/20 focus:border-primary transition-colors outline-none text-gray-900 placeholder-gray-400 bg-white;
+    @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#0A2540]/20 focus:border-primary transition-colors outline-none text-gray-900 placeholder-gray-400 bg-white;
   }
   .label { @apply block text-sm font-semibold text-gray-700 mb-1.5; }
 
@@ -52,9 +52,9 @@
   .status-badge .dot { @apply w-1.5 h-1.5 rounded-full; }
   
   .status-badge.paid, .status-badge.completed, .status-badge.approved {
-    @apply bg-emerald-50 text-emerald-700 border-emerald-100;
+    @apply bg-blue-50 text-blue-700 border-blue-100;
   }
-  .status-badge.paid .dot, .status-badge.completed .dot, .status-badge.approved .dot { @apply bg-emerald-500; }
+  .status-badge.paid .dot, .status-badge.completed .dot, .status-badge.approved .dot { @apply bg-blue-500; }
   
   .status-badge.pending, .status-badge.partial {
     @apply bg-amber-50 text-amber-700 border-amber-100;
@@ -144,7 +144,7 @@
   @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap uppercase tracking-wider;
 }
 .percent-pill.positive {
-  @apply bg-emerald-50 text-emerald-700;
+  @apply bg-blue-50 text-blue-700;
 }
 .percent-pill.negative {
   @apply bg-rose-50 text-rose-700;

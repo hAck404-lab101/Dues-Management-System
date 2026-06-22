@@ -115,7 +115,7 @@ export default function StudentProfilePage() {
                     <div>
                         <h2 className="text-2xl font-bold text-primary">{profile.full_name}</h2>
                         <p className="text-gray-500 text-sm">{profile.email}</p>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {profile.is_active ? 'Active Student' : 'Inactive'}
                         </span>
                     </div>

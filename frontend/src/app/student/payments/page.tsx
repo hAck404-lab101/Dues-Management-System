@@ -125,7 +125,7 @@ export default function PaymentsPage() {
                     <td className="py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide capitalize ${
                         payment.status === 'completed' || payment.status === 'approved'
-                          ? 'bg-green-50 text-green-700 border border-green-200'
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
                           : payment.status === 'pending'
                             ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                             : 'bg-red-50 text-red-700 border border-red-200'

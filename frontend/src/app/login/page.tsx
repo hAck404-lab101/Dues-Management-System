@@ -168,8 +168,8 @@ export default function LoginPage() {
               )}
             </button>
 
-            <div className="text-center text-sm font-medium text-gray-500 pt-2">
-              Don't have an account? <Link href="/register" className="text-gray-900 font-bold hover:underline">Sign up here</Link>
+            <div className="text-center text-xs font-semibold text-gray-400 pt-2">
+              Don't have an account? Contact your department administrator.
             </div>
           </form>
         </div>

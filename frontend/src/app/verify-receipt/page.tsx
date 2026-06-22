@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { ReceiptIcon, CheckCircleIcon, ExclamationIcon } from '@/components/Icons';
 import { useBranding } from '@/contexts/BrandingContext';
 import { SkeletonBlock } from '@/components/Skeletons';
+import Loader from '@/components/Loader';
 
 function VerifyReceiptContent() {
   const { appName, appLogo } = useBranding();
@@ -60,7 +61,7 @@ function VerifyReceiptContent() {
       <Navbar />
       <main className="container mx-auto px-4 py-8 sm:py-12">
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="card overflow-hidden p-0">
+          <div className="card overflow-hidden p-0 border-none outline-none">
             <div className="bg-primary text-white p-6 sm:p-8 relative overflow-hidden">
               <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
                 <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
@@ -97,7 +98,7 @@ function VerifyReceiptContent() {
           </div>
 
           {loading && (
-            <div className="card p-6 space-y-3">
+            <div className="card p-8 space-y-4">
               <SkeletonBlock className="h-6 w-48" />
               <SkeletonBlock className="h-4 w-full" />
               <SkeletonBlock className="h-4 w-2/3" />
@@ -105,7 +106,7 @@ function VerifyReceiptContent() {
           )}
 
           {notFound && !loading && (
-            <div className="card border-l-4 border-red-500 bg-red-50 p-6">
+            <div className="card border-l-4 border-red-500 bg-rose-50/50 p-6">
               <div className="flex gap-3 items-start">
                 <span className="w-6 h-6 text-red-600 shrink-0"><ExclamationIcon /></span>
                 <div>
@@ -117,16 +118,16 @@ function VerifyReceiptContent() {
           )}
 
           {receipt && !loading && (
-            <div className="card border border-green-100 overflow-hidden p-0">
-              <div className="bg-green-50 border-b border-green-100 p-5 sm:p-6 flex gap-3 items-start">
-                <span className="w-8 h-8 text-green-700 shrink-0"><CheckCircleIcon /></span>
+            <div className="card overflow-hidden p-0 border-none outline-none">
+              <div className="bg-blue-50/50 p-6 flex gap-3.5 items-start">
+                <span className="w-8 h-8 text-blue-600 shrink-0"><CheckCircleIcon /></span>
                 <div>
-                  <h2 className="text-xl font-bold text-green-900">Receipt Verified</h2>
-                  <p className="text-sm text-green-700">This receipt exists in the official system records.</p>
+                  <h2 className="text-xl font-bold text-blue-900">Receipt Verified</h2>
+                  <p className="text-sm text-blue-600 font-medium">This receipt exists in the official system records.</p>
                 </div>
               </div>
 
-              <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Info label="Receipt Number" value={receipt.receipt_number} />
                 <Info label="Student" value={receipt.full_name || receipt.student_name || '—'} />
                 <Info label="Index Number" value={receipt.student_id || '—'} />
@@ -139,7 +140,7 @@ function VerifyReceiptContent() {
             </div>
           )}
 
-          <div className="text-center text-sm text-gray-500">
+          <div className="text-center text-sm text-gray-500 pt-4">
             <Link href="/" className="text-primary hover:underline font-semibold">Back to Home</Link>
           </div>
         </div>
@@ -151,14 +152,10 @@ function VerifyReceiptContent() {
 export default function VerifyReceiptPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-neutral">
-        <Navbar />
-        <main className="container mx-auto px-4 py-12">
-          <div className="max-w-3xl mx-auto card p-8 text-center">
-            <div className="w-14 h-14 mx-auto rounded-full border-4 border-primary/20 border-t-primary animate-spin mb-4" />
-            <p className="font-bold text-primary">Loading receipt verification...</p>
-          </div>
-        </main>
+      <div className="min-h-screen bg-neutral flex items-center justify-center">
+        <div className="bg-white rounded-3xl p-10 shadow-[0_8px_30px_rgba(0,0,0,0.015),0_30px_60px_rgba(0,0,0,0.015)]">
+          <Loader />
+        </div>
       </div>
     }>
       <VerifyReceiptContent />
@@ -168,7 +165,7 @@ export default function VerifyReceiptPage() {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
+    <div className="bg-gray-50/60 rounded-2xl p-4 border-none outline-none">
       <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-1">{label}</p>
       <p className="text-sm font-semibold text-gray-800 break-words">{value}</p>
     </div>

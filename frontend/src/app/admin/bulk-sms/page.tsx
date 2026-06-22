@@ -179,14 +179,14 @@ export default function BulkSMSPage() {
                 </div>
 
                 {result && (
-                    <div className="card p-6 border-l-4 border-green-500 bg-green-50">
+                    <div className="card p-6 border-l-4 border-blue-500 bg-blue-50">
                         <h3 className="font-bold mb-3 flex items-center gap-2">
                             <span className="w-5 h-5"><ChartIcon /></span>
                             <span>Send Results</span>
                         </h3>
                         <div className="flex gap-8">
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-green-600">{result.sent}</p>
+                                <p className="text-3xl font-bold text-blue-600">{result.sent}</p>
                                 <p className="text-sm text-gray-600">Delivered</p>
                             </div>
                             <div className="text-center">

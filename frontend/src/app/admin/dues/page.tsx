@@ -271,7 +271,7 @@ export default function AdminDuesPage() {
                     <td className="py-4 px-4 text-sm text-rose-500 font-medium">GHS {Number(d.late_fee).toFixed(2)}</td>
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                        <span className={`w-2 h-2 rounded-full ${d.is_active ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-300 shadow-sm'}`} />
+                        <span className={`w-2 h-2 rounded-full ${d.is_active ? 'bg-blue-500 shadow-sm shadow-blue-500/50' : 'bg-gray-300 shadow-sm'}`} />
                         <span>{d.is_active ? 'Active' : 'Inactive'}</span>
                       </span>
                     </td>
@@ -498,7 +498,7 @@ export default function AdminDuesPage() {
             <div className="flex justify-between border-b border-gray-100 pb-2">
               <span className="font-bold text-gray-400">Status:</span>
               <span className="inline-flex items-center gap-1.5 font-semibold text-gray-900">
-                <span className={`w-2 h-2 rounded-full ${viewDue.is_active ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-gray-300 shadow-sm'}`} />
+                <span className={`w-2 h-2 rounded-full ${viewDue.is_active ? 'bg-blue-500 shadow-sm shadow-blue-500/50' : 'bg-gray-300 shadow-sm'}`} />
                 <span>{viewDue.is_active ? 'Active' : 'Inactive'}</span>
               </span>
             </div>

@@ -70,9 +70,9 @@ function PaymentCallbackContent() {
 
           {status === 'success' && (
             <>
-              <div className="w-20 h-20 mx-auto text-green-600"><CheckCircleIcon /></div>
+              <div className="w-20 h-20 mx-auto text-blue-600"><CheckCircleIcon /></div>
               <div>
-                <h2 className="text-xl font-extrabold text-green-700">Payment Successful</h2>
+                <h2 className="text-xl font-extrabold text-blue-700">Payment Successful</h2>
                 <p className="text-sm text-gray-600 mt-2 leading-relaxed">{message}</p>
                 {receiptNumber && <p className="text-xs font-bold text-primary mt-3">Receipt: {receiptNumber}</p>}
                 <p className="text-xs text-gray-400 mt-3">Taking you back to your dashboard...</p>

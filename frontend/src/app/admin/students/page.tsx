@@ -278,7 +278,7 @@ export default function AdminStudentsPage() {
                   <th className="py-4 px-4 w-10">
                     <input
                       type="checkbox"
-                      className="rounded border-gray-300 text-[#09261C] focus:ring-[#09261C] h-4 w-4"
+                      className="rounded border-gray-300 text-[#0A2540] focus:ring-[#0A2540] h-4 w-4"
                       checked={students.length > 0 && selectedIds.length === students.length}
                       onChange={toggleSelectAll}
                     />
@@ -298,7 +298,7 @@ export default function AdminStudentsPage() {
                     <td className="py-4 px-4">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-[#09261C] focus:ring-[#09261C] h-4 w-4"
+                        className="rounded border-gray-300 text-[#0A2540] focus:ring-[#0A2540] h-4 w-4"
                         checked={selectedIds.includes(s.id)}
                         onChange={() => toggleSelect(s.id)}
                       />
@@ -313,7 +313,7 @@ export default function AdminStudentsPage() {
                     <td className="py-4 px-4 text-sm max-w-[160px] truncate text-gray-600">{s.programme}</td>
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                        <span className={`w-2 h-2 rounded-full ${s.is_active ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}`} />
+                        <span className={`w-2 h-2 rounded-full ${s.is_active ? 'bg-blue-500 shadow-sm shadow-blue-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}`} />
                         <span>{s.is_active ? 'Active' : 'Inactive'}</span>
                       </span>
                     </td>
@@ -573,7 +573,7 @@ export default function AdminStudentsPage() {
             <div className="flex justify-between border-b border-gray-100 pb-2">
               <span className="font-bold text-gray-400">Status:</span>
               <span className="inline-flex items-center gap-1.5 font-semibold text-gray-900">
-                <span className={`w-2 h-2 rounded-full ${viewStudent.is_active ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}`} />
+                <span className={`w-2 h-2 rounded-full ${viewStudent.is_active ? 'bg-blue-500 shadow-sm shadow-blue-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}`} />
                 <span>{viewStudent.is_active ? 'Active' : 'Inactive'}</span>
               </span>
             </div>

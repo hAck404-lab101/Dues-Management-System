@@ -194,7 +194,7 @@ export default function MakePaymentPage() {
                   </div>
                   <div className="flex justify-between text-sm text-gray-700">
                     <span>Already Paid</span>
-                    <span className="text-green-600">GHS {(due.total_paid || 0).toFixed(2)}</span>
+                    <span className="text-blue-600">GHS {(due.total_paid || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between border-t pt-3 font-bold text-primary">
                     <span>Current Balance</span>
@@ -231,7 +231,7 @@ export default function MakePaymentPage() {
                     <p className="text-sm text-gray-500">Fast & Instant Verification</p>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">RECOMMENDED</span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">RECOMMENDED</span>
               </div>
 
               <div className="bg-blue-50 border border-blue-100 rounded-2xl p-6 mb-6">

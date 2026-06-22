@@ -172,7 +172,7 @@ export default function StudentDashboard() {
             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-400">
               <span className="w-6 h-6"><LandmarkIcon /></span>
             </div>
-            <span className="percent-pill bg-emerald-50 text-emerald-700">Assigned</span>
+            <span className="percent-pill bg-blue-50 text-blue-700">Assigned</span>
           </div>
           <div>
             <p className="text-sm font-bold text-gray-500 mb-1">Total Amount</p>
@@ -230,7 +230,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="text-sm text-gray-600 space-y-1 mt-3">
                   <div className="flex justify-between border-b border-gray-100/50 pb-1.5"><span className="font-medium">Assigned Amount:</span><span className="font-bold text-gray-900">GHS {due.assigned_amount.toFixed(2)}</span></div>
-                  <div className="flex justify-between border-b border-gray-100/50 py-1.5"><span className="font-medium">Amount Paid:</span><span className="font-bold text-emerald-600">GHS {due.total_paid.toFixed(2)}</span></div>
+                  <div className="flex justify-between border-b border-gray-100/50 py-1.5"><span className="font-medium">Amount Paid:</span><span className="font-bold text-blue-600">GHS {due.total_paid.toFixed(2)}</span></div>
                   <div className="flex justify-between pt-1.5"><span className="font-medium">Remaining Balance:</span><span className="font-bold text-rose-600">GHS {due.balance.toFixed(2)}</span></div>
                 </div>
                 {due.balance > 0 && (

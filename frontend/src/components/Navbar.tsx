@@ -101,8 +101,7 @@ export default function Navbar() {
             )}
             {!authenticated && (
               <div className="flex items-center gap-4 ml-4">
-                <Link href="/login" className="px-4 py-2 hover:text-secondary transition-colors font-medium">Login</Link>
-                <Link href="/register" className="btn-secondary px-6">Register</Link>
+                <Link href="/login" className="btn-secondary px-6">Login</Link>
               </div>
             )}
           </div>
@@ -164,8 +163,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <MobileNavItem href="/login" label="Login" icon={<ProfileIcon />} />
-              <div className="pt-2"><Link href="/register" className="btn-secondary w-full justify-center">Register</Link></div>
+              <div className="pt-2"><Link href="/login" className="btn-secondary w-full justify-center">Login</Link></div>
             </>
           )}
         </div>

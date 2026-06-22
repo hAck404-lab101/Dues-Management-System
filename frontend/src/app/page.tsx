@@ -24,7 +24,7 @@ export default function Home() {
 
   // Helper List Check Icon (pure SVG, no emojis)
   const ListCheck = ({ isWhite = false }: { isWhite?: boolean }) => (
-    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${isWhite ? 'bg-white/20 text-white' : 'bg-[#10B981]/15 text-[#10B981]'}`}>
+    <span className={`w-4 h-4 rounded-full flex items-center justify-center ${isWhite ? 'bg-white/20 text-white' : 'bg-[#3B82F6]/15 text-[#3B82F6]'}`}>
       <svg className="w-2.5 h-2.5 stroke-[3.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
@@ -33,7 +33,7 @@ export default function Home() {
 
   // Helper Table Check Component
   const TableCheck = ({ label = "Yes" }: { label?: string }) => (
-    <span className="inline-flex items-center gap-1.5 text-[#10B981] font-bold">
+    <span className="inline-flex items-center gap-1.5 text-[#3B82F6] font-bold">
       <span className="w-4 h-4"><CheckCircleIcon /></span>
       <span>{label}</span>
     </span>
@@ -49,10 +49,10 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#06120D] flex items-center justify-center">
+      <div className="min-h-screen bg-[#050F1A] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#10B981]/20 border-t-[#10B981] rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-semibold text-[#10B981]">Loading DuesPay...</p>
+          <div className="w-12 h-12 border-4 border-[#3B82F6]/20 border-t-[#3B82F6] rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm font-semibold text-[#3B82F6]">Loading DuesPay...</p>
         </div>
       </div>
     );
@@ -60,8 +60,8 @@ export default function Home() {
 
   // Helper custom badges with elegant icon
   const Badge = ({ text }: { text: string }) => (
-    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#10B981]/20 bg-[#E6FDF5] text-xs font-bold text-[#059669] shadow-sm select-none">
-      <svg className="w-3.5 h-3.5 text-[#10B981] fill-current animate-pulse" viewBox="0 0 24 24">
+    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#3B82F6]/20 bg-[#EFF6FF] text-xs font-bold text-[#2563EB] shadow-sm select-none">
+      <svg className="w-3.5 h-3.5 text-[#3B82F6] fill-current animate-pulse" viewBox="0 0 24 24">
         <path d="M12 2l2.4 7.4h7.6l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4-6.2-4.5h7.6z"/>
       </svg>
       <span className="uppercase tracking-wider text-[10px]">{text}</span>
@@ -75,8 +75,8 @@ export default function Home() {
       <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
         <header className={`w-full max-w-5xl rounded-full border py-2.5 px-3 flex justify-between items-center transition-all duration-300 ${
           scrolled
-            ? 'bg-[#06120D]/35 backdrop-blur-2xl border-white/10 shadow-[0_12px_45px_-8px_rgba(0,0,0,0.5)]'
-            : 'bg-[#06120D]/20 backdrop-blur-md border-white/5 shadow-none'
+            ? 'bg-[#050F1A]/35 backdrop-blur-2xl border-white/10 shadow-[0_12px_45px_-8px_rgba(0,0,0,0.5)]'
+            : 'bg-[#050F1A]/20 backdrop-blur-md border-white/5 shadow-none'
         }`}>
           <div className="flex items-center gap-3">
             <Link href="/" className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black shadow-md hover:scale-105 transition-transform">
@@ -98,7 +98,7 @@ export default function Home() {
             <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#A3E635] transition-colors">
               Login
             </Link>
-            <Link href="/register" className="px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-sm font-bold rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
+            <Link href="/login" className="px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-sm font-bold rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
               Get Started
             </Link>
           </div>
@@ -106,7 +106,7 @@ export default function Home() {
       </div>
 
       {/* 2. HERO SECTION */}
-      <section className="relative bg-[#06120D] text-white min-h-screen flex items-center justify-center py-20 px-6 sm:px-12 lg:px-24 grid-bg-dark overflow-hidden">
+      <section className="relative bg-[#050F1A] text-white min-h-screen flex items-center justify-center py-20 px-6 sm:px-12 lg:px-24 grid-bg-dark overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl pointer-events-none radial-glow animate-pulse-glow" />
         
         <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10 w-full">
@@ -121,7 +121,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-            <Link href="/register" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#06120D] font-bold rounded-full shadow-xl shadow-[#A3E635]/25 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
+            <Link href="/login" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#050F1A] font-bold rounded-full shadow-xl shadow-[#A3E635]/25 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
               Get Started
             </Link>
             <a href="#how-it-works" className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-full backdrop-blur-sm transition-all hover:scale-105 active:scale-95 min-w-[200px]">
@@ -139,7 +139,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto space-y-16">
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
-              Experience the Future of Dues - <span className="text-[#10B981]">DuesPay</span>
+              Experience the Future of Dues - <span className="text-[#3B82F6]">DuesPay</span>
             </h2>
           </div>
 
@@ -160,7 +160,7 @@ export default function Home() {
             </div>
 
             {/* Card 2 (Vibrant highlight card) */}
-            <div className="bg-[#10B981] rounded-[2rem] p-8 shadow-lg shadow-[#10B981]/25 text-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
+            <div className="bg-[#3B82F6] rounded-[2rem] p-8 shadow-lg shadow-[#3B82F6]/25 text-white hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center mb-6">
                   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -216,7 +216,7 @@ export default function Home() {
           {/* Left Side: Mockup Frame inside a colored circle */}
           <div className="lg:col-span-6 flex justify-center relative">
             <div className="absolute w-[360px] h-[360px] rounded-full bg-[#A3E635]/20 blur-2xl pointer-events-none" />
-            <div className="w-[360px] h-[360px] rounded-full bg-[#10B981] flex items-center justify-center relative shadow-xl">
+            <div className="w-[360px] h-[360px] rounded-full bg-[#3B82F6] flex items-center justify-center relative shadow-xl">
               
               {/* Floating Phone Mockup */}
               <div className="absolute w-[220px] h-[400px] rounded-[30px] border-[6px] border-[#0a1628] bg-white shadow-2xl overflow-hidden animate-float">
@@ -229,7 +229,7 @@ export default function Home() {
                     <p className="text-[7px] font-bold text-gray-400 uppercase">Current Balance</p>
                     <p className="text-sm font-black text-gray-900 mt-0.5">GHS 200.00</p>
                     <div className="mt-3 h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#10B981] w-[71%]" />
+                      <div className="h-full bg-[#3B82F6] w-[71%]" />
                     </div>
                   </div>
 
@@ -237,16 +237,16 @@ export default function Home() {
                   <div className="bg-white p-2.5 rounded-xl border border-gray-100 space-y-2">
                     <p className="text-[7px] font-bold text-gray-400 uppercase">Analysis</p>
                     <div className="flex justify-around items-end h-16 pt-2">
-                      <div className="w-3 bg-[#10B981] rounded-t-sm h-8"></div>
+                      <div className="w-3 bg-[#3B82F6] rounded-t-sm h-8"></div>
                       <div className="w-3 bg-gray-200 rounded-t-sm h-12"></div>
-                      <div className="w-3 bg-[#10B981] rounded-t-sm h-6"></div>
+                      <div className="w-3 bg-[#3B82F6] rounded-t-sm h-6"></div>
                       <div className="w-3 bg-[#A3E635] rounded-t-sm h-14"></div>
                       <div className="w-3 bg-gray-200 rounded-t-sm h-9"></div>
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <button className="flex-1 py-1 text-center bg-[#10B981] text-white rounded-md text-[8px] font-bold">Pay</button>
+                    <button className="flex-1 py-1 text-center bg-[#3B82F6] text-white rounded-md text-[8px] font-bold">Pay</button>
                     <button className="flex-1 py-1 text-center bg-gray-100 text-gray-700 rounded-md text-[8px] font-bold">Receipt</button>
                   </div>
                 </div>
@@ -258,13 +258,13 @@ export default function Home() {
           {/* Right Side: Text details */}
           <div className="lg:col-span-6 space-y-6 text-left">
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight leading-tight">
-              All <span className="text-[#10B981]">Transactions</span> Easily on Your Mobile
+              All <span className="text-[#3B82F6]">Transactions</span> Easily on Your Mobile
             </h2>
             <p className="text-base text-gray-500 leading-relaxed">
               Paying for dues is as easy as a tap. With DuesPay, you can effortlessly handle a wide range of transactions, from bill payments and online receipts to barcoded clearances in commerce.
             </p>
             <div className="pt-2">
-              <Link href="/login" className="inline-block px-8 py-3.5 bg-[#06120D] hover:bg-black text-[#A3E635] font-bold rounded-full transition-colors">
+              <Link href="/login" className="inline-block px-8 py-3.5 bg-[#050F1A] hover:bg-black text-[#A3E635] font-bold rounded-full transition-colors">
                 Get Started
               </Link>
             </div>
@@ -280,7 +280,7 @@ export default function Home() {
           {/* Left Side: Text details and metrics */}
           <div className="lg:col-span-6 space-y-6 text-left order-2 lg:order-1">
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight leading-tight">
-              Empowering Your <span className="text-[#10B981]">Financial</span> Journey
+              Empowering Your <span className="text-[#3B82F6]">Financial</span> Journey
             </h2>
             <p className="text-base text-gray-500 leading-relaxed">
               Transforming collection experiences, empower your finances with DuesPay, where security meets simplicity for seamless online administration.
@@ -300,7 +300,7 @@ export default function Home() {
 
           {/* Right Side: Mockup Frame inside a colored circle */}
           <div className="lg:col-span-6 flex justify-center relative order-1 lg:order-2">
-            <div className="absolute w-[360px] h-[360px] rounded-full bg-[#10B981]/10 blur-2xl pointer-events-none" />
+            <div className="absolute w-[360px] h-[360px] rounded-full bg-[#3B82F6]/10 blur-2xl pointer-events-none" />
             <div className="w-[360px] h-[360px] rounded-full bg-[#A3E635] flex items-center justify-center relative shadow-xl">
               
               {/* Floating Phone Mockup */}
@@ -310,7 +310,7 @@ export default function Home() {
                 </div>
                 
                 <div className="h-full pt-6 bg-gray-50 p-3 text-xs overflow-y-auto">
-                  <div className="bg-[#06120D] text-white p-3.5 rounded-xl space-y-3">
+                  <div className="bg-[#050F1A] text-white p-3.5 rounded-xl space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-[7px] font-bold text-white/50 tracking-wider">CLEARANCE CARD</span>
                       <span className="text-[7px] font-bold text-[#A3E635]">ACTIVE</span>
@@ -362,7 +362,7 @@ export default function Home() {
       </section>
 
       {/* 6. HOW IT WORKS */}
-      <section id="how-it-works" className="bg-[#06120D] text-white py-24 px-6 sm:px-12 relative z-10">
+      <section id="how-it-works" className="bg-[#050F1A] text-white py-24 px-6 sm:px-12 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
             <h2 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight">How DuesPay Works</h2>
@@ -370,24 +370,24 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center bg-[#10B981]/5 border border-white/5 p-8 rounded-[2rem] relative">
-              <div className="w-12 h-12 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#10B981]/25">1</div>
+            <div className="text-center bg-[#3B82F6]/5 border border-white/5 p-8 rounded-[2rem] relative">
+              <div className="w-12 h-12 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#3B82F6]/25">1</div>
               <h3 className="text-xl font-bold text-white mb-3">Register Members</h3>
               <p className="text-sm text-white/70 leading-relaxed">
                 Admins upload member spreadsheets or allow students to register directly using official index numbers.
               </p>
             </div>
 
-            <div className="text-center bg-[#10B981]/5 border border-white/5 p-8 rounded-[2rem] relative">
-              <div className="w-12 h-12 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#10B981]/25">2</div>
+            <div className="text-center bg-[#3B82F6]/5 border border-white/5 p-8 rounded-[2rem] relative">
+              <div className="w-12 h-12 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#3B82F6]/25">2</div>
               <h3 className="text-xl font-bold text-white mb-3">Submit Payments</h3>
               <p className="text-sm text-white/70 leading-relaxed">
                 Members login to their dashboard, review assigned dues, and complete payments via MoMo or card.
               </p>
             </div>
 
-            <div className="text-center bg-[#10B981]/5 border border-white/5 p-8 rounded-[2rem] relative">
-              <div className="w-12 h-12 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#10B981]/25">3</div>
+            <div className="text-center bg-[#3B82F6]/5 border border-white/5 p-8 rounded-[2rem] relative">
+              <div className="w-12 h-12 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#3B82F6]/25">3</div>
               <h3 className="text-xl font-bold text-white mb-3">Download Verification</h3>
               <p className="text-sm text-white/70 leading-relaxed">
                 Digital receipts verify collections immediately. Defaulter listings clear automatic clearances online.
@@ -401,7 +401,7 @@ export default function Home() {
       <section className="py-24 px-6 sm:px-12 max-w-7xl mx-auto relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
           <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-900 tracking-tight">
-            What Our <span className="text-[#10B981]">Happy User</span> Says
+            What Our <span className="text-[#3B82F6]">Happy User</span> Says
           </h2>
         </div>
 
@@ -411,7 +411,7 @@ export default function Home() {
               &ldquo;Managing departmental dues was a nightmare of paper receipts. DuesPay changed everything. Now our students pay via MoMo and are cleared instantly.&rdquo;
             </p>
             <div className="mt-8 border-t border-gray-50 pt-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#10B981] font-bold text-sm">EM</div>
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#3B82F6] font-bold text-sm">EM</div>
               <div>
                 <p className="font-bold text-gray-900 text-sm">Ebenezer Mensah</p>
                 <p className="text-[10px] text-gray-400 font-semibold">Department President · KNUST CS</p>
@@ -424,7 +424,7 @@ export default function Home() {
               &ldquo;The SMS notifications are excellent. I knew my payment was approved the second the transaction went through. No more queues at the department office.&rdquo;
             </p>
             <div className="mt-8 border-t border-gray-50 pt-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#10B981] font-bold text-sm">AO</div>
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#3B82F6] font-bold text-sm">AO</div>
               <div>
                 <p className="font-bold text-gray-900 text-sm">Abigail Osei</p>
                 <p className="text-[10px] text-gray-400 font-semibold">Student · HTU</p>
@@ -437,7 +437,7 @@ export default function Home() {
               &ldquo;For audit purposes, the automated clearance logs and downloadable CSV reports have saved our treasury team countless hours. Highly recommend DuesPay.&rdquo;
             </p>
             <div className="mt-8 border-t border-gray-50 pt-4 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#10B981] font-bold text-sm">CA</div>
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-[#3B82F6] font-bold text-sm">CA</div>
               <div>
                 <p className="font-bold text-gray-900 text-sm">Clement Appiah</p>
                 <p className="text-[10px] text-gray-400 font-semibold">Treasurer · GhACCA Student Chapter</p>
@@ -452,7 +452,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto space-y-16">
           <div className="text-center max-w-3xl mx-auto space-y-4">
             <h2 className="font-display text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
-              Take a look at our <span className="text-[#10B981]">articles & resources</span>
+              Take a look at our <span className="text-[#3B82F6]">articles & resources</span>
             </h2>
           </div>
 
@@ -461,14 +461,14 @@ export default function Home() {
             <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
               <div className="p-4 bg-gray-50 border-b border-gray-100 h-48 flex items-center justify-center relative overflow-hidden">
                 {/* Visual HTML mockup of laptop/code instead of placeholder image */}
-                <div className="w-40 h-28 bg-[#06120D] rounded-lg border border-white/10 shadow-lg p-2 space-y-1">
+                <div className="w-40 h-28 bg-[#050F1A] rounded-lg border border-white/10 shadow-lg p-2 space-y-1">
                   <div className="flex gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
                   </div>
                   <div className="text-[5px] text-white/50 font-mono space-y-0.5 mt-2">
-                    <p className="text-[#10B981]">const checkReceipt = async (receiptNum) =&gt; &#123;</p>
+                    <p className="text-[#3B82F6]">const checkReceipt = async (receiptNum) =&gt; &#123;</p>
                     <p className="pl-2">const status = await api.get(`/verify/$&#123;receiptNum&#125;`);</p>
                     <p className="pl-2">if (status.data.valid) return "CLEARED";</p>
                     <p className="text-[#A3E635]">&#125;</p>
@@ -476,7 +476,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-8 space-y-4">
-                <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-wider">Clearance</span>
+                <span className="text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-3 py-1 rounded-full uppercase tracking-wider">Clearance</span>
                 <h3 className="text-lg font-black text-gray-950">How to verify and validate clearance receipts instantly</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   Learn how administrators can confirm transaction records using the public verification portal to avoid document fraud.
@@ -491,7 +491,7 @@ export default function Home() {
                 <div className="w-36 h-36 rounded-2xl bg-white border border-gray-200 shadow-md p-2 space-y-2">
                   <div className="flex justify-between items-center text-[7px] text-gray-400 font-bold border-b pb-1">
                     <span>MTN MoMo Integration</span>
-                    <span className="text-emerald-500">Active</span>
+                    <span className="text-blue-500">Active</span>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[6px] text-gray-400 font-semibold">Callback URL</p>
@@ -501,7 +501,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-8 space-y-4">
-                <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-wider">Payments</span>
+                <span className="text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-3 py-1 rounded-full uppercase tracking-wider">Payments</span>
                 <h3 className="text-lg font-black text-gray-950">MTN Mobile Money & Card payment integration guide</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   Step-by-step setup overview for securing organization bank accounts and enabling card/Momo payment channels.
@@ -513,8 +513,8 @@ export default function Home() {
             <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
               <div className="p-4 bg-gray-50 border-b border-gray-100 h-48 flex items-center justify-center relative overflow-hidden">
                 {/* Visual mockup of terminal key/shield */}
-                <div className="w-24 h-24 rounded-full bg-[#10B981]/10 flex items-center justify-center relative shadow-inner">
-                  <div className="w-16 h-16 rounded-full bg-[#10B981] flex items-center justify-center text-white font-extrabold text-2xl shadow">
+                <div className="w-24 h-24 rounded-full bg-[#3B82F6]/10 flex items-center justify-center relative shadow-inner">
+                  <div className="w-16 h-16 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-extrabold text-2xl shadow">
                     <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
@@ -522,7 +522,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="p-8 space-y-4">
-                <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-wider">Security</span>
+                <span className="text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-3 py-1 rounded-full uppercase tracking-wider">Security</span>
                 <h3 className="text-lg font-black text-gray-950">Ensuring audit trails and security logs in accounts</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
                   Understand how audit log tracking logs settings modifications and manual proof approvals to secure member funds.
@@ -550,7 +550,7 @@ export default function Home() {
             <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative">
               <div className="space-y-6">
                 <div className="flex gap-4 items-center">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#10B981]">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#3B82F6]">
                     <span className="w-6 h-6"><WalletIcon /></span>
                   </div>
                   <h3 className="text-xl font-black text-gray-950">Startup</h3>
@@ -586,7 +586,7 @@ export default function Home() {
               </div>
 
               <div className="pt-8 space-y-3">
-                <Link href="/register" className="block w-full py-3.5 text-center text-sm font-bold bg-[#10B981] hover:bg-[#059669] text-white rounded-full transition-colors shadow-sm">
+                <Link href="/login" className="block w-full py-3.5 text-center text-sm font-bold bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full transition-colors shadow-sm">
                   Get started
                 </Link>
                 <p className="text-[10px] text-gray-400 text-center font-bold">No credit card required</p>
@@ -594,8 +594,8 @@ export default function Home() {
             </div>
 
             {/* Growth Plan (Highlighted center card) */}
-            <div className="bg-[#10B981] rounded-[2rem] p-8 shadow-xl shadow-[#10B981]/25 text-white hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative scale-105 z-10 border border-[#10B981]">
-              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#A3E635] text-[#06120D] text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-md">Popular</div>
+            <div className="bg-[#3B82F6] rounded-[2rem] p-8 shadow-xl shadow-[#3B82F6]/25 text-white hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative scale-105 z-10 border border-[#3B82F6]">
+              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#A3E635] text-[#050F1A] text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-md">Popular</div>
               
               <div className="space-y-6">
                 <div className="flex gap-4 items-center">
@@ -635,7 +635,7 @@ export default function Home() {
               </div>
 
               <div className="pt-8 space-y-3">
-                <Link href="/register" className="block w-full py-3.5 text-center text-sm font-bold bg-white text-[#10B981] hover:bg-gray-50 rounded-full transition-colors shadow-md">
+                <Link href="/login" className="block w-full py-3.5 text-center text-sm font-bold bg-white text-[#3B82F6] hover:bg-gray-50 rounded-full transition-colors shadow-md">
                   Get started
                 </Link>
                 <p className="text-[10px] text-white/70 text-center font-bold">No credit card required</p>
@@ -646,7 +646,7 @@ export default function Home() {
             <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative">
               <div className="space-y-6">
                 <div className="flex gap-4 items-center">
-                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#10B981]">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#3B82F6]">
                     <span className="w-6 h-6"><ShieldIcon /></span>
                   </div>
                   <h3 className="text-xl font-black text-gray-950">Enterprise</h3>
@@ -681,7 +681,7 @@ export default function Home() {
               </div>
 
               <div className="pt-8 space-y-3">
-                <Link href="/register" className="block w-full py-3.5 text-center text-sm font-bold bg-[#10B981] hover:bg-[#059669] text-white rounded-full transition-colors shadow-sm">
+                <Link href="/login" className="block w-full py-3.5 text-center text-sm font-bold bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-full transition-colors shadow-sm">
                   Get started
                 </Link>
                 <p className="text-[10px] text-gray-400 text-center font-bold">Contact our team</p>
@@ -695,7 +695,7 @@ export default function Home() {
             <button 
               type="button" 
               onClick={() => setShowMatrix(!showMatrix)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-50 hover:bg-gray-100 text-sm font-bold text-[#10B981] transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gray-50 hover:bg-gray-100 text-sm font-bold text-[#3B82F6] transition-all"
             >
               <span>{showMatrix ? 'Hide plans comparison' : 'View plans comparison'}</span>
               <svg className={`w-4 h-4 transform transition-transform ${showMatrix ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -717,7 +717,7 @@ export default function Home() {
                     <tr className="bg-gray-50/50 text-[10px] uppercase tracking-wider font-bold text-gray-400">
                       <th className="p-6 pl-8">Features</th>
                       <th className="p-6">Startup</th>
-                      <th className="p-6 text-[#10B981]">Growth</th>
+                      <th className="p-6 text-[#3B82F6]">Growth</th>
                       <th className="p-6">Enterprise</th>
                     </tr>
                   </thead>
@@ -725,13 +725,13 @@ export default function Home() {
                     <tr>
                       <td className="p-6 pl-8 font-bold text-gray-900">Monthly Cost</td>
                       <td className="p-6">GHS 0</td>
-                      <td className="p-6 text-[#10B981] font-bold">GHS 149</td>
+                      <td className="p-6 text-[#3B82F6] font-bold">GHS 149</td>
                       <td className="p-6">Custom Quote</td>
                     </tr>
                     <tr>
                       <td className="p-6 pl-8 font-bold text-gray-900">Member Limit</td>
                       <td className="p-6">Up to 100</td>
-                      <td className="p-6 text-[#10B981]">Unlimited</td>
+                      <td className="p-6 text-[#3B82F6]">Unlimited</td>
                       <td className="p-6">Unlimited</td>
                     </tr>
                     <tr>
@@ -780,7 +780,7 @@ export default function Home() {
       </section>
 
       {/* 10. FINAL CTA BANNER */}
-      <section className="bg-gradient-to-r from-[#06120D] to-[#0B1F17] text-white py-24 px-6 sm:px-12 text-center border-t border-white/5 relative z-10">
+      <section className="bg-gradient-to-r from-[#050F1A] to-[#0B1F17] text-white py-24 px-6 sm:px-12 text-center border-t border-white/5 relative z-10">
         <div className="max-w-4xl mx-auto space-y-6">
           <h2 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight">
             Ready to modernize your organizational dues?
@@ -789,7 +789,7 @@ export default function Home() {
             Set up your organization's portal in under 5 minutes. Start accepting secure payments and issue official clearance records today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link href="/register" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#06120D] font-bold rounded-xl shadow-xl shadow-[#A3E635]/20 transition-all hover:scale-105 active:scale-95">
+            <Link href="/login" className="px-8 py-4 bg-[#A3E635] hover:bg-[#86EFAC] text-[#050F1A] font-bold rounded-xl shadow-xl shadow-[#A3E635]/20 transition-all hover:scale-105 active:scale-95">
               Create Organization Portal
             </Link>
             <Link href="/verify-receipt" className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-xl backdrop-blur-sm transition-all hover:scale-105 active:scale-95">
@@ -800,11 +800,11 @@ export default function Home() {
       </section>
 
       {/* 11. FOOTER */}
-      <footer className="bg-[#06120D] text-white/65 py-16 px-6 sm:px-12 border-t border-white/5 relative z-10">
+      <footer className="bg-[#050F1A] text-white/65 py-16 px-6 sm:px-12 border-t border-white/5 relative z-10">
         <div className="max-w-7xl mx-auto grid md:grid-cols-12 gap-10">
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-[#10B981] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
+              <div className="w-8 h-8 rounded-lg bg-[#3B82F6] flex items-center justify-center text-white font-extrabold text-sm shadow-md">
                 D
               </div>
               <span className="font-display font-black text-lg text-white tracking-tight">{appName}</span>

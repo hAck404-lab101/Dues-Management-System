@@ -12,7 +12,7 @@ export default function Loader() {
         
         {/* Inner brand planet core */}
         <div className="absolute w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
-          <div className="w-4 h-4 rounded-full bg-secondary animate-pulse-soft" />
+          <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse-soft" />
         </div>
       </div>
       

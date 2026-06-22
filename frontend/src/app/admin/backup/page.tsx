@@ -109,7 +109,7 @@ export default function AdminBackupPage() {
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="card p-6 space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-700 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
               <span className="w-6 h-6"><DownloadIcon /></span>
             </div>
             <div>

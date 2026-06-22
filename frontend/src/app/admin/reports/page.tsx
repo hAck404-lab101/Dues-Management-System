@@ -194,12 +194,12 @@ export default function AdminReportsPage() {
                               <td className="py-3 px-3 font-medium">{row.due_name}</td>
                               <td className="py-3 px-3">{row.total_students}</td>
                               <td className="py-3 px-3">GHS {Number(row.expected_revenue).toFixed(2)}</td>
-                              <td className="py-3 px-3 text-green-700 font-medium">GHS {Number(row.collected).toFixed(2)}</td>
+                              <td className="py-3 px-3 text-blue-700 font-medium">GHS {Number(row.collected).toFixed(2)}</td>
                               <td className="py-3 px-3 text-red-600 font-medium">GHS {Number(row.outstanding).toFixed(2)}</td>
                               <td className="py-3 px-3">
                                 <div className="flex items-center gap-2">
                                   <div className="w-20 bg-gray-200 rounded-full h-2">
-                                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${Math.min(parseFloat(pct), 100)}%` }} />
+                                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${Math.min(parseFloat(pct), 100)}%` }} />
                                   </div>
                                   <span className="text-xs text-gray-600">{pct}%</span>
                                 </div>
@@ -236,7 +236,7 @@ export default function AdminReportsPage() {
                           <td className="py-3 px-3">Lvl {row.level}</td>
                           <td className="py-3 px-3 max-w-[160px] truncate">{row.programme}</td>
                           <td className="py-3 px-3">{row.due_name}</td>
-                          <td className="py-3 px-3 text-green-700 font-semibold">GHS {row.total_paid.toFixed(2)}</td>
+                          <td className="py-3 px-3 text-blue-700 font-semibold">GHS {row.total_paid.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -249,7 +249,7 @@ export default function AdminReportsPage() {
               <>
                 {defaultersData.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 text-gray-500">
-                    <div className="w-12 h-12 text-green-500 mb-3"><SparklesIcon /></div>
+                    <div className="w-12 h-12 text-blue-500 mb-3"><SparklesIcon /></div>
                     <p className="font-semibold text-base">No defaulters found — great news!</p>
                   </div>
                 ) : (
@@ -273,7 +273,7 @@ export default function AdminReportsPage() {
                           <td className="py-3 px-3">Lvl {row.level}</td>
                           <td className="py-3 px-3">{row.due_name}</td>
                           <td className="py-3 px-3">GHS {row.assigned_amount.toFixed(2)}</td>
-                          <td className="py-3 px-3 text-green-700">GHS {row.total_paid.toFixed(2)}</td>
+                          <td className="py-3 px-3 text-blue-700">GHS {row.total_paid.toFixed(2)}</td>
                           <td className="py-3 px-3">
                             <span className="font-bold text-red-600">GHS {row.balance.toFixed(2)}</span>
                           </td>
@@ -308,9 +308,9 @@ function RevenueTotal({ data }: { data: any[] }) {
         <p className="text-xs text-blue-600 font-medium">Total Expected</p>
         <p className="text-lg font-bold text-blue-800">GHS {totals.expected.toFixed(2)}</p>
       </div>
-      <div className="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
-        <p className="text-xs text-green-600 font-medium">Total Collected</p>
-        <p className="text-lg font-bold text-green-800">GHS {totals.collected.toFixed(2)}</p>
+      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
+        <p className="text-xs text-blue-600 font-medium">Total Collected</p>
+        <p className="text-lg font-bold text-blue-800">GHS {totals.collected.toFixed(2)}</p>
       </div>
       <div className="bg-red-50 border border-red-100 rounded-lg p-3 text-center">
         <p className="text-xs text-red-500 font-medium">Total Outstanding</p>

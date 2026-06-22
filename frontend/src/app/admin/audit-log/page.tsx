@@ -9,11 +9,11 @@ import toast from 'react-hot-toast';
 import { ShieldIcon } from '@/components/Icons';
 
 const ACTION_COLORS: Record<string, string> = {
-    CREATE_STUDENT: 'bg-green-100 text-green-800',
+    CREATE_STUDENT: 'bg-blue-100 text-blue-800',
     UPDATE_STUDENT: 'bg-blue-100 text-blue-800',
-    ACTIVATE_STUDENT: 'bg-green-100 text-green-800',
+    ACTIVATE_STUDENT: 'bg-blue-100 text-blue-800',
     DEACTIVATE_STUDENT: 'bg-red-100 text-red-800',
-    APPROVE_PAYMENT: 'bg-green-100 text-green-800',
+    APPROVE_PAYMENT: 'bg-blue-100 text-blue-800',
     REJECT_PAYMENT: 'bg-red-100 text-red-800',
     RESEND_SMS: 'bg-purple-100 text-purple-800',
     BULK_IMPORT_STUDENTS: 'bg-indigo-100 text-indigo-800',

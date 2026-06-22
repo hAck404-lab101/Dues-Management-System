@@ -115,7 +115,7 @@ export default function SmsLogsPage() {
                       <td className="py-3 px-4 text-xs text-gray-500">{log.message_type || 'general'}</td>
                       <td className="py-3 px-4 text-xs text-gray-500">{log.provider || '—'}</td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${log.status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${log.status === 'sent' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
                           <span className="w-3 h-3">{log.status === 'sent' ? <CheckCircleIcon /> : <ExclamationIcon />}</span>
                           {log.status}
                         </span>

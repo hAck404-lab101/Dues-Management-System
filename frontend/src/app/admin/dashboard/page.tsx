@@ -33,8 +33,8 @@ interface AdminDashboardData {
   recentPayments: any[];
 }
 
-const PIE_COLORS = ['#ffffff', '#A7F3D0', '#10B981', '#064E3B'];
-const DONUT_COLORS = ['#064E3B', '#10B981', '#A7F3D0', '#D1FAE5'];
+const PIE_COLORS = ['#ffffff', '#93C5FD', '#3B82F6', '#1E3A8A'];
+const DONUT_COLORS = ['#1E3A8A', '#3B82F6', '#93C5FD', '#DBEAFE'];
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
                     formatter={(value: number) => [`GHS ${value.toFixed(2)}`, 'Collected']}
                   />
-                  <Bar dataKey="total" fill="#10B981" radius={[20, 20, 20, 20]} barSize={24} />
+                  <Bar dataKey="total" fill="#3B82F6" radius={[20, 20, 20, 20]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

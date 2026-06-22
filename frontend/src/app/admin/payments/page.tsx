@@ -168,7 +168,7 @@ export default function AdminPaymentsPage() {
 
   const statusStyle = (status: string) => {
     switch (status) {
-      case 'approved': case 'completed': return 'bg-green-100 text-green-800';
+      case 'approved': case 'completed': return 'bg-blue-100 text-blue-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'rejected': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-600';
@@ -262,7 +262,7 @@ export default function AdminPaymentsPage() {
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 capitalize">
                         <span className={`w-2 h-2 rounded-full ${
                           p.status === 'approved' || p.status === 'completed'
-                            ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+                            ? 'bg-blue-500 shadow-sm shadow-blue-500/50'
                             : p.status === 'pending'
                             ? 'bg-amber-500 shadow-sm shadow-amber-500/50'
                             : p.status === 'rejected'
@@ -273,7 +273,7 @@ export default function AdminPaymentsPage() {
                       </span>
                     </td>
                     <td className="py-4 px-4 text-sm">
-                      {p.receipt_number ? <span className="font-semibold text-emerald-700">{p.receipt_number}</span> : <span className="text-gray-400">No receipt yet</span>}
+                      {p.receipt_number ? <span className="font-semibold text-blue-700">{p.receipt_number}</span> : <span className="text-gray-400">No receipt yet</span>}
                     </td>
                     <td className="py-4 px-4 text-sm text-gray-500 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="py-4 px-4 text-right relative">
@@ -325,9 +325,9 @@ export default function AdminPaymentsPage() {
                                     setActiveDropdownId(null);
                                   }}
                                   disabled={submitting === p.id}
-                                  className="w-full px-4 py-2.5 text-xs font-semibold text-green-700 hover:bg-green-50 flex items-center gap-2 border-t border-gray-50 disabled:opacity-50"
+                                  className="w-full px-4 py-2.5 text-xs font-semibold text-blue-700 hover:bg-blue-50 flex items-center gap-2 border-t border-gray-50 disabled:opacity-50"
                                 >
-                                  <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                   </svg>
                                   {submitting === p.id ? 'Approving…' : 'Approve'}
@@ -489,7 +489,7 @@ export default function AdminPaymentsPage() {
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="font-bold text-gray-400">Receipt No:</span>
-                <span className="text-emerald-700 font-bold">{viewPayment.receipt_number || 'No receipt generated'}</span>
+                <span className="text-blue-700 font-bold">{viewPayment.receipt_number || 'No receipt generated'}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 pb-2">
                 <span className="font-bold text-gray-400">Transaction Date:</span>
@@ -500,7 +500,7 @@ export default function AdminPaymentsPage() {
                 <span className="inline-flex items-center gap-1.5 font-semibold text-gray-900 capitalize">
                   <span className={`w-2 h-2 rounded-full ${
                     viewPayment.status === 'approved' || viewPayment.status === 'completed'
-                      ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50'
+                      ? 'bg-blue-500 shadow-sm shadow-blue-500/50'
                       : viewPayment.status === 'pending'
                       ? 'bg-amber-500 shadow-sm shadow-amber-500/50'
                       : viewPayment.status === 'rejected'

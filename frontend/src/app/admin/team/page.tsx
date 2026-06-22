@@ -132,8 +132,8 @@ export default function TeamManagementPage() {
                                             </span>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${s.is_active ? 'text-green-600' : 'text-red-500'}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${s.is_active ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${s.is_active ? 'text-blue-600' : 'text-red-500'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${s.is_active ? 'bg-blue-500 animate-pulse' : 'bg-red-500'}`} />
                                                 {s.is_active ? 'Active' : 'Deactivated'}
                                             </span>
                                         </td>
