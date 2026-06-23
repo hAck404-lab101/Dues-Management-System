@@ -88,14 +88,14 @@ export default function Home() {
             <span className="font-display font-black text-lg text-white tracking-tight hidden sm:inline">{appName}</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-white/80">
-            <a href="#features" className="hover:text-[#E60000] transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-[#E60000] transition-colors">How it Works</a>
-            <a href="#blog" className="hover:text-[#E60000] transition-colors">Articles</a>
-            <a href="#pricing" className="hover:text-[#E60000] transition-colors">Pricing</a>
-            <Link href="/verify-receipt" className="hover:text-[#E60000] transition-colors">Verify Receipt</Link>
+            <a href="#features" className="hover:text-[#93C5FD] transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-[#93C5FD] transition-colors">How it Works</a>
+            <a href="#blog" className="hover:text-[#93C5FD] transition-colors">Articles</a>
+            <a href="#pricing" className="hover:text-[#93C5FD] transition-colors">Pricing</a>
+            <Link href="/verify-receipt" className="hover:text-[#93C5FD] transition-colors">Verify Receipt</Link>
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#E60000] transition-colors">
+            <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#93C5FD] transition-colors">
               Login
             </Link>
             <Link href="/login" className="px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-sm font-bold rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
@@ -112,8 +112,8 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center space-y-10 relative z-10 w-full">
 
           <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl xl:text-9xl font-black leading-[1.05] tracking-tight text-white uppercase">
-            <span className="text-[#E60000]">SAVE</span> YOUR TIME & <br className="hidden sm:inline" />
-            <span className="text-[#E60000]">LESS EXPENSE</span>
+            <span className="text-[#93C5FD]">SAVE</span> YOUR TIME & <br className="hidden sm:inline" />
+            <span className="text-[#93C5FD]">LESS EXPENSE</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-white/70 leading-relaxed max-w-3xl mx-auto">
@@ -121,7 +121,7 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-            <Link href="/login" className="px-8 py-4 bg-[#E60000] hover:bg-[#FF3333] text-white font-bold rounded-full shadow-xl shadow-[#E60000]/25 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
+            <Link href="/login" className="px-8 py-4 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#001150] font-bold rounded-full shadow-xl shadow-[#0020B2]/10 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
               Get Started
             </Link>
             <a href="#how-it-works" className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-full backdrop-blur-sm transition-all hover:scale-105 active:scale-95 min-w-[200px]">
@@ -215,7 +215,7 @@ export default function Home() {
           
           {/* Left Side: Mockup Frame inside a colored circle */}
           <div className="lg:col-span-6 flex justify-center relative">
-            <div className="absolute w-[360px] h-[360px] rounded-full bg-[#E60000]/20 blur-2xl pointer-events-none" />
+            <div className="absolute w-[360px] h-[360px] rounded-full bg-[#93C5FD]/20 blur-2xl pointer-events-none" />
             <div className="w-[360px] h-[360px] rounded-full bg-[#0020B2] flex items-center justify-center relative shadow-xl">
               
               {/* Floating Phone Mockup */}
@@ -240,7 +240,7 @@ export default function Home() {
                       <div className="w-3 bg-[#0020B2] rounded-t-sm h-8"></div>
                       <div className="w-3 bg-gray-200 rounded-t-sm h-12"></div>
                       <div className="w-3 bg-[#0020B2] rounded-t-sm h-6"></div>
-                      <div className="w-3 bg-[#E60000] rounded-t-sm h-14"></div>
+                      <div className="w-3 bg-[#93C5FD] rounded-t-sm h-14"></div>
                       <div className="w-3 bg-gray-200 rounded-t-sm h-9"></div>
                     </div>
                   </div>
@@ -264,7 +264,7 @@ export default function Home() {
               Paying for dues is as easy as a tap. With DuesPay, you can effortlessly handle a wide range of transactions, from bill payments and online receipts to barcoded clearances in commerce.
             </p>
             <div className="pt-2">
-              <Link href="/login" className="inline-block px-8 py-3.5 bg-[#000B33] hover:bg-black text-[#E60000] font-bold rounded-full transition-colors">
+              <Link href="/login" className="inline-block px-8 py-3.5 bg-[#000B33] hover:bg-black text-[#93C5FD] font-bold rounded-full transition-colors">
                 Get Started
               </Link>
             </div>
@@ -301,7 +301,7 @@ export default function Home() {
           {/* Right Side: Mockup Frame inside a colored circle */}
           <div className="lg:col-span-6 flex justify-center relative order-1 lg:order-2">
             <div className="absolute w-[360px] h-[360px] rounded-full bg-[#0020B2]/10 blur-2xl pointer-events-none" />
-            <div className="w-[360px] h-[360px] rounded-full bg-[#E60000] flex items-center justify-center relative shadow-xl">
+            <div className="w-[360px] h-[360px] rounded-full bg-[#DBEAFE] flex items-center justify-center relative shadow-xl">
               
               {/* Floating Phone Mockup */}
               <div className="absolute w-[220px] h-[400px] rounded-[30px] border-[6px] border-[#0a1628] bg-white shadow-2xl overflow-hidden animate-float" style={{ animationDelay: '1.5s' }}>
@@ -313,7 +313,7 @@ export default function Home() {
                   <div className="bg-[#000B33] text-white p-3.5 rounded-xl space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-[7px] font-bold text-white/50 tracking-wider">CLEARANCE CARD</span>
-                      <span className="text-[7px] font-bold text-[#E60000]">ACTIVE</span>
+                      <span className="text-[7px] font-bold text-[#93C5FD]">ACTIVE</span>
                     </div>
                     <div>
                       <p className="text-[6px] text-white/60 uppercase">Student Name</p>
@@ -321,7 +321,7 @@ export default function Home() {
                     </div>
                     <div>
                       <p className="text-[6px] text-white/60 uppercase">Clearance Status</p>
-                      <p className="text-xs font-extrabold text-[#E60000] mt-0.5">GHS 0.00 Outstanding</p>
+                      <p className="text-xs font-extrabold text-[#93C5FD] mt-0.5">GHS 0.00 Outstanding</p>
                     </div>
                   </div>
                   
@@ -471,7 +471,7 @@ export default function Home() {
                     <p className="text-[#0020B2]">const checkReceipt = async (receiptNum) =&gt; &#123;</p>
                     <p className="pl-2">const status = await api.get(`/verify/$&#123;receiptNum&#125;`);</p>
                     <p className="pl-2">if (status.data.valid) return "CLEARED";</p>
-                    <p className="text-[#E60000]">&#125;</p>
+                    <p className="text-[#93C5FD]">&#125;</p>
                   </div>
                 </div>
               </div>
@@ -595,7 +595,7 @@ export default function Home() {
 
             {/* Growth Plan (Highlighted center card) */}
             <div className="bg-[#0020B2] rounded-[2rem] p-8 shadow-xl shadow-[#0020B2]/25 text-white hover:shadow-2xl transition-all duration-300 flex flex-col justify-between relative scale-105 z-10 border border-[#0020B2]">
-              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#E60000] text-white text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-md">Popular</div>
+              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#DBEAFE] text-[#001150] text-[9px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-md">Popular</div>
               
               <div className="space-y-6">
                 <div className="flex gap-4 items-center">
@@ -789,7 +789,7 @@ export default function Home() {
             Set up your organization's portal in under 5 minutes. Start accepting secure payments and issue official clearance records today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link href="/login" className="px-8 py-4 bg-[#E60000] hover:bg-[#FF3333] text-white font-bold rounded-xl shadow-xl shadow-[#E60000]/20 transition-all hover:scale-105 active:scale-95">
+            <Link href="/login" className="px-8 py-4 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#001150] font-bold rounded-xl shadow-xl shadow-[#0020B2]/10 transition-all hover:scale-105 active:scale-95">
               Create Organization Portal
             </Link>
             <Link href="/verify-receipt" className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-xl backdrop-blur-sm transition-all hover:scale-105 active:scale-95">
@@ -817,18 +817,18 @@ export default function Home() {
           <div className="md:col-span-3 space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-widest">Quick Links</h4>
             <ul className="space-y-2.5 text-xs text-white/60">
-              <li><a href="#features" className="hover:text-[#E60000] transition-colors">Features</a></li>
-              <li><a href="#how-it-works" className="hover:text-[#E60000] transition-colors">How it Works</a></li>
-              <li><Link href="/login" className="hover:text-[#E60000] transition-colors">Member Login</Link></li>
-              <li><Link href="/admin/login" className="hover:text-[#E60000] transition-colors">Admin Login</Link></li>
+              <li><a href="#features" className="hover:text-[#93C5FD] transition-colors">Features</a></li>
+              <li><a href="#how-it-works" className="hover:text-[#93C5FD] transition-colors">How it Works</a></li>
+              <li><Link href="/login" className="hover:text-[#93C5FD] transition-colors">Member Login</Link></li>
+              <li><Link href="/admin/login" className="hover:text-[#93C5FD] transition-colors">Admin Login</Link></li>
             </ul>
           </div>
 
           <div className="md:col-span-4 space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-widest">Legal & Privacy</h4>
             <ul className="space-y-2.5 text-xs text-white/60">
-              <li><Link href="/privacy" className="hover:text-[#E60000] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-[#E60000] transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="hover:text-[#93C5FD] transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-[#93C5FD] transition-colors">Terms & Conditions</Link></li>
             </ul>
             <p className="text-[10px] text-white/40 leading-relaxed pt-2">
               Payment processing services are powered securely by licensed payment providers.

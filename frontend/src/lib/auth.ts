@@ -27,7 +27,7 @@ export const login = async (emailOrIndexNumber: string, password: string) => {
   try {
     const response = await api.post('/auth/login', payload);
     if (response.data.success) {
-      Cookies.set('token', response.data.token, { expires: 7 });
+      Cookies.set('token', response.data.token, { expires: 7, path: '/' });
       return response.data;
     }
     throw new Error(response.data.message || 'Login failed');
@@ -40,7 +40,7 @@ export const adminLogin = async (email: string, password: string) => {
   try {
     const response = await api.post('/auth/login', { email, password });
     if (response.data.success) {
-      Cookies.set('token', response.data.token, { expires: 7 });
+      Cookies.set('token', response.data.token, { expires: 7, path: '/' });
       return response.data;
     }
     throw new Error(response.data.message || 'Login failed');
@@ -61,7 +61,7 @@ export const register = async (data: {
   try {
     const response = await api.post('/auth/register', data);
     if (response.data.success) {
-      Cookies.set('token', response.data.token, { expires: 7 });
+      Cookies.set('token', response.data.token, { expires: 7, path: '/' });
       return response.data;
     }
     throw new Error(response.data.message || 'Registration failed');
@@ -71,7 +71,7 @@ export const register = async (data: {
 };
 
 export const logout = () => {
-  Cookies.remove('token');
+  Cookies.remove('token', { path: '/' });
   window.location.href = '/';
 };
 

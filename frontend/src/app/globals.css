@@ -13,7 +13,7 @@
   --neutral-dark: #E2E8F0;
   --sidebar: #001150;
   --sidebar-hover: rgba(255, 255, 255, 0.04);
-  --sidebar-active: #E60000;
+  --sidebar-active: #DDF3FF;
 }
 
 @layer base {
@@ -102,7 +102,9 @@
 }
 
 .sidebar-item.active {
-  @apply bg-white/10 text-white font-bold shadow-lg shadow-black/10;
+  background-color: rgba(221, 243, 255, 0.2);
+  color: var(--sidebar-active);
+  @apply font-bold shadow-lg shadow-black/10;
 }
 
 .sidebar-section-label {
