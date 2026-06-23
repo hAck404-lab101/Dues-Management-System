@@ -174,8 +174,8 @@ export default function Navbar() {
 
 function NavLink({ href, icon, label, active }: any) {
   return (
-    <Link href={href} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium ${active ? 'bg-secondary text-primary shadow-lg scale-[1.02]' : 'hover:bg-white/10 text-white/80 hover:text-white'}`}>
-      <span className="w-5 h-5">{icon}</span><span>{label}</span>{active && <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />}
+    <Link href={href} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium ${active ? 'bg-[#DBEAFE] text-[#001150] shadow-lg scale-[1.02]' : 'hover:bg-white/10 text-white/80 hover:text-white'}`}>
+      <span className="w-5 h-5">{icon}</span><span>{label}</span>{active && <span className="w-1.5 h-1.5 rounded-full bg-[#0020B2] ml-1" />}
     </Link>
   );
 }
@@ -200,11 +200,11 @@ function DropdownItem({ href, label, icon, active }: any) {
   );
 }
 
-function MobileNavItem({ href, label, icon }: any) {
+function MobileNavItem({ href, label, icon, active }: any) {
   return (
-    <Link href={href} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors min-h-[44px]">
-      <div className="w-7 h-7 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary shrink-0"><span className="w-4 h-4">{icon}</span></div>
-      <span className="font-semibold text-sm leading-tight">{label}</span>
+    <Link href={href} className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors min-h-[44px] ${active ? 'bg-[#DBEAFE] text-[#001150] font-bold shadow-md' : 'bg-white/5 text-white/80 hover:bg-white/10'}`}>
+      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${active ? 'bg-[#0020B2]/10 text-[#0020B2]' : 'bg-secondary/10 text-white/70'}`}><span className="w-4 h-4">{icon}</span></div>
+      <span className="text-sm leading-tight">{label}</span>
     </Link>
   );
 }
