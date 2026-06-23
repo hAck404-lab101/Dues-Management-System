@@ -225,8 +225,8 @@
 
 .grid-bg-light {
   background-image: 
-    linear-gradient(to right, rgba(16, 185, 129, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(16, 185, 129, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(0, 32, 178, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 32, 178, 0.04) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -248,6 +248,6 @@
 }
 
 .radial-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(0, 32, 178, 0.15) 0%, transparent 70%);
 }
 

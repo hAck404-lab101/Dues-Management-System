@@ -28,7 +28,7 @@ api.interceptors.response.use(
       const isLoginPath = window.location.pathname === '/login' || window.location.pathname === '/admin/login';
 
       if (!isLoginPath) {
-        Cookies.remove('token');
+        Cookies.remove('token', { path: '/' });
         // Redirect to admin login if we were in admin section, else student login
         if (window.location.pathname.startsWith('/admin')) {
           window.location.href = '/admin/login';
