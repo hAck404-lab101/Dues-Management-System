@@ -61,6 +61,15 @@ const findStudentUserByIdentity = async (identityValue = '') => {
   return null;
 };
 
+const getRolePermissions = async (role) => {
+  if (role === 'admin') {
+    const { rows } = await pool.query('SELECT DISTINCT `key` as permission_key FROM permissions');
+    return rows.map(r => r.permission_key);
+  }
+  const { rows } = await pool.query('SELECT permission_key FROM role_permissions WHERE role = ?', [role]);
+  return rows.map(r => r.permission_key);
+};
+
 const userPayload = (user) => ({
   id: user.id,
   email: user.email,
@@ -112,7 +121,8 @@ exports.login = async (req, res) => {
     if (!isValidPassword) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
     const token = generateToken(user.id, user.role);
-    res.json({ success: true, message: 'Login successful', token, user: userPayload(user) });
+    const permissions = await getRolePermissions(user.role);
+    res.json({ success: true, message: 'Login successful', token, user: { ...userPayload(user), permissions } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -276,7 +286,9 @@ exports.getMe = async (req, res) => {
       [req.user.id]
     );
     if (userResult.rows.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
-    res.json({ success: true, user: userPayload(userResult.rows[0]) });
+    const user = userResult.rows[0];
+    const permissions = await getRolePermissions(user.role);
+    res.json({ success: true, user: { ...userPayload(user), permissions } });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

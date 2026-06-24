@@ -18,9 +18,7 @@ const getAssignableDue = async (id) => {
 
 exports.getAllDues = async (req, res) => {
   try {
-    const { academicYear, isActive, studentId } = req.query;
-    const userRole = req.user.role;
-    const userId = req.user.id;
+    const { academicYear, isActive } = req.query;
     let query = `
       SELECT d.id, d.name, d.amount, d.academic_year, d.deadline, d.late_fee, d.description,
              d.is_active, d.created_at, d.updated_at,
@@ -32,43 +30,9 @@ exports.getAllDues = async (req, res) => {
     const params = [];
     if (academicYear) { query += ` AND d.academic_year = ?`; params.push(academicYear); }
     if (isActive !== undefined) { query += ` AND d.is_active = ?`; params.push(isActive === 'true' ? 1 : 0); }
-    if (userRole === 'student' && studentId) {
-      query += ` AND d.is_active = true AND EXISTS (
-        SELECT 1 FROM due_assignments da
-        INNER JOIN students s ON da.student_id = s.id
-        WHERE da.due_id = d.id AND s.user_id = ?
-      )`;
-      params.push(userId);
-    }
+    
     query += ` ORDER BY d.created_at DESC`;
     const result = await pool.query(query, params);
-
-    if (userRole === 'student' && studentId) {
-      const studentResult = await pool.query(`SELECT s.id FROM students s WHERE s.user_id = ?`, [userId]);
-      if (studentResult.rows.length > 0) {
-        const sId = studentResult.rows[0].id;
-        for (let due of result.rows) {
-          const assignmentResult = await pool.query(`SELECT amount FROM due_assignments WHERE due_id = ? AND student_id = ?`, [due.id, sId]);
-          if (assignmentResult.rows.length > 0) {
-            due.assigned_amount = parseFloat(assignmentResult.rows[0].amount);
-            const paymentResult = await pool.query(
-              `SELECT COALESCE(SUM(amount), 0) as total_paid FROM payments WHERE due_id = ? AND student_id = ? AND status IN ('approved', 'completed')`,
-              [due.id, sId]
-            );
-            const totalPaid = parseFloat(paymentResult.rows[0].total_paid);
-            due.total_paid = totalPaid;
-            let effectiveAssignedAmount = due.assigned_amount;
-            const now = new Date();
-            if (due.deadline && new Date(due.deadline) < now && totalPaid < due.assigned_amount) {
-              effectiveAssignedAmount += parseFloat(due.late_fee || 0);
-              due.is_overdue = true;
-            } else due.is_overdue = false;
-            due.balance = effectiveAssignedAmount - totalPaid;
-            due.payment_status = due.balance <= 0 ? 'paid' : due.balance < effectiveAssignedAmount ? 'partial' : 'pending';
-          }
-        }
-      }
-    }
 
     res.json({ success: true, data: result.rows });
   } catch (error) {
@@ -80,8 +44,6 @@ exports.getAllDues = async (req, res) => {
 exports.getDueById = async (req, res) => {
   try {
     const { id } = req.params;
-    const userRole = req.user.role;
-    const userId = req.user.id;
     const result = await pool.query(
       `SELECT d.id, d.name, d.amount, d.academic_year, d.deadline, d.late_fee, d.description,
               d.is_active, d.created_at, d.updated_at,
@@ -90,34 +52,7 @@ exports.getDueById = async (req, res) => {
       [id]
     );
     if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Due not found' });
-    const due = result.rows[0];
-    if (userRole === 'student' && !due.is_active) return res.status(404).json({ success: false, message: 'Due not found' });
-
-    if (userRole === 'student') {
-      const studentResult = await pool.query(`SELECT s.id FROM students s WHERE s.user_id = ?`, [userId]);
-      if (studentResult.rows.length > 0) {
-        const sId = studentResult.rows[0].id;
-        const assignmentResult = await pool.query(`SELECT amount FROM due_assignments WHERE due_id = ? AND student_id = ?`, [id, sId]);
-        if (assignmentResult.rows.length > 0) {
-          due.assigned_amount = parseFloat(assignmentResult.rows[0].amount);
-          const paymentResult = await pool.query(
-            `SELECT COALESCE(SUM(amount), 0) as total_paid FROM payments WHERE due_id = ? AND student_id = ? AND status IN ('approved', 'completed')`,
-            [id, sId]
-          );
-          const totalPaid = parseFloat(paymentResult.rows[0].total_paid);
-          due.total_paid = totalPaid;
-          let effectiveAssignedAmount = due.assigned_amount;
-          const now = new Date();
-          if (due.deadline && new Date(due.deadline) < now && totalPaid < due.assigned_amount) {
-            effectiveAssignedAmount += parseFloat(due.late_fee || 0);
-            due.is_overdue = true;
-          } else due.is_overdue = false;
-          due.balance = effectiveAssignedAmount - totalPaid;
-          due.payment_status = due.balance <= 0 ? 'paid' : due.balance < effectiveAssignedAmount ? 'partial' : 'pending';
-        }
-      }
-    }
-    res.json({ success: true, data: due });
+    res.json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error('Get due error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -128,26 +63,29 @@ exports.getDueStudents = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.query;
+    
+    // Select da.locked_amount as assigned_amount
     let query = `
       SELECT s.id, s.student_id, s.full_name, s.email, s.level, s.programme, s.academic_year,
-             da.amount as assigned_amount,
+             da.locked_amount as assigned_amount,
              COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) as total_paid,
-             da.amount - COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) as balance
+             da.locked_amount - COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) as balance
       FROM due_assignments da
       INNER JOIN students s ON da.student_id = s.id
       LEFT JOIN payments p ON p.due_id = da.due_id AND p.student_id = s.id
       WHERE da.due_id = ?
-      GROUP BY s.id, s.student_id, s.full_name, s.email, s.level, s.programme, s.academic_year, da.amount
+      GROUP BY s.id, s.student_id, s.full_name, s.email, s.level, s.programme, s.academic_year, da.locked_amount
     `;
     const params = [id];
     if (status) {
       query += ` HAVING `;
-      if (status === 'paid') query += `COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) >= da.amount`;
-      else if (status === 'partial') query += `COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) > 0 AND COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) < da.amount`;
+      if (status === 'paid') query += `COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) >= da.locked_amount`;
+      else if (status === 'partial') query += `COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) > 0 AND COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) < da.locked_amount`;
       else if (status === 'pending') query += `COALESCE(SUM(CASE WHEN p.status IN ('approved', 'completed') THEN p.amount ELSE 0 END), 0) = 0`;
     }
     query += ` ORDER BY s.full_name`;
     const result = await pool.query(query, params);
+    
     const students = result.rows.map(row => ({
       ...row,
       assigned_amount: parseFloat(row.assigned_amount),
@@ -164,16 +102,37 @@ exports.getDueStudents = async (req, res) => {
 
 exports.createDue = async (req, res) => {
   try {
-    const { name, amount, academicYear, deadline, description, lateFee } = req.body;
+    const { name, title, amount, academicYear, academic_year, deadline, description, lateFee, late_fee } = req.body;
+    const dueName = title || name;
+    const dueYear = academic_year || academicYear;
+    const dueLateFee = late_fee !== undefined ? late_fee : lateFee;
     const userId = req.user.id;
-    if (!name || !amount || !academicYear) return res.status(400).json({ success: false, message: 'Name, amount, and academic year are required' });
+    if (!dueName || !amount || !dueYear) {
+      return res.status(400).json({ success: false, message: 'Name/Title, amount, and academic year are required' });
+    }
     const newId = generateUUID();
-    await pool.query(
-      `INSERT INTO dues (id, name, amount, academic_year, deadline, description, late_fee, is_active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [newId, name, amount, academicYear, deadline || null, description || null, lateFee || 0, true, userId]
-    );
-    const result = await pool.query('SELECT id, name, amount, academic_year, deadline, late_fee, description, is_active, created_at FROM dues WHERE id = ?', [newId]);
-    res.status(201).json({ success: true, message: 'Due created successfully', data: result.rows[0] });
+    const historyId = generateUUID();
+    const conn = await pool.getConnection();
+    await conn.beginTransaction();
+    try {
+      await conn.query(
+        `INSERT INTO dues (id, name, amount, academic_year, deadline, description, late_fee, is_active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [newId, dueName, amount, dueYear, deadline || null, description || null, dueLateFee || 0, true, userId]
+      );
+      await conn.query(
+        `INSERT INTO due_price_history (id, due_id, amount, changed_by, reason) VALUES (?, ?, ?, ?, ?)`,
+        [historyId, newId, amount, userId, 'Initial price setting on creation']
+      );
+      await conn.commit();
+      
+      const result = await pool.query('SELECT id, name, amount, academic_year, deadline, late_fee, description, is_active, created_at FROM dues WHERE id = ?', [newId]);
+      res.status(201).json({ success: true, message: 'Due created successfully', data: result.rows[0] });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   } catch (error) {
     console.error('Create due error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -183,26 +142,164 @@ exports.createDue = async (req, res) => {
 exports.updateDue = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, amount, academicYear, deadline, description, lateFee } = req.body;
+    const { name, title, amount, academicYear, academic_year, deadline, description, lateFee, late_fee, price_change_reason } = req.body;
+    
+    const dueName = title !== undefined ? title : name;
+    const dueYear = academic_year !== undefined ? academic_year : academicYear;
+    const dueLateFee = late_fee !== undefined ? late_fee : lateFee;
+
+    const dueRes = await pool.query('SELECT name, amount FROM dues WHERE id = ?', [id]);
+    if (dueRes.rows.length === 0) return res.status(404).json({ success: false, message: 'Due not found' });
+    
+    const currentAmount = parseFloat(dueRes.rows[0].amount);
+    const newAmount = amount !== undefined ? parseFloat(amount) : currentAmount;
+    const amountChanged = amount !== undefined && newAmount !== currentAmount;
+    
+    if (amountChanged && !price_change_reason) {
+      return res.status(400).json({
+        success: false,
+        message: 'Price change reason (price_change_reason) is required when changing amount'
+      });
+    }
+
     const updateFields = [];
     const params = [];
-    if (name !== undefined) { updateFields.push('name = ?'); params.push(name); }
-    if (amount !== undefined) { updateFields.push('amount = ?'); params.push(amount); }
-    if (academicYear !== undefined) { updateFields.push('academic_year = ?'); params.push(academicYear); }
+    if (dueName !== undefined) { updateFields.push('name = ?'); params.push(dueName); }
+    if (amount !== undefined) { updateFields.push('amount = ?'); params.push(newAmount); }
+    if (dueYear !== undefined) { updateFields.push('academic_year = ?'); params.push(dueYear); }
     if (deadline !== undefined) { updateFields.push('deadline = ?'); params.push(deadline || null); }
     if (description !== undefined) { updateFields.push('description = ?'); params.push(description); }
-    if (lateFee !== undefined) { updateFields.push('late_fee = ?'); params.push(lateFee); }
-    if (updateFields.length === 0) return res.status(400).json({ success: false, message: 'No fields to update' });
+    if (dueLateFee !== undefined) { updateFields.push('late_fee = ?'); params.push(dueLateFee); }
+    
+    if (updateFields.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+    
     updateFields.push('updated_at = CURRENT_TIMESTAMP');
     params.push(id);
+
     const conn = await pool.getConnection();
-    const [updateResult] = await conn.query(`UPDATE dues SET ${updateFields.join(', ')} WHERE id = ?`, params);
-    conn.release();
-    if (updateResult.affectedRows === 0) return res.status(404).json({ success: false, message: 'Due not found' });
-    const result = await pool.query('SELECT id, name, amount, academic_year, deadline, late_fee, description, is_active FROM dues WHERE id = ?', [id]);
-    res.json({ success: true, message: 'Due updated successfully', data: result.rows[0] });
+    await conn.beginTransaction();
+    try {
+      await conn.query(`UPDATE dues SET ${updateFields.join(', ')} WHERE id = ?`, params);
+      
+      if (amountChanged) {
+        const historyId = generateUUID();
+        await conn.query(
+          `INSERT INTO due_price_history (id, due_id, amount, changed_by, reason) VALUES (?, ?, ?, ?, ?)`,
+          [historyId, id, newAmount, req.user.id, price_change_reason]
+        );
+      }
+      
+      await conn.commit();
+      
+      const result = await pool.query('SELECT id, name, amount, academic_year, deadline, late_fee, description, is_active FROM dues WHERE id = ?', [id]);
+      res.json({ success: true, message: 'Due updated successfully', data: result.rows[0] });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   } catch (error) {
     console.error('Update due error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getPriceHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rows } = await pool.query(
+      `SELECT h.id, h.amount, h.effective_from, h.reason, u.email as changed_by_email
+       FROM due_price_history h
+       INNER JOIN users u ON h.changed_by = u.id
+       WHERE h.due_id = ?
+       ORDER BY h.effective_from DESC`,
+      [id]
+    );
+
+    const data = rows.map((row, index) => {
+      const nextRow = rows[index + 1];
+      return {
+        id: row.id,
+        date: row.effective_from,
+        new_amount: parseFloat(row.amount),
+        old_amount: nextRow ? parseFloat(nextRow.amount) : null,
+        changed_by: row.changed_by_email,
+        reason: row.reason
+      };
+    });
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Get due price history error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.repriceUnpaid = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { confirmation_text } = req.body;
+    
+    const dueRes = await pool.query('SELECT name, amount FROM dues WHERE id = ?', [id]);
+    if (dueRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Due not found' });
+    }
+    const due = dueRes.rows[0];
+    
+    if (confirmation_text !== due.name) {
+      return res.status(400).json({
+        success: false,
+        message: `Confirmation text must match the due's name exactly: "${due.name}"`
+      });
+    }
+    
+    const historyRes = await pool.query(
+      'SELECT id FROM due_price_history WHERE due_id = ? ORDER BY effective_from DESC LIMIT 1',
+      [id]
+    );
+    const historyId = historyRes.rows[0]?.id || null;
+
+    const conn = await pool.getConnection();
+    await conn.beginTransaction();
+    try {
+      const [updateResult] = await conn.query(
+        `UPDATE due_assignments da
+         SET da.amount = ?, da.locked_amount = ?, da.price_history_id = ?
+         WHERE da.due_id = ? AND da.status = 'unpaid' AND (
+           SELECT COALESCE(SUM(p.amount), 0) FROM payments p 
+           WHERE p.due_id = da.due_id AND p.student_id = da.student_id AND p.status IN ('approved', 'completed')
+         ) = 0`,
+        [due.amount, due.amount, historyId, id]
+      );
+      
+      await conn.commit();
+      
+      const sysLog = require('../lib/systemLogger');
+      if (sysLog) {
+        await sysLog.info(
+          'payment',
+          'dues.reprice_unpaid',
+          `Re-priced unpaid assignments for due: ${due.name} to GHS ${due.amount}`,
+          { dueId: id, newAmount: due.amount, affectedRows: updateResult.affectedRows },
+          { userId: req.user.id }
+        );
+      }
+      
+      res.json({
+        success: true,
+        message: `Successfully re-priced ${updateResult.affectedRows} unpaid assignments to GHS ${due.amount}`
+      });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  } catch (error) {
+    console.error('Reprice unpaid error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -210,64 +307,92 @@ exports.updateDue = async (req, res) => {
 exports.assignDue = async (req, res) => {
   try {
     const { id } = req.params;
-    const { studentId, amount } = req.body;
-    if (!studentId) return res.status(400).json({ success: false, message: 'Student is required' });
+    const { filters, dry_run = false } = req.body;
+    const level = filters?.level;
+    const programme = filters?.program || filters?.programme;
+    const academicYear = filters?.year || filters?.academic_year;
 
     const { due, error } = await getAssignableDue(id);
     if (error) return res.status(error.status).json({ success: false, message: error.message });
-    const assignmentAmount = amount || due.amount;
 
-    const studentCheck = await pool.query('SELECT id, full_name, email FROM students WHERE id = ? AND is_active = true', [studentId]);
-    if (studentCheck.rows.length === 0) return res.status(404).json({ success: false, message: 'Active student not found' });
-
-    const assignId = generateUUID();
-    await pool.query(
-      `INSERT INTO due_assignments (id, due_id, student_id, amount) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount = VALUES(amount)`,
-      [assignId, id, studentId, assignmentAmount]
-    );
-    const result = await pool.query('SELECT id, due_id, student_id, amount FROM due_assignments WHERE due_id = ? AND student_id = ?', [id, studentId]);
-
-    const studentResult = await pool.query(
-      `SELECT s.*, d.name as due_name, d.amount as due_amount, d.deadline, d.description FROM students s CROSS JOIN dues d WHERE s.id = ? AND d.id = ?`,
-      [studentId, id]
-    );
-    if (studentResult.rows.length > 0) {
-      const student = studentResult.rows[0];
-      queueDueEmail(student, { name: student.due_name, amount: assignmentAmount, deadline: student.deadline, description: student.description });
-    }
-    res.status(201).json({ success: true, message: 'Due assigned to student successfully', data: result.rows[0] });
-  } catch (error) {
-    console.error('Assign due error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-exports.bulkAssignDue = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { level, programme, academicYear, amount } = req.body;
-    const { due, error } = await getAssignableDue(id);
-    if (error) return res.status(error.status).json({ success: false, message: error.message });
-    const assignmentAmount = amount || due.amount;
-
-    let query = 'SELECT id FROM students WHERE is_active = true';
+    let query = 'SELECT id, full_name, email, level, programme, academic_year FROM students WHERE is_active = true';
     const params = [];
     if (level) { query += ` AND level = ?`; params.push(level); }
     if (programme) { query += ` AND programme = ?`; params.push(programme); }
     if (academicYear) { query += ` AND academic_year = ?`; params.push(academicYear); }
-    const studentsResult = await pool.query(query, params);
-    const studentIds = studentsResult.rows.map(row => row.id);
-    if (studentIds.length === 0) return res.status(400).json({ success: false, message: 'No students found matching criteria' });
 
-    const placeholders = studentIds.map(() => '(UUID(), ?, ?, ?)').join(', ');
-    const bulkParams = studentIds.flatMap(sId => [id, sId, assignmentAmount]);
-    await pool.query(
-      `INSERT INTO due_assignments (id, due_id, student_id, amount) VALUES ${placeholders} ON DUPLICATE KEY UPDATE amount = VALUES(amount)`,
-      bulkParams
+    const studentsResult = await pool.query(query, params);
+    const students = studentsResult.rows;
+
+    if (students.length === 0) {
+      return res.status(400).json({ success: false, message: 'No students found matching criteria' });
+    }
+
+    const sample = students.slice(0, 10).map(s => ({
+      id: s.id,
+      full_name: s.full_name,
+      email: s.email,
+      level: s.level,
+      programme: s.programme
+    }));
+
+    if (dry_run) {
+      return res.json({
+        success: true,
+        dry_run: true,
+        count: students.length,
+        sample
+      });
+    }
+
+    const historyRes = await pool.query(
+      'SELECT id FROM due_price_history WHERE due_id = ? ORDER BY effective_from DESC LIMIT 1',
+      [id]
     );
-    res.json({ success: true, message: `Due assigned to ${studentIds.length} students successfully`, count: studentIds.length });
+    const historyId = historyRes.rows[0]?.id || null;
+
+    const conn = await pool.getConnection();
+    await conn.beginTransaction();
+    try {
+      for (const s of students) {
+        const assignId = generateUUID();
+        await conn.query(
+          `INSERT INTO due_assignments (id, due_id, locked_amount, price_history_id, student_id, level, programme, amount, status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid')
+           ON DUPLICATE KEY UPDATE 
+             locked_amount = VALUES(locked_amount), 
+             price_history_id = VALUES(price_history_id),
+             amount = VALUES(amount)`,
+          [assignId, id, due.amount, historyId, s.id, s.level, s.programme, due.amount]
+        );
+      }
+      await conn.commit();
+      
+      const sysLog = require('../lib/systemLogger');
+      if (sysLog) {
+        await sysLog.info(
+          'job',
+          'dues.assigned_bulk',
+          `Assigned due ${due.name} to ${students.length} students`,
+          { dueId: id, count: students.length },
+          { userId: req.user.id }
+        );
+      }
+      
+      res.json({
+        success: true,
+        dry_run: false,
+        count: students.length,
+        sample
+      });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   } catch (error) {
-    console.error('Bulk assign due error:', error);
+    console.error('Assign due error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
@@ -305,12 +430,9 @@ exports.deactivateDue = async (req, res) => {
 exports.deleteDue = async (req, res) => {
   try {
     const { id } = req.params;
-    const paymentsResult = await pool.query('SELECT COUNT(*) as total FROM payments WHERE due_id = ?', [id]);
-    if (parseInt(paymentsResult.rows[0].total) > 0) return res.status(400).json({ success: false, message: 'Cannot delete due with existing payments' });
-    const dueResult = await pool.query('SELECT id, name FROM dues WHERE id = ?', [id]);
-    if (dueResult.rows.length === 0) return res.status(404).json({ success: false, message: 'Due not found' });
-    await pool.query('DELETE FROM dues WHERE id = ?', [id]);
-    res.json({ success: true, message: 'Due deleted successfully' });
+    // Perform soft delete by setting is_active = false
+    await pool.query('UPDATE dues SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+    res.json({ success: true, message: 'Due archived successfully' });
   } catch (error) {
     console.error('Delete due error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

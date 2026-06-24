@@ -8,6 +8,7 @@ export interface User {
   studentId?: string;
   isActive?: boolean;
   mustChangePassword?: boolean;
+  permissions?: string[];
   student?: {
     id: string;
     fullName: string;
@@ -17,6 +18,7 @@ export interface User {
     phoneNumber?: string;
   };
 }
+
 
 export const login = async (emailOrIndexNumber: string, password: string) => {
   const isEmail = emailOrIndexNumber.includes('@');
