@@ -21,7 +21,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   const { appName, appLogo } = useBranding();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
@@ -50,7 +50,11 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   if (loading || !isClient) return null;
   if (!user || user.role === 'student') return null;
 
-  const canUseBackup = ['admin', 'treasurer', 'president'].includes(user.role);
+  let dashboardHref = '/dashboard';
+  if (user.role === 'admin') dashboardHref = '/dashboard/admin';
+  else if (user.role === 'treasurer') dashboardHref = '/dashboard/treasurer';
+  else if (user.role === 'financial_secretary') dashboardHref = '/dashboard/financial-secretary';
+  else if (user.role === 'president') dashboardHref = '/dashboard/president';
 
   return (
     <div className="admin-layout">
@@ -64,7 +68,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       <aside className={`admin-sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* Branding Area */}
         <div className="h-24 flex items-center px-8 shrink-0">
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <Link href={dashboardHref} className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-lg">
               {appLogo ? (
                 <img src={appLogo.startsWith('http') ? appLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${appLogo}`} alt="Logo" className="w-full h-full object-cover" />
@@ -79,28 +83,42 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         {/* Navigation Menu */}
         <div className="flex-1 py-4 flex flex-col overflow-y-auto">
           <div className="sidebar-section-label">Menu</div>
-          <NavLink href="/admin/dashboard" icon={<ChartIcon />} label="Dashboard" active={pathname === '/admin/dashboard'} />
+          <NavLink href={dashboardHref} icon={<ChartIcon />} label="Dashboard" active={pathname === dashboardHref} />
           
-          <div className="sidebar-section-label mt-4">Students</div>
-          <NavLink href="/admin/students" icon={<UsersIcon />} label="Student List" active={pathname === '/admin/students'} />
-          <NavLink href="/admin/import" icon={<ImportIcon />} label="Bulk Import" active={pathname === '/admin/import'} />
-          <NavLink href="/admin/clearance" icon={<CertificateIcon />} label="Clearance" active={pathname === '/admin/clearance'} />
+          {(hasPermission('students.view') || hasPermission('students.edit') || hasPermission('students.import')) && (
+            <>
+              <div className="sidebar-section-label mt-4">Students</div>
+              {hasPermission('students.view') && <NavLink href="/admin/students" icon={<UsersIcon />} label="Student List" active={pathname === '/admin/students'} />}
+              {hasPermission('students.import') && <NavLink href="/admin/import" icon={<ImportIcon />} label="Bulk Import" active={pathname === '/admin/import'} />}
+              {hasPermission('students.view') && <NavLink href="/admin/clearance" icon={<CertificateIcon />} label="Clearance" active={pathname === '/admin/clearance'} />}
+            </>
+          )}
           
-          <div className="sidebar-section-label mt-4">Finance</div>
-          <NavLink href="/admin/dues" icon={<LandmarkIcon />} label="Manage Dues" active={pathname === '/admin/dues'} />
-          <NavLink href="/admin/payments" icon={<CardIcon />} label="Payments" active={pathname === '/admin/payments'} />
-          <NavLink href="/admin/reports" icon={<FileChartIcon />} label="Reports" active={pathname === '/admin/reports'} />
+          {(hasPermission('dues.view') || hasPermission('payments.view_all') || hasPermission('reports.export')) && (
+            <>
+              <div className="sidebar-section-label mt-4">Finance</div>
+              {hasPermission('dues.view') && <NavLink href="/dashboard/admin/settings/dues" icon={<LandmarkIcon />} label="Manage Dues" active={pathname === '/dashboard/admin/settings/dues'} />}
+              {hasPermission('payments.view_all') && <NavLink href="/admin/payments" icon={<CardIcon />} label="Payments" active={pathname === '/admin/payments'} />}
+              {hasPermission('reports.export') && <NavLink href="/admin/reports" icon={<FileChartIcon />} label="Reports" active={pathname === '/admin/reports'} />}
+            </>
+          )}
           
-          <div className="sidebar-section-label mt-4">System</div>
-          <NavLink href="/admin/bulk-sms" icon={<SmsIcon />} label="Bulk SMS" active={pathname === '/admin/bulk-sms'} />
-          <NavLink href="/admin/audit-log" icon={<ShieldIcon />} label="Audit Log" active={pathname === '/admin/audit-log'} />
-          <NavLink href="/admin/security" icon={<LockClosedIcon />} label="Security" active={pathname === '/admin/security'} />
-          {canUseBackup && <NavLink href="/admin/backup" icon={<ShieldIcon />} label="Backup & Recovery" active={pathname === '/admin/backup'} />}
-          {user.role === 'admin' && <NavLink href="/admin/team" icon={<GroupIcon />} label="Team" active={pathname === '/admin/team'} />}
-          <NavLink href="/admin/settings" icon={<SettingsIcon />} label="Settings" active={pathname === '/admin/settings'} />
+          {(hasPermission('reminders.send') || hasPermission('audit_logs.view_all') || hasPermission('system_logs.view') || hasPermission('users.edit') || hasPermission('settings.read')) && (
+            <>
+              <div className="sidebar-section-label mt-4">System</div>
+              {hasPermission('reminders.send') && <NavLink href="/admin/bulk-sms" icon={<SmsIcon />} label="Bulk SMS" active={pathname === '/admin/bulk-sms'} />}
+              {hasPermission('audit_logs.view_all') && <NavLink href="/admin/audit-log" icon={<ShieldIcon />} label="Audit Log" active={pathname === '/admin/audit-log'} />}
+              {hasPermission('system_logs.view') && <NavLink href="/dashboard/admin/settings/logs" icon={<ShieldIcon />} label="System Logs" active={pathname === '/dashboard/admin/settings/logs'} />}
+              {hasPermission('users.edit') && <NavLink href="/admin/security" icon={<LockClosedIcon />} label="Security" active={pathname === '/admin/security'} />}
+              {hasPermission('settings.write') && <NavLink href="/admin/backup" icon={<ShieldIcon />} label="Backup & Recovery" active={pathname === '/admin/backup'} />}
+              {hasPermission('users.edit') && user.role === 'admin' && <NavLink href="/admin/team" icon={<GroupIcon />} label="Team" active={pathname === '/admin/team'} />}
+              {hasPermission('settings.read') && <NavLink href="/admin/settings" icon={<SettingsIcon />} label="Settings" active={pathname === '/admin/settings'} />}
+            </>
+          )}
+          
           <button 
             onClick={handleLogout} 
-            className="sidebar-item mt-auto mb-4 text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors"
+            className="sidebar-item mt-auto mb-4 text-red-400 hover:text-red-300 hover:bg-white/5 transition-colors animate-pulse-subtle"
           >
             <span className="w-5 h-5"><LogoutIcon /></span>
             <span>Logout</span>
@@ -169,3 +187,4 @@ function NavLink({ href, icon, label, active }: { href: string; icon: React.Reac
     </Link>
   );
 }
+
