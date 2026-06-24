@@ -79,7 +79,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
     const response = await fetch(`${apiBase}/api/settings/public`, {
       cache: 'no-store',
-      next: { revalidate: 0 },
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
     })
 
