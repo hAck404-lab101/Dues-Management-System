@@ -90,23 +90,30 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl w-full space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#000B33] via-[#001150] to-[#0020B2] flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Decorative ambient blobs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-[#93C5FD]/5 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#1A3DF5]/10 blur-[150px] pointer-events-none" />
+
+      {/* Grid background overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+      <div className="max-w-2xl w-full space-y-6 relative z-10">
         <div className="flex items-center justify-between text-sm">
-          <Link href="/" className="text-primary font-semibold hover:underline">← Home</Link>
-          <Link href="/login" className="text-primary font-semibold hover:underline">Login</Link>
+          <Link href="/" className="text-[#93C5FD] hover:text-white font-semibold transition-colors">← Home</Link>
+          <Link href="/login" className="text-[#93C5FD] hover:text-white font-semibold transition-colors">Login</Link>
         </div>
 
         <div className="text-center">
           {appLogo ? (
             <img src={appLogo.startsWith('http') ? appLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${appLogo}`} alt="Logo" className="mx-auto h-20 w-auto mb-4 drop-shadow-lg" />
           ) : (
-            <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl mb-4">
-              <svg className="w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <div className="mx-auto w-16 h-16 bg-white/10 border border-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-xl mb-4">
+              <svg className="w-10 h-10 text-[#93C5FD]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
             </div>
           )}
-          <h2 className="text-3xl font-extrabold text-primary">{appName}</h2>
-          <p className="mt-2 text-sm text-gray-600">Student Registration Portal</p>
+          <h2 className="text-3xl font-extrabold text-white">{appName}</h2>
+          <p className="mt-2 text-sm text-[#93C5FD] font-medium">Student Registration Portal</p>
         </div>
 
         <div className="card">
