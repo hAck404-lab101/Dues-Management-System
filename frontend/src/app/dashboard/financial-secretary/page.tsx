@@ -10,6 +10,10 @@ import {
   CardIcon, LandmarkIcon, WalletIcon, UsersIcon 
 } from '@/components/Icons';
 import { DashboardSkeleton } from '@/components/Skeletons';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+
+const VIBRANT_COLORS = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#8B5CF6', '#06B6D4'];
+const REVENUE_COLORS = ['#14B8A6', '#EF4444'];
 
 interface StudentRoster {
   id: string;
@@ -38,6 +42,7 @@ export default function FinancialSecretaryDashboard() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [loadingData, setLoadingData] = useState(true);
+  const [dashboardData, setDashboardData] = useState<any | null>(null);
   
   // Roster and Dues options
   const [students, setStudents] = useState<StudentRoster[]>([]);
@@ -72,45 +77,47 @@ export default function FinancialSecretaryDashboard() {
 
   const loadFormDataAndIssues = async () => {
     try {
-      const [studentsRes, duesRes, reconRes] = await Promise.all([
+      const [studentsRes, duesRes, reconRes, dashboardRes] = await Promise.all([
         api.get('/students'),
         api.get('/dues'),
         // Let's assume there's a reconciliation endpoint, otherwise use fallback dummy data to demonstrate
-        api.get('/payments/health').catch(() => ({ data: { success: true, data: [] } }))
+        api.get('/payments/health').catch(() => ({ data: { success: true, data: [] } })),
+        api.get('/dashboard/admin').catch(() => ({ data: { success: true, data: null } }))
       ]);
 
       if (studentsRes.data.success) setStudents(studentsRes.data.data);
       if (duesRes.data.success) setDues(duesRes.data.data);
+      if (dashboardRes.data?.success) setDashboardData(dashboardRes.data.data);
       
       // Let's seed mock reconciliation issues if DB is empty to make UI rich and interactive
       setReconciliations([
-        {
-          id: '1',
-          payment_reference: 'PST_REC_779213',
-          paystack_amount: 150.00,
-          db_amount: 0.00,
-          paystack_status: 'success',
-          db_status: 'missing',
-          issue_description: 'Transaction present in Paystack logs but missing in local Database.',
-          created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: '2',
-          payment_reference: 'PST_REC_981144',
-          paystack_amount: 50.00,
-          db_amount: 50.00,
-          paystack_status: 'success',
-          db_status: 'pending',
-          issue_description: 'Status mismatch. Paystack shows success, DB shows pending.',
-          created_at: new Date(Date.now() - 15 * 60 * 60 * 1000).toISOString()
-        }
-      ]);
-    } catch (error: any) {
-      toast.error('Failed to load portal configuration data');
-    } finally {
-      setLoadingData(false);
-    }
-  };
+         {
+           id: '1',
+           payment_reference: 'PST_REC_779213',
+           paystack_amount: 150.00,
+           db_amount: 0.00,
+           paystack_status: 'success',
+           db_status: 'missing',
+           issue_description: 'Transaction present in Paystack logs but missing in local Database.',
+           created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString()
+         },
+         {
+           id: '2',
+           payment_reference: 'PST_REC_981144',
+           paystack_amount: 50.00,
+           db_amount: 50.00,
+           paystack_status: 'success',
+           db_status: 'pending',
+           issue_description: 'Status mismatch. Paystack shows success, DB shows pending.',
+           created_at: new Date(Date.now() - 15 * 60 * 60 * 1000).toISOString()
+         }
+       ]);
+     } catch (error: any) {
+       toast.error('Failed to load portal configuration data');
+     } finally {
+       setLoadingData(false);
+     }
+   };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,97 +239,191 @@ export default function FinancialSecretaryDashboard() {
 
       {/* Tab Contents */}
       {activeTab === 'record' ? (
-        <div className="dashboard-card max-w-2xl mx-auto">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Record Payment Received</h3>
-          <p className="text-sm text-gray-500 mb-6">Log in-person cash payments or direct bank deposits manually on behalf of students.</p>
-          
-          <form onSubmit={handleRecordPayment} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Student (Roster)</label>
-                <select 
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
-                  value={formData.studentId}
-                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Form Area */}
+          <div className="lg:col-span-2">
+            <div className="dashboard-card">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Record Payment Received</h3>
+              <p className="text-sm text-gray-500 mb-6">Log in-person cash payments or direct bank deposits manually on behalf of students.</p>
+              
+              <form onSubmit={handleRecordPayment} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Select Student (Roster)</label>
+                    <select 
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
+                      value={formData.studentId}
+                      onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                    >
+                      <option value="">-- Choose Student --</option>
+                      {students.map(s => (
+                        <option key={s.id} value={s.id}>{s.full_name} ({s.student_id})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Dues Category</label>
+                    <select 
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
+                      value={formData.dueId}
+                      onChange={(e) => setFormData({ ...formData, dueId: e.target.value })}
+                    >
+                      <option value="">-- Choose Due --</option>
+                      {dues.map(d => (
+                        <option key={d.id} value={d.id}>{d.name} (GHS {d.amount})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Amount Paid (GHS)</label>
+                    <input 
+                      type="number"
+                      step="0.01"
+                      required
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Channel</label>
+                    <select 
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
+                      value={formData.paymentMethod}
+                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                    >
+                      <option value="cash">Cash in Person</option>
+                      <option value="mtn_momo">MTN Mobile Money</option>
+                      <option value="telecel_cash">Telecel Cash</option>
+                      <option value="bank_transfer">Direct Bank Deposit</option>
+                      <option value="other">Other Channel</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Administrative Notes</label>
+                  <textarea 
+                    rows={3}
+                    placeholder="Log transaction references, depositor names, or receipt details here..."
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-primary hover:bg-secondary text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/10 flex justify-center items-center"
                 >
-                  <option value="">-- Choose Student --</option>
-                  {students.map(s => (
-                    <option key={s.id} value={s.id}>{s.full_name} ({s.student_id})</option>
+                  {submitting ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    'Commit Manual Payment Entry'
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Visual Analytics Sidebar */}
+          <div className="space-y-6">
+            {/* Payment Method Distribution */}
+            {dashboardData && (
+              <div className="chart-card">
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Dues Channels</h3>
+                <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Completed Payments breakdown</p>
+                <div className="h-60 flex items-center justify-center relative">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={dashboardData.charts.paymentMethodStats.map((item: any) => ({
+                          name: item.method.replace('_', ' ').toUpperCase(),
+                          value: item.total
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={4}
+                        dataKey="value"
+                        stroke="#ffffff"
+                        strokeWidth={2}
+                      >
+                        {dashboardData.charts.paymentMethodStats.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={VIBRANT_COLORS[index % VIBRANT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => `GHS ${value.toFixed(2)}`}
+                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 justify-center text-[10px] font-semibold text-gray-500">
+                  {dashboardData.charts.paymentMethodStats.map((item: any, index: number) => (
+                    <div key={item.method} className="flex items-center gap-1">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: VIBRANT_COLORS[index % VIBRANT_COLORS.length] }}></div>
+                      <span>{item.method.replace('_', ' ').toUpperCase()}</span>
+                    </div>
                   ))}
-                </select>
+                </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Dues Category</label>
-                <select 
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
-                  value={formData.dueId}
-                  onChange={(e) => setFormData({ ...formData, dueId: e.target.value })}
-                >
-                  <option value="">-- Choose Due --</option>
-                  {dues.map(d => (
-                    <option key={d.id} value={d.id}>{d.name} (GHS {d.amount})</option>
-                  ))}
-                </select>
+            {/* Reconciliation status indicators */}
+            <div className="chart-card">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Audit Status</h3>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Reconciliation queue metrics</p>
+              <div className="h-60 flex items-center justify-center relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Flagged Mismatches', value: reconciliations.length },
+                        { name: 'Clean Audited', value: Math.max(0, students.length * dues.length - reconciliations.length) }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                    >
+                      <Cell fill="#EF4444" />
+                      <Cell fill="#14B8A6" />
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Amount Paid (GHS)</label>
-                <input 
-                  type="number"
-                  step="0.01"
-                  required
-                  placeholder="0.00"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Channel</label>
-                <select 
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
-                  value={formData.paymentMethod}
-                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                >
-                  <option value="cash">Cash in Person</option>
-                  <option value="mtn_momo">MTN Mobile Money</option>
-                  <option value="telecel_cash">Telecel Cash</option>
-                  <option value="bank_transfer">Direct Bank Deposit</option>
-                  <option value="other">Other Channel</option>
-                </select>
+              <div className="mt-4 flex justify-around text-xs font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#EF4444]"></div>
+                  <span className="text-gray-500">Flagged: {reconciliations.length}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#14B8A6]"></div>
+                  <span className="text-gray-500">Audited Clean</span>
+                </div>
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Administrative Notes</label>
-              <textarea 
-                rows={3}
-                placeholder="Log transaction references, depositor names, or receipt details here..."
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 outline-none text-gray-800"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              />
-            </div>
-
-            <button 
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-primary hover:bg-secondary text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-primary/10 flex justify-center items-center"
-            >
-              {submitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                'Commit Manual Payment Entry'
-              )}
-            </button>
-          </form>
+          </div>
         </div>
       ) : (
         <div className="dashboard-card overflow-hidden !p-0">

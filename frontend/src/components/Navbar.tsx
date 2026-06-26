@@ -29,14 +29,17 @@ export default function Navbar() {
   }, [mobileMenuOpen]);
 
   const handleLogout = () => {
-    logout();
-    router.push('/');
-    router.refresh();
+    if (window.confirm('Are you sure you want to log out?')) {
+      logout();
+      router.push('/');
+      router.refresh();
+    }
   };
 
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin/login';
+  const isAuthPage = pathname === '/login' || pathname === '/admin/login';
   const isAdminRoute = pathname.startsWith('/admin');
   const authenticated = isClient && !!user;
+  const showNavLinks = false;
   const canUseBackup = ['admin', 'treasurer', 'president'].includes(user?.role || '');
 
   if (isAuthPage || isAdminRoute) return null;
@@ -45,7 +48,7 @@ export default function Navbar() {
     <nav className="bg-primary text-white shadow-xl sticky top-0 z-[100]">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16 sm:h-20">
-          <Link href={authenticated ? (user?.role === 'student' ? '/student/dashboard' : '/admin/dashboard') : '/'} className="flex items-center gap-2 sm:gap-3 group min-w-0">
+          <Link href={authenticated ? (user?.role === 'student' ? '/student/dashboard' : '/dashboard') : '/'} className="flex items-center gap-2 sm:gap-3 group min-w-0">
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-9 h-9 sm:w-10 sm:h-10 bg-secondary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden">
                 {appLogo ? (
@@ -65,7 +68,7 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center space-x-1">
-            {authenticated && (
+            {showNavLinks && (
               <>
                 {user?.role === 'student' ? (
                   <>
@@ -87,12 +90,8 @@ export default function Navbar() {
                       <DropdownItem href="/admin/payments" icon={<CardIcon />} label="Payments" active={pathname === '/admin/payments'} />
                       <DropdownItem href="/admin/reports" icon={<FileChartIcon />} label="Reports" active={pathname === '/admin/reports'} />
                     </NavDropdown>
-                    <NavDropdown label="System" icon={<SettingsIcon />} active={pathname.includes('/admin/bulk-sms') || pathname.includes('/admin/audit-log') || pathname.includes('/admin/team') || pathname.includes('/admin/settings') || pathname.includes('/admin/security') || pathname.includes('/admin/backup')}>
+                    <NavDropdown label="System" icon={<SettingsIcon />} active={pathname.includes('/admin/bulk-sms') || pathname.includes('/admin/settings')}>
                       <DropdownItem href="/admin/bulk-sms" icon={<SmsIcon />} label="Bulk SMS" active={pathname === '/admin/bulk-sms'} />
-                      <DropdownItem href="/admin/audit-log" icon={<ShieldIcon />} label="Audit Log" active={pathname === '/admin/audit-log'} />
-                      <DropdownItem href="/admin/security" icon={<LockClosedIcon />} label="Account Security" active={pathname === '/admin/security'} />
-                      {canUseBackup && <DropdownItem href="/admin/backup" icon={<ShieldIcon />} label="Backup & Recovery" active={pathname === '/admin/backup'} />}
-                      {user?.role === 'admin' && <DropdownItem href="/admin/team" icon={<GroupIcon />} label="Team" active={pathname === '/admin/team'} />}
                       <DropdownItem href="/admin/settings" icon={<SettingsIcon />} label="Settings" active={pathname === '/admin/settings'} />
                     </NavDropdown>
                   </>
@@ -131,7 +130,7 @@ export default function Navbar() {
 
       <div className={`lg:hidden transition-all duration-300 ease-in-out border-t border-white/5 shadow-2xl bg-primary/98 backdrop-blur-2xl fixed left-0 right-0 top-16 sm:top-20 z-[100] ${mobileMenuOpen ? 'max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] opacity-100 visible pointer-events-auto' : 'max-h-0 opacity-0 invisible pointer-events-none overflow-hidden'}`}>
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 overflow-y-auto overscroll-contain max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] space-y-1.5 pb-8">
-          {authenticated ? (
+          {showNavLinks ? (
             <>
               {user?.role === 'student' ? (
                 <>
@@ -153,10 +152,6 @@ export default function Navbar() {
                   <MobileNavItem href="/admin/reports" label="Reports" icon={<FileChartIcon />} />
                   <MobileNavHeader label="System Tools" />
                   <MobileNavItem href="/admin/bulk-sms" label="Bulk SMS" icon={<SmsIcon />} />
-                  <MobileNavItem href="/admin/audit-log" label="Audit Log" icon={<ShieldIcon />} />
-                  <MobileNavItem href="/admin/security" label="Account Security" icon={<LockClosedIcon />} />
-                  {canUseBackup && <MobileNavItem href="/admin/backup" label="Backup & Recovery" icon={<ShieldIcon />} />}
-                  {user?.role === 'admin' && <MobileNavItem href="/admin/team" label="Team" icon={<GroupIcon />} />}
                   <MobileNavItem href="/admin/settings" label="Settings" icon={<SettingsIcon />} />
                 </>
               )}

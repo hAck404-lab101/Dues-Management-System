@@ -1,6 +1,6 @@
 import { DashboardSkeleton } from '@/components/Skeletons';
 
-export default function AdminLoading() {
+export default function DashboardLoading() {
   return (
     <div className="min-h-screen bg-neutral flex">
       {/* Sidebar skeleton */}

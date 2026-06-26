@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
       if (result.user && ['admin', 'treasurer', 'financial_secretary', 'president'].includes(result.user.role)) {
         setUser(result.user);
         toast.success('Login successful!');
-        window.location.href = '/admin/dashboard';
+        window.location.href = '/dashboard';
       } else {
         toast.error('Access denied. Admin credentials required.');
       }

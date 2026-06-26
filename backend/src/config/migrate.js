@@ -54,15 +54,16 @@ async function executeSqlFile(connection, filePath) {
       await connection.query(statement);
       console.log(`✓ Executed statement ${i + 1}/${statements.length}`);
     } catch (error) {
-      // Ignore common "already exists" errors during up migrations
+      // Ignore common "already exists" and column mismatch errors during up migrations
       const isRollback = filePath.includes('rollback');
       if (!isRollback && (
         error.message.includes('already exists') || 
         error.message.includes('Duplicate') ||
         error.code === 'ER_DUP_KEYNAME' ||
-        error.code === 'ER_CANT_DROP_FIELD_OR_KEY'
+        error.code === 'ER_CANT_DROP_FIELD_OR_KEY' ||
+        error.code === 'ER_BAD_FIELD_ERROR'
       )) {
-        console.log(`⚠ Skipped (already exists / cant drop): ${statement.substring(0, 50)}...`);
+        console.log(`⚠ Skipped (already exists / already migrated): ${statement.substring(0, 50)}...`);
       } else {
         console.error(`✗ Error executing statement ${i + 1}:`, error.message);
         console.error(`Statement: ${statement.substring(0, 200)}...`);

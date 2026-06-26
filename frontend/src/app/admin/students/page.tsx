@@ -6,6 +6,8 @@ import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import BulkImportModal from '@/components/BulkImportModal';
+import { TableSkeleton } from '@/components/Skeletons';
 
 const LEVELS = ['100', '200', '300', '400'];
 
@@ -40,6 +42,7 @@ export default function AdminStudentsPage() {
   const [total, setTotal] = useState(0);
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -256,6 +259,9 @@ export default function AdminStudentsPage() {
           </div>
           <div className="flex gap-2 items-center">
             <span className="text-sm text-gray-500">{total} student{total !== 1 ? 's' : ''}</span>
+            <button onClick={() => setShowBulkImportModal(true)} className="btn-outline">
+              Bulk Upload
+            </button>
             <button onClick={() => { setForm(emptyForm); setShowAddModal(true); }} className="btn-primary">
               + Add Student
             </button>
@@ -264,11 +270,7 @@ export default function AdminStudentsPage() {
 
         <div className="card overflow-x-auto">
           {loadingData ? (
-            <div className="space-y-3 p-2">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
-              ))}
-            </div>
+            <TableSkeleton rows={7} columns={7} />
           ) : students.length === 0 ? (
             <p className="text-gray-500 text-center py-10">No students found.</p>
           ) : (
@@ -587,6 +589,12 @@ export default function AdminStudentsPage() {
           </div>
         </Modal>
       )}
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={showBulkImportModal}
+        onClose={() => setShowBulkImportModal(false)}
+        onSuccess={fetchStudents}
+      />
     </>
   );
 }

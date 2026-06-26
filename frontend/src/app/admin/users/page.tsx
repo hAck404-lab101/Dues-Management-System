@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { GroupIcon } from '@/components/Icons';
+import { TableSkeleton } from '@/components/Skeletons';
 
 const ROLES = ['admin', 'treasurer', 'financial_secretary', 'president', 'staff'];
 
@@ -93,22 +94,22 @@ export default function TeamManagementPage() {
     };
 
     return (
-        <AdminLayout title="Team Management">
+        <AdminLayout title="User Management">
             <div className="max-w-5xl mx-auto space-y-6">
                 <div className="flex justify-between items-center">
                     <div>
                         <h2 className="text-xl font-bold text-primary flex items-center gap-2">
                             <span className="w-6 h-6"><GroupIcon /></span>
-                            <span>Executive Team</span>
+                            <span>System Users</span>
                         </h2>
-                        <p className="text-sm text-gray-500">Manage admin and staff access roles.</p>
+                        <p className="text-sm text-gray-500">Manage admin, staff, and other officer access roles.</p>
                     </div>
-                    <button onClick={openCreate} className="btn-primary">+ Add Member</button>
+                    <button onClick={openCreate} className="btn-primary">+ Add User</button>
                 </div>
 
                 <div className="card overflow-x-auto">
                     {loadingData ? (
-                        <div className="p-8 text-center animate-pulse text-gray-400">Loading team members...</div>
+                        <TableSkeleton rows={4} columns={4} />
                     ) : staff.length === 0 ? (
                         <p className="text-center py-12 text-gray-500">No staff users found.</p>
                     ) : (
@@ -158,7 +159,7 @@ export default function TeamManagementPage() {
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4" onClick={() => setShowModal(false)}>
                     <form className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8" onClick={e => e.stopPropagation()} onSubmit={handleSubmit}>
-                        <h3 className="text-xl font-extrabold text-primary mb-6">{editUser ? 'Edit Team Member' : 'Add Team Member'}</h3>
+                        <h3 className="text-xl font-extrabold text-primary mb-6">{editUser ? 'Edit User' : 'Add User'}</h3>
 
                         <div className="space-y-4">
                             <div>

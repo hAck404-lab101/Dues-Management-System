@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell 
+  PieChart, Pie, Cell, AreaChart, Area, ComposedChart, Line, Legend
 } from 'recharts';
 import { 
   UsersIcon, LandmarkIcon, WalletIcon, CardIcon, 
@@ -29,12 +29,13 @@ interface AdminDashboardData {
   charts: {
     monthlyCollections: any[];
     levelWisePayments: any[];
+    paymentMethodStats: any[];
   };
   recentPayments: any[];
 }
 
-const PIE_COLORS = ['#3B82F6', '#60A5FA', '#0020B2', '#001150'];
-const DONUT_COLORS = ['#001150', '#0020B2', '#3B82F6', '#EFF6FF'];
+const VIBRANT_COLORS = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#8B5CF6', '#06B6D4']; // Indigo, Pink, Teal, Amber, Purple, Cyan
+const REVENUE_COLORS = ['#14B8A6', '#EF4444']; // Teal for collected, Red for outstanding
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -171,28 +172,34 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Bar Chart */}
+          {/* Area Chart for Revenue Trends */}
           <div className="chart-card">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h3>Collection Habits</h3>
+                <h3>Revenue Growth</h3>
                 <p className="chart-subtitle mb-0">Monthly collection trends</p>
               </div>
             </div>
             
             <div className="h-72 mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <AreaChart data={monthlyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                   <XAxis dataKey="monthShort" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} />
                   <Tooltip 
-                    cursor={{ fill: '#F9FAFB' }}
+                    cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '3 3' }}
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
                     formatter={(value: number) => [`GHS ${value.toFixed(2)}`, 'Collected']}
                   />
-                  <Bar dataKey="total" fill="#0020B2" radius={[20, 20, 20, 20]} barSize={24} />
-                </BarChart>
+                  <Area type="monotone" dataKey="total" stroke="#6366F1" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -223,7 +230,7 @@ export default function AdminDashboard() {
                     strokeWidth={2}
                   >
                     {paymentStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={REVENUE_COLORS[index % REVENUE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -256,37 +263,61 @@ export default function AdminDashboard() {
           <div className="chart-card">
             <div className="flex justify-between items-start mb-2">
               <div>
-                <h3>Level Growth</h3>
-                <p className="chart-subtitle mb-0">Payments by level</p>
+                <h3>Level Insights</h3>
+                <p className="chart-subtitle mb-0">Total paid vs Active students</p>
               </div>
             </div>
-            <div className="h-48 flex items-center justify-center relative">
+            <div className="h-64 mt-4 relative">
+               <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={data.charts.levelWisePayments} margin={{ top: 10, right: -20, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="level" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
+                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} />
+                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                    <Bar yAxisId="left" dataKey="totalPaid" name="Amount Paid (GHS)" fill="#14B8A6" radius={[4, 4, 0, 0]} barSize={20} />
+                    <Line yAxisId="right" type="monotone" dataKey="students" name="Students" stroke="#EC4899" strokeWidth={3} dot={{ r: 4, fill: '#EC4899', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Payment Methods */}
+          <div className="chart-card">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3>Payment Methods</h3>
+                <p className="chart-subtitle mb-0">How students pay</p>
+              </div>
+            </div>
+            <div className="h-64 flex items-center justify-center relative">
                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={data.charts.levelWisePayments}
+                      data={data.charts.paymentMethodStats}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={70}
+                      innerRadius={60}
+                      outerRadius={80}
                       paddingAngle={5}
-                      dataKey="totalPaid"
-                      nameKey="level"
+                      dataKey="total"
+                      nameKey="method"
                       stroke="none"
                     >
-                      {data.charts.levelWisePayments.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={DONUT_COLORS[index % DONUT_COLORS.length]} />
+                      {data.charts.paymentMethodStats?.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={VIBRANT_COLORS[index % VIBRANT_COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
                       formatter={(value: number) => `GHS ${value.toFixed(2)}`}
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     />
+                    <Legend iconType="circle" layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '12px' }} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="font-extrabold text-xl text-primary">{s.totalStudents}</span>
-                </div>
             </div>
           </div>
 

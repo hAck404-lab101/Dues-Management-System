@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ChartIcon, CheckCircleIcon, ExclamationIcon, DownloadIcon, SparklesIcon } from '@/components/Icons';
+import { TableSkeleton } from '@/components/Skeletons';
 
 type Tab = 'revenue' | 'paid' | 'defaulters';
 
@@ -167,7 +168,7 @@ export default function AdminReportsPage() {
       {/* Tables */}
       <div className="card overflow-x-auto">
         {loadingData ? (
-          <div className="space-y-3 p-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />)}</div>
+          <TableSkeleton rows={6} columns={6} />
         ) : (
           <>
             {tab === 'revenue' && (

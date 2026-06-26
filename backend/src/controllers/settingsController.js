@@ -60,10 +60,10 @@ const cleanOldUccBranding = async () => {
 };
 
 const ensureDefaultSettings = async () => {
-    for (const [key, value, category, description] of DEFAULT_SETTINGS) {
+    for (const [key, value, category] of DEFAULT_SETTINGS) {
         await query(
-            'INSERT IGNORE INTO settings (`key`, `value`, `category`, `description`) VALUES (?, ?, ?, ?)',
-            [key, value, category, description]
+            'INSERT IGNORE INTO settings (`key`, `value`, `category`) VALUES (?, ?, ?)',
+            [key, value, category]
         );
     }
 
@@ -85,7 +85,7 @@ exports.getSettings = async (req, res) => {
             settingsMap[s.key] = {
                 value,
                 category: s.category,
-                description: s.description,
+                description: '',
                 updated_at: s.updated_at
             };
         });
@@ -141,7 +141,7 @@ exports.getSettingsByCategory = async (req, res) => {
             settingsMap[s.key] = {
                 value,
                 category: s.category,
-                description: s.description,
+                description: '',
                 updated_at: s.updated_at
             };
         });
@@ -191,6 +191,12 @@ exports.getPublicSettings = async (req, res) => {
         const homepageRes = await query('SELECT value FROM settings WHERE `key` = "homepage_variant"');
         settingsMap.homepage_variant = homepageRes.rows[0]?.value || 'portal';
 
+        const turnstileEnabledRes = await query('SELECT value FROM settings WHERE `key` = "turnstile_enabled"');
+        settingsMap.turnstile_enabled = turnstileEnabledRes.rows[0]?.value || 'false';
+
+        const turnstileSiteKeyRes = await query('SELECT value FROM settings WHERE `key` = "turnstile_site_key"');
+        settingsMap.turnstile_site_key = turnstileSiteKeyRes.rows[0]?.value || '';
+
         res.json({ success: true, data: settingsMap });
     } catch (error) {
         console.error('Get public settings error:', error);
@@ -227,6 +233,23 @@ exports.uploadLogo = async (req, res) => {
 exports.resetSite = async (req, res) => {
     if (!['admin', 'treasurer', 'president'].includes(req.user.role)) {
         return res.status(403).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    const { password } = req.body;
+    if (!password) {
+        return res.status(400).json({ success: false, message: 'Password is required to reset the site' });
+    }
+
+    const { query } = require('../config/database');
+    const userRes = await query('SELECT password FROM users WHERE id = ? LIMIT 1', [req.user.id]);
+    if (userRes.rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const isMatch = await bcrypt.compare(password, userRes.rows[0].password);
+    if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Invalid password' });
     }
 
     const { pool } = require('../config/database');

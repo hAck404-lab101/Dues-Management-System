@@ -10,7 +10,7 @@ import {
   UsersIcon, LandmarkIcon, WalletIcon, CardIcon 
 } from '@/components/Icons';
 import { DashboardSkeleton } from '@/components/Skeletons';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 interface PresidentDashboardData {
   summary: {
@@ -41,7 +41,8 @@ interface RefundRequest {
   due_name: string;
 }
 
-const PIE_COLORS = ['#3B82F6', '#EF4444'];
+const VIBRANT_COLORS = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#8B5CF6', '#06B6D4'];
+const REVENUE_COLORS = ['#14B8A6', '#EF4444'];
 
 export default function PresidentDashboard() {
   const router = useRouter();
@@ -162,6 +163,16 @@ export default function PresidentDashboard() {
     { name: 'Outstanding', value: s.outstandingBalance },
   ];
 
+  const monthlyData = data.charts?.monthlyCollections ? data.charts.monthlyCollections.map((m: any) => ({
+    ...m,
+    monthShort: new Date(m.month + '-01').toLocaleDateString('en-US', { month: 'short' })
+  })).reverse() : [];
+
+  const levelData = data.charts?.levelWisePayments ? data.charts.levelWisePayments.map((l: any) => ({
+    ...l,
+    levelName: `Level ${l.level}`
+  })) : [];
+
   return (
     <AdminLayout title="President Portal">
       {/* KPI Cards */}
@@ -244,52 +255,119 @@ export default function PresidentDashboard() {
       {/* Tab Contents */}
       {activeTab === 'analytics' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 chart-card">
-            <h3>Revenue Metrics</h3>
-            <p className="chart-subtitle">Defaulter count: {s.defaultersCount} students. Outstanding balance: GHS {Number(s.outstandingBalance).toFixed(2)}</p>
-            <div className="h-72 mt-8 flex items-center justify-center relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={paymentStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={95}
-                    paddingAngle={4}
-                    dataKey="value"
-                    stroke="#ffffff"
-                    strokeWidth={2}
-                  >
-                    {paymentStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => `GHS ${value.toFixed(2)}`}
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="font-extrabold text-2xl text-primary">{collectionRate}%</span>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Collected</span>
+          {/* Charts Area (Spans 2 columns) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Monthly Dues Inflow trend */}
+            <div className="chart-card">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Monthly Revenue Growth</h3>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Historical collection progression</p>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="monthShort" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} />
+                    <Tooltip 
+                      cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '3 3' }}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                      formatter={(value: number) => [`GHS ${value.toFixed(2)}`, 'Collected']}
+                    />
+                    <Area type="monotone" dataKey="total" stroke="#6366F1" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Level-wise Collections breakdown */}
+            <div className="chart-card">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Collections by Level</h3>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Total payments received across cohorts</p>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={levelData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="levelName" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                      formatter={(value: number) => [`GHS ${value.toFixed(2)}`, 'Dues Collected']}
+                    />
+                    <Bar dataKey="totalPaid" fill="#14B8A6" radius={[8, 8, 0, 0]} barSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
 
-          <div className="dashboard-card flex flex-col justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-gray-900">President Overview</h3>
-              <p className="text-xs text-gray-400 font-semibold mt-1 uppercase tracking-wider">Role Scope & Auditing</p>
-              <p className="text-sm text-gray-500 mt-4 leading-relaxed">
-                As the executive head, you have read-only access to all payments, setting parameters, and log audits. 
-                Your primary active duties are the <strong>broadcast of notices/announcements</strong> and the <strong>co-signing approval of transaction refund requests</strong>.
-              </p>
+          {/* Sidebar Area (Spans 1 column) */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Revenue Statistic Card */}
+            <div className="chart-card">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Revenue Breakdown</h3>
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Defaulters count: {s.defaultersCount} students</p>
+              <div className="h-64 flex items-center justify-center relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={paymentStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={4}
+                      dataKey="value"
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                    >
+                      {paymentStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={REVENUE_COLORS[index % REVENUE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => `GHS ${value.toFixed(2)}`}
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="font-extrabold text-2xl text-primary">{collectionRate}%</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Collected</span>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-around text-xs font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#14B8A6]"></div>
+                  <span className="text-gray-500">Collected:</span>
+                  <span className="text-gray-950">GHS {Number(s.amountCollected).toFixed(0)}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#EF4444]"></div>
+                  <span className="text-gray-500">Outstanding:</span>
+                  <span className="text-gray-950">GHS {Number(s.outstandingBalance).toFixed(0)}</span>
+                </div>
+              </div>
             </div>
-            <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 mt-6">
-              <p className="text-xs font-bold text-primary mb-1">Co-signing Refund Security Policy</p>
-              <p className="text-[11px] text-gray-500 leading-tight">All manual refunds must be requested by the Financial Secretary and co-signed by the President before any payout action.</p>
+
+            {/* Overview / Instructions Card */}
+            <div className="dashboard-card flex flex-col justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">President Overview</h3>
+                <p className="text-xs text-gray-400 font-semibold mt-1 uppercase tracking-wider">Role Scope & Auditing</p>
+                <p className="text-sm text-gray-500 mt-4 leading-relaxed">
+                  As the executive head, you have read-only access to all payments, setting parameters, and log audits. 
+                  Your primary active duties are the <strong>broadcast of notices/announcements</strong> and the <strong>co-signing approval of transaction refund requests</strong>.
+                </p>
+              </div>
+              <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10 mt-6">
+                <p className="text-xs font-bold text-primary mb-1">Co-signing Refund Security Policy</p>
+                <p className="text-[11px] text-gray-500 leading-tight">All manual refunds must be requested by the Financial Secretary and co-signed by the President before any payout action.</p>
+              </div>
             </div>
           </div>
         </div>

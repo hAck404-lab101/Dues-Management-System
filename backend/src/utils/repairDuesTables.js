@@ -92,8 +92,8 @@ const repairDuesTables = async (connection) => {
   await exec('Ensure payments.service_fee exists', 'ALTER TABLE payments ADD COLUMN service_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER amount');
 
   await exec('Ensure settings public_app_url exists', `
-    INSERT IGNORE INTO settings (id, \`key\`, \`value\`, category, description)
-    VALUES (UUID(), 'public_app_url', 'https://uewdept.org', 'sys_general', 'Canonical public app URL used in SMS and email links')
+    INSERT IGNORE INTO settings (\`key\`, \`value\`, category)
+    VALUES ('public_app_url', 'https://uewdept.org', 'sys_general')
   `);
   await exec('Repair unsafe public_app_url setting', `
     UPDATE settings SET \`value\` = 'https://uewdept.org'
@@ -101,8 +101,8 @@ const repairDuesTables = async (connection) => {
       AND (\`value\` IS NULL OR \`value\` = '' OR \`value\` LIKE '%vercel.app%' OR \`value\` LIKE '%railway.app%' OR \`value\` LIKE '%localhost%')
   `);
   await exec('Ensure receipt prefix setting exists', `
-    INSERT IGNORE INTO settings (id, \`key\`, \`value\`, category, description)
-    VALUES (UUID(), 'receipt_prefix', 'DMS', 'sys_general', 'Receipt number prefix')
+    INSERT IGNORE INTO settings (\`key\`, \`value\`, category)
+    VALUES ('receipt_prefix', 'DMS', 'sys_general')
   `);
   await exec('Repair UCC receipt prefix setting', `
     UPDATE settings SET \`value\` = 'DMS'
@@ -137,6 +137,37 @@ const repairDuesTables = async (connection) => {
   await exec('Ensure sms_logs.related_id exists', 'ALTER TABLE sms_logs ADD COLUMN related_id CHAR(36) AFTER related_type');
   await exec('Ensure sms_logs.created_at index exists', 'ALTER TABLE sms_logs ADD INDEX idx_sms_logs_created_at (created_at)');
   await exec('Ensure sms_logs_status index exists', 'ALTER TABLE sms_logs ADD INDEX idx_sms_logs_status (status)');
+
+  await exec('Ensure reconciliation_issues table exists', `
+    CREATE TABLE IF NOT EXISTS reconciliation_issues (
+      id CHAR(36) PRIMARY KEY,
+      payment_reference VARCHAR(100) UNIQUE NOT NULL,
+      paystack_amount DECIMAL(12,2) NOT NULL,
+      db_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+      paystack_status VARCHAR(50) NOT NULL,
+      db_status VARCHAR(50) NOT NULL DEFAULT 'missing',
+      issue_description TEXT,
+      status ENUM('unresolved', 'resolved', 'escalated') NOT NULL DEFAULT 'unresolved',
+      resolved_by CHAR(36) NULL,
+      resolution_notes TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  await exec('Ensure student_otps table exists', `
+    CREATE TABLE IF NOT EXISTS student_otps (
+      id CHAR(36) PRIMARY KEY,
+      student_id CHAR(36) NOT NULL,
+      otp_code VARCHAR(10) NOT NULL,
+      recipient VARCHAR(255) NOT NULL,
+      is_verified BOOLEAN DEFAULT false,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+    )
+  `);
+  await exec('Ensure student_otps index exists', 'ALTER TABLE student_otps ADD INDEX idx_student_otps_student_id (student_id)');
 
   console.log('Dues and notification tables check completed.');
 };

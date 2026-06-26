@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { SmsIcon, CheckCircleIcon, ExclamationIcon } from '@/components/Icons';
+import { TableSkeleton } from '@/components/Skeletons';
 
 type SmsLog = {
   id: string;
@@ -88,7 +89,7 @@ export default function SmsLogsPage() {
 
         <div className="card overflow-x-auto">
           {loadingData ? (
-            <div className="space-y-3 p-4">{[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />)}</div>
+            <TableSkeleton rows={8} columns={7} />
           ) : logs.length === 0 ? (
             <p className="text-gray-500 text-center py-12">No SMS logs found.</p>
           ) : (

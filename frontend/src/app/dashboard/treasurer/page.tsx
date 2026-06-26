@@ -10,6 +10,7 @@ import {
   UsersIcon, CardIcon, LandmarkIcon, WalletIcon 
 } from '@/components/Icons';
 import { DashboardSkeleton } from '@/components/Skeletons';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface PendingPayment {
   id: string;
@@ -28,10 +29,13 @@ interface PendingPayment {
   due_name: string;
 }
 
+const VIBRANT_COLORS = ['#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#8B5CF6', '#06B6D4'];
+
 export default function TreasurerDashboard() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([]);
+  const [dashboardData, setDashboardData] = useState<any | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   
   // Modals state
@@ -46,25 +50,47 @@ export default function TreasurerDashboard() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (user && user.role === 'treasurer') {
-      fetchPendingQueue();
+  const fetchDashboardData = async () => {
+    try {
+      const response = await api.get('/dashboard/admin');
+      if (response.data.success) {
+        setDashboardData(response.data.data);
+      }
+    } catch (error: any) {
+      console.error('Failed to load dashboard statistics:', error);
     }
-  }, [user]);
+  };
 
   const fetchPendingQueue = async () => {
     try {
       // Excludes paystack method payments and returns manual pending ones
-      const response = await api.get('/manual-payments/pending');
+      const response = await api.get('/features/manual-payments/pending');
       if (response.data.success) {
         setPendingPayments(response.data.data);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load pending manual payments');
-    } finally {
-      setLoadingData(false);
     }
   };
+
+  const loadInitialData = async () => {
+    if (user && user.role === 'treasurer') {
+      try {
+        await Promise.all([
+          fetchPendingQueue(),
+          fetchDashboardData()
+        ]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoadingData(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    loadInitialData();
+  }, [user]);
 
   const handleApprove = async (id: string) => {
     if (!confirm('Are you sure you want to approve this manual payment?')) return;
@@ -157,6 +183,77 @@ export default function TreasurerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Visual Analytics */}
+      {dashboardData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="chart-card">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Payment Channels</h3>
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Breakdown of all completed transactions</p>
+            <div className="h-72 flex items-center justify-center relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={dashboardData.charts.paymentMethodStats.map((item: any) => ({
+                      name: item.method.replace('_', ' ').toUpperCase(),
+                      value: item.total
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={95}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                  >
+                    {dashboardData.charts.paymentMethodStats.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={VIBRANT_COLORS[index % VIBRANT_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => `GHS ${value.toFixed(2)}`}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="chart-card">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Monthly Dues Inflow</h3>
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-4">Collections growth trend</p>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart 
+                  data={dashboardData.charts.monthlyCollections.map((m: any) => ({
+                    ...m,
+                    monthShort: new Date(m.month + '-01').toLocaleDateString('en-US', { month: 'short' })
+                  })).reverse()} 
+                  margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                  <XAxis dataKey="monthShort" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF', fontWeight: 600 }} />
+                  <Tooltip 
+                    cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+                    formatter={(value: number) => [`GHS ${value.toFixed(2)}`, 'Collected']}
+                  />
+                  <Area type="monotone" dataKey="total" stroke="#6366F1" strokeWidth={3} fillOpacity={1} fill="url(#colorTotal)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Manual Pending Payments Queue Table */}
       <div className="dashboard-card overflow-hidden !p-0">

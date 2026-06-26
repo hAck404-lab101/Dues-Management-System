@@ -82,7 +82,7 @@
 
 /* Sidebar */
 .admin-sidebar {
-  @apply fixed lg:static inset-y-0 left-0 w-64 bg-secondary-dark lg:bg-transparent z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col;
+  @apply fixed lg:static inset-y-0 left-0 w-64 bg-secondary-dark lg:bg-transparent z-50 transform -translate-x-full lg:translate-x-0 transition-all duration-300 flex flex-col;
 }
 
 .admin-sidebar .overflow-y-auto {
@@ -95,6 +95,23 @@
 
 .admin-sidebar.open {
   @apply translate-x-0;
+}
+
+/* Collapsed Sidebar (Desktop only) */
+.admin-sidebar.collapsed {
+  @apply lg:w-20;
+}
+.admin-sidebar.collapsed .branding-area {
+  @apply lg:px-0 lg:justify-center;
+}
+.admin-sidebar.collapsed .logo-text {
+  @apply lg:hidden;
+}
+.admin-sidebar.collapsed .sidebar-item {
+  @apply lg:px-0 lg:mx-2 lg:justify-center;
+}
+.admin-sidebar.collapsed .sidebar-label {
+  @apply lg:hidden;
 }
 
 .sidebar-item {

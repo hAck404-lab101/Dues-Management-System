@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const clearanceEmailController = require('../controllers/clearanceEmailController');
 const usersController = require('../controllers/usersController');
+const announcementsController = require('../controllers/announcementsController');
 const { authenticate } = require('../middleware/auth');
 const requirePermission = require('../middleware/requirePermission');
 const { auditLog } = require('../middleware/auditLog');
@@ -10,6 +11,7 @@ const { auditLog } = require('../middleware/auditLog');
 // Audit and SMS logs
 router.get('/audit-logs', authenticate, requirePermission('audit_logs.view_all'), adminController.getAuditLogs);
 router.get('/sms-logs', authenticate, requirePermission('system_logs.view', 'audit_logs.view_all'), adminController.getSmsLogs);
+router.get('/system-logs', authenticate, requirePermission('system_logs.view'), adminController.getSystemLogs);
 
 // Student management
 router.post('/promote-students', authenticate, requirePermission('students.edit'), adminController.promoteStudents);
@@ -31,6 +33,13 @@ router.get('/users', authenticate, requirePermission('users.edit'), usersControl
 router.post('/users', authenticate, requirePermission('users.create'), auditLog('CREATE_STAFF', 'user'), usersController.createStaffUser);
 router.patch('/users/:id', authenticate, requirePermission('users.edit'), auditLog('UPDATE_STAFF', 'user'), usersController.updateStaffUser);
 router.delete('/users/:id', authenticate, requirePermission('users.deactivate'), auditLog('DELETE_STAFF', 'user'), usersController.deleteStaffUser);
+
+// Announcements Management
+router.get('/announcements', authenticate, requirePermission('announcements.create', 'announcements.publish'), announcementsController.getAnnouncements);
+router.post('/announcements', authenticate, requirePermission('announcements.create'), announcementsController.createAnnouncement);
+router.patch('/announcements/:id', authenticate, requirePermission('announcements.create', 'announcements.publish'), announcementsController.updateAnnouncement);
+router.put('/announcements/:id', authenticate, requirePermission('announcements.create', 'announcements.publish'), announcementsController.updateAnnouncement);
+router.delete('/announcements/:id', authenticate, requirePermission('announcements.create'), announcementsController.deleteAnnouncement);
 
 module.exports = router;
 

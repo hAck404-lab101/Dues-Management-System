@@ -6,6 +6,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
+import { TableSkeleton } from '@/components/Skeletons';
 
 const LEVELS = ['100', '200', '300', '400'];
 
@@ -242,7 +243,7 @@ export default function AdminDuesPage() {
 
         <div className="card overflow-x-auto">
           {loadingData ? (
-            <div className="space-y-3 p-2">{[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />)}</div>
+            <TableSkeleton rows={6} columns={7} />
           ) : dues.length === 0 ? (
             <p className="text-gray-500 text-center py-10">No dues found. Create one to get started.</p>
           ) : (

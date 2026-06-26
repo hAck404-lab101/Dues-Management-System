@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { AcademicCapIcon, CheckCircleIcon, XCircleIcon, DownloadIcon, EnvelopeIcon } from '@/components/Icons';
-import { SkeletonBlock } from '@/components/Skeletons';
+import { SkeletonBlock, TableSkeleton } from '@/components/Skeletons';
 
 interface ClearanceData {
     student: any;

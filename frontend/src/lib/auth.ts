@@ -51,29 +51,15 @@ export const adminLogin = async (email: string, password: string) => {
   }
 };
 
-export const register = async (data: {
-  indexNumber: string;
-  fullName: string;
-  phoneNumber: string;
-  email: string;
-  password: string;
-  programme: string;
-  academicYear: string;
-}) => {
-  try {
-    const response = await api.post('/auth/register', data);
-    if (response.data.success) {
-      Cookies.set('token', response.data.token, { expires: 7, path: '/' });
-      return response.data;
-    }
-    throw new Error(response.data.message || 'Registration failed');
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Registration failed');
-  }
-};
+
 
 export const logout = () => {
   Cookies.remove('token', { path: '/' });
+  // Clear all caches
+  try {
+    sessionStorage.removeItem('auth_user_cache');
+    localStorage.removeItem('branding_cache');
+  } catch { /* ignore */ }
   window.location.href = '/';
 };
 

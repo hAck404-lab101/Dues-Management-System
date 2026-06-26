@@ -3,12 +3,265 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useBranding } from '@/contexts/BrandingContext';
-import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, CertificateIcon, WalletIcon, CheckCircleIcon, XCircleIcon } from '@/components/Icons';
+import { CardIcon, ChartIcon, ReceiptIcon, SmsIcon, ClockIcon, ShieldIcon, CertificateIcon, WalletIcon, CheckCircleIcon, XCircleIcon, ExclamationIcon } from '@/components/Icons';
+import api from '@/lib/api';
+import toast from 'react-hot-toast';
+import Script from 'next/script';
+import Loader from '@/components/Loader';
 
 export default function Home() {
   const { appName, loading } = useBranding();
   const [showMatrix, setShowMatrix] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+
+  // Pay Dues Modal states
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [payStep, setPayStep] = useState(1); // 1 = Lookup, 2 = Dues/Payment, 3 = Redirecting, 4 = OTP verification, 5 = Enter OTP
+  const [studentIdOrCard, setStudentIdOrCard] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  // Student and Dues data
+  const [student, setStudent] = useState<any | null>(null);
+  const [dues, setDues] = useState<any[]>([]);
+  const [selectedDueId, setSelectedDueId] = useState<string>('');
+  const [payAmount, setPayAmount] = useState<string>('');
+  
+  // Payer Contact Info
+  const [payerEmail, setPayerEmail] = useState('');
+  const [payerPhone, setPayerPhone] = useState('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
+  // OTP Verification states
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpMethod, setOtpMethod] = useState<'email'>('email');
+
+  // Fetch settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await api.get('/settings/public');
+        if (res.data?.success) {
+          setSettings(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to load public settings:', err);
+      } finally {
+        setLoadingSettings(false);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  // Turnstile Callback Setup
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).onTurnstileVerify = (token: string) => {
+        setTurnstileToken(token);
+      };
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).onTurnstileVerify;
+      }
+    };
+  }, []);
+
+  const openPaymentModal = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setPayStep(1);
+    setStudentIdOrCard('');
+    setStudent(null);
+    setDues([]);
+    setOtpSent(false);
+    setOtpCode('');
+    setShowPayModal(true);
+  };
+
+  const handleLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentIdOrCard.trim()) {
+      toast.error('Please enter your Student ID or Card Number');
+      return;
+    }
+
+    if (settings?.turnstile_enabled === 'true' && !turnstileToken) {
+      toast.error('Please complete the captcha verification');
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const res = await api.post('/public/lookup', {
+        student_id_or_card: studentIdOrCard.trim(),
+        turnstile_token: turnstileToken
+      });
+
+      if (res.data?.success) {
+        setStudent(res.data.student);
+        setPayStep(4); // Move to OTP verification screen
+        setOtpSent(false);
+        setOtpCode('');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Lookup failed. Student not found.');
+      
+      // Reset turnstile widget on failure
+      if (typeof window !== 'undefined' && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.reset();
+        } catch (e) {}
+        setTurnstileToken('');
+      }
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!student) return;
+    setSendingOtp(true);
+    try {
+      const res = await api.post('/public/send-otp', {
+        student_id_or_card: studentIdOrCard.trim()
+      });
+      if (res.data?.success) {
+        setOtpSent(true);
+        toast.success('Verification code sent to your registered email!');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to send verification code.');
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!student || !otpCode || otpCode.trim().length !== 6) {
+      toast.error('Please enter a valid 6-digit verification code');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      const res = await api.post('/public/verify-otp', {
+        student_id_or_card: studentIdOrCard.trim(),
+        otp_code: otpCode.trim()
+      });
+
+      if (res.data?.success) {
+        setStudent(res.data.student);
+        setDues(res.data.dues);
+        
+        // Pre-fill email and phone if roster data exists
+        setPayerEmail(res.data.student.email || '');
+        setPayerPhone(res.data.student.phone_number || '');
+
+        if (res.data.dues.length > 0) {
+          const firstDue = res.data.dues[0];
+          setSelectedDueId(firstDue.due_id);
+          setPayAmount(firstDue.balance.toFixed(2));
+          toast.success('Identity verified! Checkout unlocked.');
+          setPayStep(2);
+        } else {
+          toast.success('Identity verified! All assigned dues are fully paid.');
+          setShowPayModal(false);
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Verification failed. Incorrect or expired code.');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const handleDueSelect = (dueId: string) => {
+    setSelectedDueId(dueId);
+    const chosen = dues.find(d => d.due_id === dueId);
+    if (chosen) {
+      setPayAmount(chosen.balance.toFixed(2));
+    }
+  };
+
+  // Service Fee & Total calculations
+  const calculateTotal = () => {
+    const amount = parseFloat(payAmount) || 0;
+    if (amount <= 0 || !settings) return { fee: 0, total: 0 };
+
+    const chargeEnabled = settings.service_charge_enabled !== 'false';
+    if (!chargeEnabled) return { fee: 0, total: amount };
+
+    const type = settings.service_charge_type || 'fixed';
+    const rate = parseFloat(settings.payment_service_fee || '0') || 0;
+
+    let fee = 0;
+    if (type === 'percentage') {
+      fee = Math.round(((amount * rate) / 100) * 100) / 100;
+    } else {
+      fee = Math.round(rate * 100) / 100;
+    }
+
+    return {
+      fee,
+      total: Math.round((amount + fee) * 100) / 100
+    };
+  };
+
+  const handlePay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!student || !selectedDueId) return;
+
+    const amount = parseFloat(payAmount);
+    if (isNaN(amount) || amount < 10) {
+      toast.error('Minimum payment amount is GHS 10.00');
+      return;
+    }
+
+    const chosenDue = dues.find(d => d.due_id === selectedDueId);
+    if (chosenDue && amount > chosenDue.balance) {
+      toast.error(`Amount exceeds outstanding balance of GHS ${chosenDue.balance.toFixed(2)}`);
+      return;
+    }
+
+    if (!payerEmail.trim()) {
+      toast.error('Payer email is required');
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const res = await api.post('/public/initiate-payment', {
+        student_id: student.id,
+        due_id: selectedDueId,
+        amount: amount,
+        payer_email: payerEmail.trim(),
+        payer_phone: payerPhone.trim() || null
+      });
+
+      if (res.data?.success && res.data?.paystack?.authorization_url) {
+        setPayStep(3);
+        window.location.href = res.data.paystack.authorization_url;
+      } else {
+        toast.error('Failed to initiate Paystack checkout.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Payment initiation failed.');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const { fee, total } = calculateTotal();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,15 +345,14 @@ export default function Home() {
             <a href="#how-it-works" className="hover:text-[#93C5FD] transition-colors">How it Works</a>
             <a href="#blog" className="hover:text-[#93C5FD] transition-colors">Articles</a>
             <a href="#pricing" className="hover:text-[#93C5FD] transition-colors">Pricing</a>
-            <Link href="/verify-receipt" className="hover:text-[#93C5FD] transition-colors">Verify Receipt</Link>
           </nav>
           <div className="flex items-center gap-2">
-            <Link href="/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#93C5FD] transition-colors">
-              Login
+            <Link href="/admin/login" className="px-4 py-2 text-sm font-bold text-white hover:text-[#93C5FD] transition-colors">
+              Staff Login
             </Link>
-            <Link href="/login" className="px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-sm font-bold rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
-              Get Started
-            </Link>
+            <button onClick={openPaymentModal} className="px-6 py-2.5 bg-white hover:bg-gray-100 text-black text-sm font-bold rounded-full shadow-md transition-all hover:scale-105 active:scale-95">
+              Pay Dues
+            </button>
           </div>
         </header>
       </div>
@@ -121,9 +373,9 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-            <Link href="/login" className="px-8 py-4 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#001150] font-bold rounded-full shadow-xl shadow-[#0020B2]/10 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
-              Get Started
-            </Link>
+            <button onClick={openPaymentModal} className="px-8 py-4 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#001150] font-bold rounded-full shadow-xl shadow-[#0020B2]/10 transition-all hover:scale-105 active:scale-95 text-center min-w-[200px]">
+              Pay Dues Now
+            </button>
             <a href="#how-it-works" className="inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-full backdrop-blur-sm transition-all hover:scale-105 active:scale-95 min-w-[200px]">
               <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
@@ -198,10 +450,10 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-black text-gray-950 mb-3">Exclusive Clearance Verification</h3>
+                <h3 className="text-lg font-black text-gray-950 mb-3">Instant Clearance Generation</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  Generate secure clearance receipts and verify credentials via the public page.
-                  </p>
+                  Generate secure digital clearance certificates immediately once assigned dues are paid in full.
+                </p>
               </div>
             </div>
 
@@ -264,9 +516,9 @@ export default function Home() {
               Paying for dues is as easy as a tap. With DuesPay, you can effortlessly handle a wide range of transactions, from bill payments and online receipts to barcoded clearances in commerce.
             </p>
             <div className="pt-2">
-              <Link href="/login" className="inline-block px-8 py-3.5 bg-[#000B33] hover:bg-black text-[#93C5FD] font-bold rounded-full transition-colors">
-                Get Started
-              </Link>
+              <button onClick={openPaymentModal} className="inline-block px-8 py-3.5 bg-[#000B33] hover:bg-black text-[#93C5FD] font-bold rounded-full transition-colors">
+                Pay Dues Now
+              </button>
             </div>
           </div>
 
@@ -366,15 +618,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
             <h2 className="font-display text-3xl sm:text-5xl font-black text-white tracking-tight">How DuesPay Works</h2>
-            <p className="text-base text-white/60">Automated onboarding for both members and administration.</p>
+            <p className="text-base text-white/60">Simple, automated dues management from setup to clearance.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center bg-[#0020B2]/5 border border-white/5 p-8 rounded-[2rem] relative">
               <div className="w-12 h-12 rounded-full bg-[#0020B2] flex items-center justify-center text-white font-extrabold text-lg mx-auto mb-6 shadow-md shadow-[#0020B2]/25">1</div>
-              <h3 className="text-xl font-bold text-white mb-3">Register Members</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Import Members</h3>
               <p className="text-sm text-white/70 leading-relaxed">
-                Admins upload member spreadsheets or allow students to register directly using official index numbers.
+                Admins upload a member spreadsheet or manually add students. Only authorised staff can add or manage member records.
               </p>
             </div>
 
@@ -460,26 +712,26 @@ export default function Home() {
             {/* Blog Card 1 */}
             <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between">
               <div className="p-4 bg-gray-50 border-b border-gray-100 h-48 flex items-center justify-center relative overflow-hidden">
-                {/* Visual HTML mockup of laptop/code instead of placeholder image */}
-                <div className="w-40 h-28 bg-[#000B33] rounded-lg border border-white/10 shadow-lg p-2 space-y-1">
-                  <div className="flex gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                {/* Visual HTML mockup of receipt generation */}
+                <div className="w-32 h-36 bg-white rounded-lg border border-gray-200 shadow-md p-2.5 space-y-2">
+                  <div className="flex justify-between items-center text-[7px] text-gray-400 font-bold border-b pb-1">
+                    <span>Receipt No: DP-98741</span>
+                    <span className="text-[#0020B2]">PAID</span>
                   </div>
-                  <div className="text-[5px] text-white/50 font-mono space-y-0.5 mt-2">
-                    <p className="text-[#0020B2]">const checkReceipt = async (receiptNum) =&gt; &#123;</p>
-                    <p className="pl-2">const status = await api.get(`/verify/$&#123;receiptNum&#125;`);</p>
-                    <p className="pl-2">if (status.data.valid) return "CLEARED";</p>
-                    <p className="text-[#93C5FD]">&#125;</p>
+                  <div className="space-y-1 text-[6px] text-gray-500">
+                    <p>Student Name: <span className="text-gray-900 font-bold">D. Student</span></p>
+                    <p>Amount Paid: <span className="text-gray-900 font-bold">GHS 120.00</span></p>
+                  </div>
+                  <div className="h-10 bg-gray-50 rounded flex items-center justify-center border border-dashed text-[6px] text-[#0020B2] font-bold">
+                    Email Delivered Successfully
                   </div>
                 </div>
               </div>
               <div className="p-8 space-y-4">
-                <span className="text-[10px] font-bold text-[#0020B2] bg-[#0020B2]/10 px-3 py-1 rounded-full uppercase tracking-wider">Clearance</span>
-                <h3 className="text-lg font-black text-gray-950">How to verify and validate clearance receipts instantly</h3>
+                <span className="text-[10px] font-bold text-[#0020B2] bg-[#0020B2]/10 px-3 py-1 rounded-full uppercase tracking-wider">Automation</span>
+                <h3 className="text-lg font-black text-gray-950">Automatic receipt generation & email delivery</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">
-                  Learn how administrators can confirm transaction records using the public verification portal to avoid document fraud.
+                  How DuesPay automates the generation and delivery of digital receipts to students' registered emails immediately after payment.
                 </p>
               </div>
             </div>
@@ -792,9 +1044,7 @@ export default function Home() {
             <Link href="/login" className="px-8 py-4 bg-[#DBEAFE] hover:bg-[#BFDBFE] text-[#001150] font-bold rounded-xl shadow-xl shadow-[#0020B2]/10 transition-all hover:scale-105 active:scale-95">
               Create Organization Portal
             </Link>
-            <Link href="/verify-receipt" className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-bold rounded-xl backdrop-blur-sm transition-all hover:scale-105 active:scale-95">
-              Verify Clearance Receipt
-            </Link>
+
           </div>
         </div>
       </section>
@@ -842,6 +1092,325 @@ export default function Home() {
         </div>
       </footer>
 
+      {showPayModal && settings?.turnstile_enabled === 'true' && (
+        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />
+      )}
+
+      {/* Modal for Public Pay Dues (Popup Card) */}
+      {showPayModal && (
+        <div className="fixed inset-0 bg-[#000B33]/60 backdrop-blur-md flex items-center justify-center z-[150] p-4 overflow-y-auto animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+            {/* Header Banner */}
+            <div className="bg-primary text-white p-6 relative overflow-hidden flex justify-between items-start">
+              <div className="relative z-10 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                  <span className="w-6 h-6"><WalletIcon /></span>
+                </div>
+                <div>
+                  <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider">Public Checkout</p>
+                  <h3 className="text-lg font-black mt-0.5">Pay Departmental Dues</h3>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowPayModal(false)}
+                className="relative z-20 text-white/70 hover:text-white transition-colors font-black text-2xl leading-none"
+              >
+                &times;
+              </button>
+              <div className="absolute -right-12 -top-12 w-28 h-28 rounded-full bg-white/10" />
+              <div className="absolute right-12 -bottom-16 w-32 h-32 rounded-full bg-secondary/20" />
+            </div>
+
+            {/* STEP 1: Student Lookup */}
+            {payStep === 1 && (
+              <div className="p-6 space-y-6">
+                <form onSubmit={handleLookup} className="space-y-4">
+                  <div>
+                    <label className="label text-xs">Student ID or Card Number</label>
+                    <input
+                      className="input-field"
+                      placeholder="e.g. 20261002 or ID Card Number"
+                      value={studentIdOrCard}
+                      onChange={e => setStudentIdOrCard(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  {settings?.turnstile_enabled === 'true' && settings?.turnstile_site_key && (
+                    <div className="flex justify-center p-2 bg-gray-50/50 rounded-2xl border border-gray-100">
+                      <div 
+                        className="cf-turnstile" 
+                        data-sitekey={settings.turnstile_site_key} 
+                        data-callback="onTurnstileVerify"
+                      />
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={lookupLoading}
+                    className="btn-primary w-full py-3 text-xs font-bold uppercase tracking-wider"
+                  >
+                    {lookupLoading ? 'Locating student...' : 'Find My Account'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* STEP 4: Identity Verification Screen */}
+            {payStep === 4 && student && (
+              <div className="p-6 space-y-6">
+                <div className="bg-gray-50/70 rounded-2xl p-4 border border-gray-100/60 space-y-2.5">
+                  <h4 className="font-extrabold text-gray-900 text-xs uppercase tracking-wider">Account Located</h4>
+                  <div className="border-t border-gray-100 pt-2 space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Student Name:</span>
+                      <span className="text-gray-950 font-bold">{student.full_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Index Number:</span>
+                      <span className="text-gray-950 font-bold">{student.student_id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 font-medium">Registered Email:</span>
+                      <span className="text-gray-950 font-bold font-mono">{student.email}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {!otpSent ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-1.5 text-xs text-blue-800 leading-relaxed">
+                      <p className="font-bold">Identity Verification Required</p>
+                      <p>
+                        To protect your privacy, we require verification before displaying assigned dues or allowing payment.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="label text-xs">Choose Verification Method</label>
+                      <label className="flex items-center gap-3 p-3 rounded-2xl border border-primary bg-[#F0F4FF] cursor-pointer transition-all">
+                        <input
+                          type="radio"
+                          name="otp_method"
+                          checked={otpMethod === 'email'}
+                          onChange={() => setOtpMethod('email')}
+                          className="text-primary focus:ring-primary"
+                        />
+                        <div className="text-xs">
+                          <span className="font-bold text-gray-800 block">Email One-Time Password (OTP)</span>
+                          <span className="text-gray-400 font-semibold block mt-0.5">Send code to {student.email}</span>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setPayStep(1)}
+                        className="btn-outline w-full py-3 text-xs font-bold uppercase tracking-wider"
+                      >
+                        Back
+                      </button>
+                      <button
+                        onClick={handleSendOtp}
+                        disabled={sendingOtp}
+                        className="btn-primary w-full py-3 text-xs font-bold uppercase tracking-wider"
+                      >
+                        {sendingOtp ? 'Sending code...' : 'Send Code'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 space-y-1.5 text-xs text-emerald-800 leading-relaxed">
+                      <p className="font-bold">Verification Code Sent!</p>
+                      <p>
+                        We have sent a 6-digit verification code to <span className="font-bold font-mono">{student.email}</span>.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="label text-xs">Enter 6-Digit Code</label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        required
+                        placeholder="e.g. 123456"
+                        className="input-field text-center font-mono font-bold text-2xl tracking-[0.4em] py-3"
+                        value={otpCode}
+                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setOtpSent(false)}
+                        className="btn-outline w-full py-3 text-xs font-bold uppercase tracking-wider"
+                      >
+                        Resend / Back
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={verifyingOtp || otpCode.length !== 6}
+                        className="btn-primary w-full py-3 text-xs font-bold uppercase tracking-wider"
+                      >
+                        {verifyingOtp ? 'Verifying...' : 'Verify & Continue'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* STEP 2: Checkout Form */}
+            {payStep === 2 && student && (
+              <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                <div className="bg-gray-50/70 rounded-2xl p-4 border border-gray-100/60 space-y-2">
+                  <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-sm">{student.full_name}</h4>
+                      <p className="text-[10px] text-gray-400 font-semibold">Index: {student.student_id}</p>
+                    </div>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-md text-[9px] font-bold uppercase">
+                      {student.level}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-500">
+                    <div>Prog: <span className="text-gray-800">{student.programme}</span></div>
+                    <div className="text-right">Year: <span className="text-gray-800">{student.academic_year}</span></div>
+                  </div>
+                </div>
+
+                <form onSubmit={handlePay} className="space-y-4">
+                  <div>
+                    <label className="label text-xs">Select Due to Pay</label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                      {dues.map(due => (
+                        <label
+                          key={due.due_id}
+                          className={`flex items-start justify-between p-3 rounded-xl border cursor-pointer transition-all ${
+                            selectedDueId === due.due_id
+                              ? 'border-primary bg-[#F0F4FF] shadow-sm'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <input
+                              type="radio"
+                              name="selected_due"
+                              className="mt-0.5 text-primary focus:ring-primary"
+                              checked={selectedDueId === due.due_id}
+                              onChange={() => handleDueSelect(due.due_id)}
+                            />
+                            <div>
+                              <span className="font-bold text-xs text-gray-800 block leading-tight">{due.due_name}</span>
+                              {due.deadline && (
+                                <span className={`text-[9px] font-semibold mt-0.5 inline-block ${due.is_overdue ? 'text-red-500' : 'text-gray-400'}`}>
+                                  {due.is_overdue ? 'Overdue' : 'Deadline'}: {new Date(due.deadline).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="font-extrabold text-xs text-gray-900 block">GHS {due.balance.toFixed(2)}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label text-xs">Amount to Pay (GHS)</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm font-bold text-gray-400">GHS</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="10.00"
+                        className="input-field pl-12 font-mono font-bold text-base py-2.5"
+                        value={payAmount}
+                        onChange={e => setPayAmount(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="label text-xs">Payer Email</label>
+                      <input
+                        type="email"
+                        className="input-field py-2 text-xs"
+                        placeholder="payer@example.com"
+                        value={payerEmail}
+                        onChange={e => setPayerEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="label text-xs">Payer Phone (Optional)</label>
+                      <input
+                        type="tel"
+                        className="input-field py-2 text-xs"
+                        placeholder="054XXXXXXX"
+                        value={payerPhone}
+                        onChange={e => setPayerPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {parseFloat(payAmount) >= 10 && (
+                    <div className="bg-gray-50/80 rounded-2xl p-3 border border-dashed border-gray-200 text-[10px] space-y-1.5">
+                      <div className="flex justify-between font-bold text-gray-500">
+                        <span>Payment Subtotal</span>
+                        <span className="font-mono">GHS {parseFloat(payAmount).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-gray-500">
+                        <span>Processing Fee</span>
+                        <span className="font-mono">GHS {fee.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-extrabold text-gray-900 border-t border-gray-200/60 pt-1.5 text-xs">
+                        <span>Total Charge</span>
+                        <span className="font-mono">GHS {total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setPayStep(4)}
+                      className="btn-outline w-full py-3 text-xs font-bold uppercase tracking-wider"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={paymentLoading || parseFloat(payAmount) < 10}
+                      className="btn-primary w-full py-3 text-xs font-bold uppercase tracking-wider"
+                    >
+                      {paymentLoading ? 'Preparing...' : `Pay GHS ${total.toFixed(2)}`}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* STEP 3: Redirecting */}
+            {payStep === 3 && (
+              <div className="p-10 text-center space-y-5">
+                <div className="w-12 h-12 mx-auto rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                <div>
+                  <h4 className="text-base font-extrabold text-primary uppercase tracking-wide">Redirecting to Paystack</h4>
+                  <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">Please complete your payment securely on the Paystack screen. Do not close this popup.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

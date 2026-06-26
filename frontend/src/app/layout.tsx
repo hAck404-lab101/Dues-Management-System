@@ -73,18 +73,38 @@ const fallbackMetadata = (): Metadata => {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
+  console.log('[METADATA] Starting generateMetadata...');
   try {
     const apiBase = getApiBase()
-    if (!apiBase) return fallbackMetadata()
+    console.log('[METADATA] apiBase derived as:', apiBase);
+    if (!apiBase) {
+      console.log('[METADATA] No apiBase, returning fallback');
+      return fallbackMetadata()
+    }
 
-    const response = await fetch(`${apiBase}/api/settings/public`, {
+    const fetchUrl = `${apiBase}/api/settings/public`;
+    console.log('[METADATA] Fetching public settings from:', fetchUrl);
+    
+    // Set a controller to abort if it takes too long (e.g. 3 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch(fetchUrl, {
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
-    })
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
 
-    if (!response.ok) return fallbackMetadata()
+    console.log('[METADATA] Fetch response status:', response.status);
+    if (!response.ok) {
+      console.log('[METADATA] Response not OK, returning fallback');
+      return fallbackMetadata()
+    }
 
     const result = await response.json()
+    console.log('[METADATA] Parse JSON success, success value:', result?.success);
     const settings = result?.data || {}
     const appTitle = cleanBrandText(settings.app_name, DEFAULT_TITLE)
     const appDescription = cleanBrandText(settings.app_description, DEFAULT_DESCRIPTION)
@@ -113,7 +133,8 @@ export async function generateMetadata(): Promise<Metadata> {
         images: imageUrl ? [imageUrl] : undefined
       }
     }
-  } catch {
+  } catch (err: any) {
+    console.error('[METADATA] Error in generateMetadata:', err.message || err);
     return fallbackMetadata()
   }
 }
