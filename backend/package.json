@@ -1,5 +1,5 @@
 {
-  "name": "htu-dues-backend",
+  "name": "dues-management-backend",
   "version": "1.0.0",
   "description": "Backend API for Dues Management System",
   "main": "server.js",
@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "dev:backend": "nodemon server.js",
     "migrate": "node src/config/migrate.js",
-    "seed": "node src/config/seed.js"
+    "seed": "node src/config/seed.js",
+    "seed:staff": "node src/config/seed.js"
   },
   "dependencies": {
     "axios": "^1.6.2",
