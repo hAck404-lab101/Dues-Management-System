@@ -13,10 +13,18 @@ const DEFAULT_APP_DESCRIPTION = process.env.DEFAULT_APP_DESCRIPTION || 'A secure
 
 const DEFAULT_SETTINGS = [
     ['homepage_variant', 'portal', 'sys_maintenance', 'Homepage style shown to students. Options: portal or classic'],
+    ['maintenance_mode', 'false', 'sys_maintenance', 'System maintenance mode: true or false'],
     ['app_name', DEFAULT_APP_NAME, 'sys_general', 'Application name'],
     ['app_description', DEFAULT_APP_DESCRIPTION, 'sys_general', 'Application link preview description'],
-    ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DUES', 'comm_sms', 'SMS sender ID'],
-    ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, 'comm_email', 'Email sender display name']
+    ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DMS', 'comm_sms', 'SMS sender ID'],
+    ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, 'comm_email', 'Email sender display name'],
+    ['admin_approval_required', 'false', 'portal', 'Require admin approval for new students'],
+    ['available_courses', '', 'portal', 'Comma-separated list of courses'],
+    ['available_programmes', 'Dip. Graphic Design, Bsc. Graphic Design, Dip. Advertisement, Bsc. Advertisement, Dip. Multimedia, Bsc. Multimedia, Dip. Animation, Bsc. Animation', 'portal', 'Comma-separated list of available programmes'],
+    ['student_registration_open', 'true', 'portal', 'Allow students to register themselves'],
+    ['available_academic_years', '2023/2024, 2024/2025, 2025/2026', 'portal', 'Comma-separated list of available academic years'],
+    ['available_levels', '100, 200, 300, 400', 'portal', 'Comma-separated list of levels'],
+    ['registration_status', 'open', 'portal', 'Registration status (open/closed)']
 ];
 
 const cleanPublicBrandText = (value, fallback = '') => {

@@ -148,16 +148,37 @@ exports.verifyPayment = async (req, res) => {
   try {
     const { reference } = req.body;
     if (!reference) return res.status(400).json({ success: false, message: 'Reference is required' });
-    const verifyResult = await paystackService.verifyTransaction(reference);
-    if (!verifyResult.success) return res.status(400).json({ success: false, message: verifyResult.error || 'Payment verification failed' });
-    const transaction = verifyResult.data;
+
     const paymentResult = await pool.query('SELECT * FROM payments WHERE paystack_reference = ?', [reference]);
     if (paymentResult.rows.length === 0) return res.status(404).json({ success: false, message: 'Payment record not found' });
     const payment = paymentResult.rows[0];
+
+    if (req.user && req.user.role === 'student') {
+      const studentResult = await pool.query('SELECT id FROM students WHERE user_id = ?', [req.user.id]);
+      if (studentResult.rows.length === 0 || studentResult.rows[0].id !== payment.student_id) {
+        return res.status(403).json({ success: false, message: 'Access denied: payment does not belong to this account' });
+      }
+    }
+
+    if (payment.status === 'completed' || payment.status === 'approved') {
+      const existingReceipt = await pool.query('SELECT * FROM receipts WHERE payment_id = ? LIMIT 1', [payment.id]);
+      return res.json({
+        success: true,
+        message: 'Payment has already been confirmed',
+        payment,
+        receipt: existingReceipt.rows[0] || null
+      });
+    }
+
+    const verifyResult = await paystackService.verifyTransaction(reference);
+    if (!verifyResult.success) return res.status(400).json({ success: false, message: verifyResult.error || 'Payment verification failed' });
+    const transaction = verifyResult.data;
+
     if (transaction.status === 'success' && payment.status === 'pending') {
       const receipt = await completePaymentAndNotify({ payment, transactionId: transaction.id.toString(), status: 'completed' });
       return res.json({ success: true, message: receipt ? 'Payment verified, receipt generated, and SMS queued/sent' : 'Payment verified. Receipt/SMS can be resent manually.', payment: { ...payment, status: 'completed' }, receipt });
     }
+
     res.json({ success: true, message: 'Payment verification completed', payment });
   } catch (error) {
     console.error('Verify payment error:', error);

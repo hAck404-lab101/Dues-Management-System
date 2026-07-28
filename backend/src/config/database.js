@@ -46,7 +46,7 @@ if (databaseUrl) {
     'MYSQLPORT'
   ];
 
-  const missingVars = requiredVars.filter((key) => !process.env[key]);
+  const missingVars = requiredVars.filter((key) => process.env[key] === undefined);
 
   if (missingVars.length > 0) {
     throw new Error(

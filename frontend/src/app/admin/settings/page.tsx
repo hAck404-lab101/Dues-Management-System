@@ -68,7 +68,40 @@ const formatSettingLabel = (key: string) => {
     if (key === 'service_charge_enabled') return 'Enable Service Charge';
     if (key === 'homepage_variant') return 'Homepage Style';
     if (key === 'maintenance_mode') return 'Maintenance Mode';
+    if (key === 'admin_approval_required') return 'ADMIN APPROVAL REQUIRED';
+    if (key === 'available_courses') return 'AVAILABLE COURSES';
+    if (key === 'available_programmes') return 'AVAILABLE PROGRAMMES';
+    if (key === 'student_registration_open') return 'SELF REGISTRATION ENABLED';
+    if (key === 'available_academic_years') return 'AVAILABLE ACADEMIC YEARS';
+    if (key === 'available_levels') return 'AVAILABLE LEVELS';
+    if (key === 'registration_status') return 'REGISTRATION STATUS';
     return key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
+const getDefaultValue = (key: string) => {
+    switch (key) {
+        case 'admin_approval_required': return 'false';
+        case 'available_courses': return '';
+        case 'available_programmes': return 'Dip. Graphic Design, Bsc. Graphic Design, Dip. Advertisement, Bsc. Advertisement, Dip. Multimedia, Bsc. Multimedia, Dip. Animation, Bsc. Animation';
+        case 'student_registration_open': return 'true';
+        case 'available_academic_years': return '2023/2024, 2024/2025, 2025/2026';
+        case 'available_levels': return '100, 200, 300, 400';
+        case 'registration_status': return 'open';
+        default: return '';
+    }
+};
+
+const getDefaultDesc = (key: string) => {
+    switch (key) {
+        case 'admin_approval_required': return 'Require admin approval for new students';
+        case 'available_courses': return 'Comma-separated list of courses';
+        case 'available_programmes': return 'Comma-separated list of available programmes';
+        case 'student_registration_open': return 'Allow students to register themselves';
+        case 'available_academic_years': return 'Comma-separated list of available academic years';
+        case 'available_levels': return 'Comma-separated list of levels';
+        case 'registration_status': return 'Registration status (open/closed)';
+        default: return '';
+    }
 };
 
 export default function AdminSettingsPage() {
@@ -171,7 +204,9 @@ export default function AdminSettingsPage() {
     };
 
     const renderSettingInput = (key: string) => {
-        const val = settings[key]?.value || '';
+        const val = (settings[key]?.value !== undefined && settings[key]?.value !== null)
+            ? settings[key].value
+            : getDefaultValue(key);
 
         if (key === 'service_charge_type') {
             const options = [
@@ -245,49 +280,51 @@ export default function AdminSettingsPage() {
             );
         }
 
-        if (key.endsWith('_enabled') || key.endsWith('_status') || key.endsWith('_required') || key === 'paystack_auto_verify') {
+        if (key.endsWith('_enabled') || key.endsWith('_status') || key.endsWith('_required') || key === 'paystack_auto_verify' || key === 'student_registration_open') {
             const isToggle = key !== 'registration_status';
-            const isOn = isToggle ? val === 'true' : val === 'open';
+            const isOn = isToggle ? (val === 'true' || val === '1') : val === 'open';
             return (
                 <div className="flex items-center gap-4">
                     <button
                         type="button"
                         onClick={() => handleChange(key, isOn ? (isToggle ? 'false' : 'closed') : (isToggle ? 'true' : 'open'))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isOn ? 'bg-primary' : 'bg-gray-200'}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${isOn ? 'bg-primary' : 'bg-gray-200'}`}
                     >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isOn ? 'translate-x-6' : 'translate-x-1'}`} />
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${isOn ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
-                    <span className={`text-xs font-bold ${isOn ? 'text-primary' : 'text-gray-400'}`}>{isOn ? (isToggle ? 'ENABLED' : 'OPEN') : (isToggle ? 'DISABLED' : 'CLOSED')}</span>
+                    <span className={`text-xs font-black tracking-wider ${isOn ? 'text-primary' : 'text-gray-400'}`}>
+                        {isOn ? (isToggle ? 'ENABLED' : 'OPEN') : (isToggle ? 'DISABLED' : 'CLOSED')}
+                    </span>
                 </div>
             );
         }
 
         if (key.includes('available_')) {
+            const itemsList = val ? val.split(',').map(x => x.trim()).filter(Boolean) : [];
             return (
                 <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2 p-2 bg-white border rounded-lg min-h-[40px]">
-                        {val.split(',').filter(Boolean).map((item: string, i: number) => (
-                            <span key={i} className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 text-primary text-[10px] font-bold rounded-lg border">
-                                {item.trim()}
+                    <div className="flex flex-wrap gap-2 p-2 bg-white border border-gray-200 rounded-lg min-h-[44px] items-center">
+                        {itemsList.map((item: string, i: number) => (
+                            <span key={i} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-800 text-xs font-bold rounded-lg border border-slate-200">
+                                {item}
                                 <button type="button" onClick={() => {
-                                    const items = val.split(',').filter(Boolean).map(x => x.trim()).filter((_, idx) => idx !== i);
-                                    handleChange(key, items.join(','));
-                                }} className="text-red-500 hover:text-red-700 font-black">&times;</button>
+                                    const updated = itemsList.filter((_, idx) => idx !== i);
+                                    handleChange(key, updated.join(', '));
+                                }} className="text-red-500 hover:text-red-700 font-extrabold text-xs ml-1">&times;</button>
                             </span>
                         ))}
                     </div>
                     <input
                         type="text"
-                        className="input-field py-1.5 text-xs"
+                        className="input-field py-2 text-xs"
                         placeholder="Type and press Enter to add..."
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 const value = e.currentTarget.value.trim();
                                 if (value) {
-                                    const current = val.split(',').filter(Boolean).map(x => x.trim());
-                                    if (!current.includes(value)) {
-                                        handleChange(key, [...current, value].join(','));
+                                    if (!itemsList.includes(value)) {
+                                        handleChange(key, [...itemsList, value].join(', '));
                                         e.currentTarget.value = '';
                                     }
                                 }
@@ -321,6 +358,47 @@ export default function AdminSettingsPage() {
     };
 
     const getGroupedContent = () => {
+        if (activeTab === 'portal') {
+            const col1 = [
+                'admin_approval_required',
+                'available_courses',
+                'available_programmes',
+                'student_registration_open'
+            ];
+            const col2 = [
+                'available_academic_years',
+                'available_levels',
+                'registration_status'
+            ];
+
+            const renderPortalItem = (key: string) => {
+                const item = settings[key] || {
+                    value: getDefaultValue(key),
+                    category: 'portal',
+                    description: getDefaultDesc(key)
+                };
+                return (
+                    <div key={key} className="flex flex-col mb-6">
+                        <label className="text-xs font-extrabold text-primary uppercase tracking-wider mb-1">
+                            {formatSettingLabel(key)}
+                        </label>
+                        <p className="text-xs text-gray-400 mb-3 leading-snug">{item.description || getDefaultDesc(key)}</p>
+                        {renderSettingInput(key)}
+                    </div>
+                );
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2">
+                        <div>{col1.map(renderPortalItem)}</div>
+                        <div>{col2.map(renderPortalItem)}</div>
+                    </div>
+                    <SaveRow submitting={submitting} onSave={handleUpdate} text="Portal settings saved on this tab apply immediately." label="Save Settings" />
+                </div>
+            );
+        }
+
         if (activeTab === 'sys_maintenance') {
             const maintenanceKeys = ['homepage_variant', 'maintenance_mode'].filter(k => settings[k]);
             return (

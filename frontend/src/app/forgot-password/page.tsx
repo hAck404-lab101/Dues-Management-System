@@ -2,85 +2,110 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import { useBranding } from '@/contexts/BrandingContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { useBranding } from '@/contexts/BrandingContext';
-import { useRouter } from 'next/navigation';
+import { LockClosedIcon, CheckCircleIcon } from '@/components/Icons';
 
 export default function ForgotPasswordPage() {
-  const [identity, setIdentity] = useState('');
-  const [otp, setOtp] = useState('');
+  const { appName } = useBranding();
+  const [identifier, setIdentifier] = useState('');
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'identity' | 'otp'>('identity');
-  const [maskedContact, setMaskedContact] = useState('');
-  const [verifiedIdentity, setVerifiedIdentity] = useState('');
-  const { appName, appLogo } = useBranding();
-  const router = useRouter();
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleRequestOTP = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanIdentity = identity.trim();
-    if (!cleanIdentity) return toast.error('Enter your index number or registered phone number');
+    if (!identifier.trim()) {
+      toast.error('Please enter your email or index number');
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await api.post('/auth/forgot-password', { identity: cleanIdentity });
-      if (res.data.success) {
-        setMaskedContact(res.data.contact || 'your registered phone');
-        setVerifiedIdentity(res.data.identity || cleanIdentity);
-        setStep('otp');
-        toast.success('Verification code sent');
+      const res = await api.post('/auth/forgot-password', { identifier: identifier.trim() });
+      if (res.data?.success) {
+        setSubmitted(true);
+        toast.success(res.data?.message || 'Password reset instructions sent');
+      } else {
+        toast.error(res.data?.message || 'Could not process request');
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to request verification code');
-    } finally { setLoading(false); }
-  };
-
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await api.post('/auth/verify-otp', { identity: verifiedIdentity || identity.trim(), otp });
-      if (res.data.success) {
-        toast.success('Code verified');
-        router.push(`/reset-password?token=${res.data.resetToken}`);
-      }
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Invalid verification code');
-    } finally { setLoading(false); }
+      toast.error(err.response?.data?.message || 'Failed to send reset link. Please contact system administrator.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-neutral flex items-center justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-6">
-        <div className="flex items-center justify-between text-sm">
-          <Link href="/" className="text-primary font-semibold hover:underline">← Home</Link>
-          <Link href="/login" className="text-primary font-semibold hover:underline">Login</Link>
-        </div>
+    <div className="min-h-screen bg-neutral flex flex-col justify-between">
+      <Navbar />
+      <main className="container mx-auto px-4 py-12 flex-1 flex items-center justify-center">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 p-8 space-y-6">
+          <div className="text-center">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
+              <span className="w-7 h-7"><LockClosedIcon /></span>
+            </div>
+            <h1 className="text-2xl font-extrabold text-primary">Forgot Password?</h1>
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+              Enter your registered Index Number or Email address and we will send password reset instructions to your phone or email.
+            </p>
+          </div>
 
-        <div className="text-center">
-          {appLogo ? <img src={appLogo.startsWith('http') ? appLogo : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}${appLogo}`} alt="Logo" className="mx-auto h-20 w-auto mb-4 drop-shadow-lg" /> : <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl mb-4"><svg className="w-10 h-10 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>}
-          <h2 className="text-3xl font-extrabold text-primary">{appName}</h2>
-          <p className="mt-2 text-sm text-gray-600">Student Password Recovery</p>
-        </div>
-
-        <div className="card space-y-6">
-          {step === 'identity' ? (
-            <form onSubmit={handleRequestOTP} className="space-y-5">
-              <div><h1 className="text-xl font-bold text-primary">Reset your password</h1><p className="text-sm text-gray-600 mt-1">Enter either your index number or the phone number registered on your student account.</p></div>
-              <div><label className="label">Index Number or Phone Number</label><input type="text" className="input-field" placeholder="Example: STD/ICT/26/001 or 0244123456" value={identity} onChange={e => setIdentity(e.target.value)} /><p className="text-xs text-gray-500 mt-2">The reset code will be sent to the phone number already saved on your student profile.</p></div>
-              <button type="submit" disabled={loading} className="btn-primary w-full">{loading ? 'Sending code...' : 'Send Verification Code'}</button>
-            </form>
+          {submitted ? (
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-6 text-center space-y-4">
+              <div className="w-12 h-12 text-green-600 mx-auto">
+                <CheckCircleIcon />
+              </div>
+              <h2 className="font-bold text-green-900 text-lg">Request Received</h2>
+              <p className="text-sm text-green-800 leading-relaxed">
+                If an account matches <span className="font-semibold">{identifier}</span>, reset instructions have been sent via SMS / Email.
+              </p>
+              <p className="text-xs text-gray-500">
+                You can also contact your department financial administrator or system manager directly for an immediate credential reset.
+              </p>
+              <div className="pt-2">
+                <Link href="/login" className="btn-primary w-full inline-block text-center">
+                  Return to Login
+                </Link>
+              </div>
+            </div>
           ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-5">
-              <div><h1 className="text-xl font-bold text-primary">Enter verification code</h1><p className="text-sm text-gray-600 mt-1">We sent a 6-digit code to <span className="font-semibold text-primary">{maskedContact}</span>.</p></div>
-              <div><label className="label">Verification Code</label><input type="text" required maxLength={6} className="input-field text-center text-2xl tracking-[0.4em] font-bold" placeholder="------" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} /></div>
-              <button type="submit" disabled={loading || otp.length < 6} className="btn-primary w-full disabled:opacity-60">{loading ? 'Verifying...' : 'Verify Code'}</button>
-              <button type="button" onClick={() => { setStep('identity'); setOtp(''); }} className="bg-gray-100 text-primary w-full rounded-lg py-3 font-bold hover:bg-gray-200 transition-colors">Use different details</button>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="label">Index Number or Email Address *</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g. 10023456 or student@example.com"
+                  value={identifier}
+                  onChange={e => setIdentifier(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary w-full py-3 font-bold"
+              >
+                {loading ? 'Sending...' : 'Send Reset Instructions'}
+              </button>
+
+              <div className="text-center text-sm pt-2">
+                <Link href="/login" className="text-primary hover:underline font-semibold">
+                  ← Back to Login
+                </Link>
+              </div>
             </form>
           )}
-          <div className="pt-2 border-t text-center text-sm"><Link href="/login" className="text-primary hover:underline font-medium">Return to login</Link></div>
         </div>
-      </div>
+      </main>
+
+      <footer className="py-6 text-center text-xs text-gray-400">
+        &copy; {new Date().getFullYear()} {appName}. All rights reserved.
+      </footer>
     </div>
   );
 }

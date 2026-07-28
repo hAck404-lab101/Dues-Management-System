@@ -165,6 +165,21 @@ CREATE TABLE IF NOT EXISTS email_notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- SMS logs table
+CREATE TABLE IF NOT EXISTS sms_logs (
+    id CHAR(36) PRIMARY KEY,
+    recipient_phone VARCHAR(30) NOT NULL,
+    message TEXT NOT NULL,
+    message_type VARCHAR(80) DEFAULT 'general',
+    provider VARCHAR(80),
+    sender_id VARCHAR(80),
+    status ENUM('sent', 'failed') NOT NULL,
+    provider_response TEXT,
+    related_type VARCHAR(80),
+    related_id CHAR(36),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Backward-compatible schema upgrades for existing databases
 ALTER TABLE dues ADD COLUMN late_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER deadline;
 ALTER TABLE payments ADD COLUMN service_fee DECIMAL(10, 2) DEFAULT 0.00 AFTER amount;
@@ -174,6 +189,8 @@ ALTER TABLE due_assignments ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIME
 -- Default system settings
 INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'payment_service_fee', '0', 'pay_charges', 'Extra service fee added to online payments'),
+(UUID(), 'service_charge_enabled', 'true', 'pay_charges', 'Enable service charges on payments'),
+(UUID(), 'service_charge_type', 'fixed', 'pay_charges', 'Service charge type: fixed or percentage'),
 (UUID(), 'paystack_public_key', '', 'pay_paystack', 'Paystack public key for frontend checkout'),
 (UUID(), 'paystack_secret_key', '', 'pay_paystack', 'Encrypted Paystack secret key'),
 (UUID(), 'paystack_webhook_secret', '', 'pay_paystack', 'Encrypted Paystack webhook secret'),
@@ -182,7 +199,12 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'manual_payment_account_name', '', 'pay_manual', 'Account name for manual payments'),
 (UUID(), 'manual_payment_account_number', '', 'pay_manual', 'Account number or MoMo number for manual payments'),
 (UUID(), 'student_registration_open', 'true', 'portal', 'Allow students to register from the portal'),
-(UUID(), 'active_academic_year', '', 'portal', 'Current academic year'),
+(UUID(), 'registration_status', 'open', 'portal', 'Registration status: open or closed'),
+(UUID(), 'available_programmes', 'Computer Science, Information Technology, Software Engineering', 'portal', 'Comma-separated available programmes'),
+(UUID(), 'available_academic_years', '2023/2024, 2024/2025, 2025/2026', 'portal', 'Comma-separated available academic years'),
+(UUID(), 'maintenance_mode', 'false', 'sys_maintenance', 'System maintenance mode: true or false'),
+(UUID(), 'homepage_variant', 'portal', 'sys_maintenance', 'Homepage variant: portal or classic'),
+(UUID(), 'active_academic_year', '2024/2025', 'portal', 'Current academic year'),
 (UUID(), 'sms_provider', 'gonlinesites', 'comm_sms', 'SMS provider name'),
 (UUID(), 'sms_api_url', 'https://sms.gonlinesites.com/app/smsapi/index.php', 'comm_sms', 'SMS provider API URL'),
 (UUID(), 'sms_api_key', '', 'comm_sms', 'Encrypted SMS provider API key'),
