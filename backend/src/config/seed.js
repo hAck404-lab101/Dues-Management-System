@@ -2,6 +2,53 @@ require('dotenv').config();
 const { pool } = require('./database');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
+
+const createTemporaryPassword = () => crypto.randomBytes(12).toString('base64url');
+
+const STAFF_ACCOUNTS = [
+  {
+    label: 'System Admin',
+    role: 'admin',
+    email: process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com',
+    password: process.env.DEFAULT_ADMIN_PASSWORD || process.env.DEFAULT_STAFF_PASSWORD
+  },
+  {
+    label: 'President',
+    role: 'president',
+    email: process.env.DEFAULT_PRESIDENT_EMAIL || 'president@example.com',
+    password: process.env.DEFAULT_PRESIDENT_PASSWORD || process.env.DEFAULT_STAFF_PASSWORD
+  },
+  {
+    label: 'Treasurer',
+    role: 'treasurer',
+    email: process.env.DEFAULT_TREASURER_EMAIL || 'treasurer@example.com',
+    password: process.env.DEFAULT_TREASURER_PASSWORD || process.env.DEFAULT_STAFF_PASSWORD
+  },
+  {
+    label: 'Financial Secretary',
+    role: 'financial_secretary',
+    email: process.env.DEFAULT_FINANCIAL_SECRETARY_EMAIL || 'fsecretary@example.com',
+    password: process.env.DEFAULT_FINANCIAL_SECRETARY_PASSWORD || process.env.DEFAULT_STAFF_PASSWORD
+  }
+];
+
+async function upsertStaffAccount(connection, account) {
+  const password = account.password || createTemporaryPassword();
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await connection.query(
+    `INSERT INTO users (id, email, password_hash, role, is_active)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       password_hash = VALUES(password_hash),
+       role = VALUES(role),
+       is_active = VALUES(is_active)`,
+    [uuidv4(), account.email, hashedPassword, account.role, true]
+  );
+
+  return password;
+}
 
 const permissionsList = [
   { key: 'payments.approve', desc: 'Approve manual payments' },
@@ -70,28 +117,13 @@ async function seed() {
   let connection;
   try {
     connection = await pool.getConnection();
-    const staffPassword = await bcrypt.hash('Admin123!', 10);
-    
-    console.log('Clearing old database tables for fresh seed...');
-    await connection.query('DELETE FROM receipts');
-    await connection.query('DELETE FROM payments');
-    await connection.query('DELETE FROM due_assignments');
-    await connection.query('DELETE FROM due_price_history');
-    await connection.query('DELETE FROM dues');
-    await connection.query('DELETE FROM students');
-    await connection.query('DELETE FROM announcements');
-    await connection.query('DELETE FROM refund_requests');
-    await connection.query('DELETE FROM role_permissions');
-    await connection.query('DELETE FROM permissions');
-    await connection.query('DELETE FROM users');
-    
-    // 1. Seed Permissions
-    console.log('Seeding permissions list...');
-    for (const perm of permissionsList) {
-      await connection.query(
-        'INSERT INTO permissions (id, `key`, description) VALUES (?, ?, ?)',
-        [uuidv4(), perm.key, perm.desc]
-      );
+
+    console.log('Repairing staff accounts...');
+    for (const account of STAFF_ACCOUNTS) {
+      const password = await upsertStaffAccount(connection, account);
+      console.log(`${account.label} (${account.role})`);
+      console.log(`Email: ${account.email}`);
+      console.log(`Password: ${password}`);
     }
     
     // 2. Seed Role Permissions
@@ -154,101 +186,7 @@ async function seed() {
     const levels = [100, 200, 300, 400];
     
 
-    
-    for (let i = 1; i <= 5; i++) {
-      const studentId = uuidv4();
-      const indexNum = `0409${suffix}${i}`;
-      const email = `student${i}_${suffix}@example.com`;
-      const level = levels[i % levels.length];
-      const programme = programmes[i % programmes.length].name;
-      
-      await connection.query(
-        `INSERT INTO students (id, student_id, id_card_number, full_name, email, roster_email, level, programme, academic_year, phone_number, roster_phone, is_active) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [studentId, indexNum, indexNum, `Dummy Student ${i}`, email, email, level, programme, '2024/2025', `024000${suffix.slice(-4)}`, `024000${suffix.slice(-4)}`, true]
-      );
-      
-      studentRecords.push({ id: studentId, name: `Dummy Student ${i}`, level, programme });
-    }
-    
-    // 7. Seed Dues & Price History
-    console.log('Seeding dues and pricing records...');
-    await connection.query('DELETE FROM due_price_history');
-    await connection.query('DELETE FROM dues');
-    
-    const duesList = [
-      { id: uuidv4(), name: `Departmental Dues (${suffix})`, amount: 150.00, year: '2024/2025' },
-      { id: uuidv4(), name: `SRC Dues (${suffix})`, amount: 50.00, year: '2024/2025' },
-      { id: uuidv4(), name: `Association Dues (${suffix})`, amount: 80.00, year: '2024/2025' }
-    ];
-    
-    for (const due of duesList) {
-      // Insert baseline due
-      await connection.query(
-        `INSERT INTO dues (id, name, amount, academic_year, deadline, description, is_active, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [due.id, due.name, due.amount, due.year, new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'Sample dues generated by seed script', true, adminUserId]
-      );
-      
-      // Insert initial price history
-      await connection.query(
-        `INSERT INTO due_price_history (id, due_id, amount, effective_from, changed_by, reason) VALUES (?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`,
-        [uuidv4(), due.id, due.amount, adminUserId, 'Initial price seeding']
-      );
-    }
-    
-    // 8. Assign Dues to Students
-    console.log('Seeding due assignments...');
-    const assignments = [];
-    for (const student of studentRecords) {
-      for (const due of duesList) {
-        const assignmentId = uuidv4();
-        
-        // Fetch active history ID
-        const [historyRows] = await connection.query('SELECT id FROM due_price_history WHERE due_id = ? LIMIT 1', [due.id]);
-        const historyId = historyRows[0]?.id || null;
-        
-        await connection.query(
-          `INSERT INTO due_assignments (id, due_id, locked_amount, price_history_id, student_id, level, programme, amount, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [assignmentId, due.id, due.amount, historyId, student.id, student.level, student.programme, due.amount, 'unpaid']
-        );
-        assignments.push({ id: assignmentId, due_id: due.id, student_id: student.id, amount: due.amount });
-      }
-    }
-    
-    // 9. Seed Payments & Receipts (using payments structure)
-    console.log('Seeding mock payment records...');
-    
-    // Student 1: Paid Departmental Dues fully (online via Paystack)
-    const payment1Id = uuidv4();
-    await connection.query(
-      `INSERT INTO payments (id, student_id, due_id, amount, service_fee, payment_method, payment_type, status, paystack_reference, approval_source, payer_email, payer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [payment1Id, studentRecords[0].id, duesList[0].id, duesList[0].amount, 0, 'paystack', 'online', 'completed', `REF_SEED_${suffix}_1`, 'paystack_webhook', 'payer@example.com', '0240000001']
-    );
-    await connection.query(
-      `UPDATE due_assignments SET status = 'paid' WHERE student_id = ? AND due_id = ?`,
-      [studentRecords[0].id, duesList[0].id]
-    );
-    await connection.query(
-      `INSERT INTO receipts (id, receipt_number, student_id, due_id, payment_id, amount_paid, balance, total_amount, issued_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [uuidv4(), `REC-${suffix}-1`, studentRecords[0].id, duesList[0].id, payment1Id, duesList[0].amount, 0, duesList[0].amount, adminUserId]
-    );
-    
-    // Student 2: Pending manual payment for SRC Dues
-    const payment2Id = uuidv4();
-    await connection.query(
-      `INSERT INTO payments (id, student_id, due_id, amount, service_fee, payment_method, payment_type, status, notes, payer_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [payment2Id, studentRecords[1].id, duesList[1].id, duesList[1].amount, 0, 'mtn_momo', 'manual', 'pending', 'Paid via MoMo, waiting approval', 'payer2@example.com']
-    );
-    
-    // Student 3: Rejected manual payment for Association Dues
-    const payment3Id = uuidv4();
-    await connection.query(
-      `INSERT INTO payments (id, student_id, due_id, amount, service_fee, payment_method, payment_type, status, notes, rejected_reason, approved_by, approval_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [payment3Id, studentRecords[2].id, duesList[2].id, duesList[2].amount, 0, 'bank_transfer', 'manual', 'rejected', 'Bank transfer', 'Proof image was blurry and unreadable', adminUserId, 'manual_admin']
-    );
-    
-    console.log('Database seeding completed successfully!');
-    console.log(`Staff Credentials: email: admin|treasurer|fsecretary|president@example.com, password: Admin123!`);
+    console.log('Staff credentials repaired successfully');
     process.exit(0);
   } catch (error) {
     console.error('Seeding error:', error);
