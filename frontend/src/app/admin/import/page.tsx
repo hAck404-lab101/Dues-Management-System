@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -113,7 +113,7 @@ export default function BulkImportPage() {
     };
 
     return (
-        <Layout title="Bulk Import Students">
+        <AdminLayout title="Bulk Import Students">
             <div className="max-w-5xl mx-auto space-y-6">
 
                 <div className="card p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -246,11 +246,11 @@ export default function BulkImportPage() {
                 )}
 
                 {result && (
-                    <div className={`card p-6 border-l-4 ${result.errors?.length > 0 ? 'border-yellow-400 bg-yellow-50' : 'border-green-500 bg-green-50'}`}>
+                    <div className={`card p-6 border-l-4 ${result.errors?.length > 0 ? 'border-yellow-400 bg-yellow-50' : 'border-blue-500 bg-blue-50'}`}>
                         <h3 className="font-bold mb-3">Import Results</h3>
                         <div className="flex gap-6 mb-4">
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-green-600">{result.created}</p>
+                                <p className="text-3xl font-bold text-blue-600">{result.created}</p>
                                 <p className="text-sm text-gray-600">Created</p>
                             </div>
                             <div className="text-center">
@@ -274,6 +274,6 @@ export default function BulkImportPage() {
                     </div>
                 )}
             </div>
-        </Layout>
+        </AdminLayout>
     );
 }

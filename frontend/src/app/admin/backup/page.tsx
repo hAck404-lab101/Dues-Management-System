@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -80,19 +80,19 @@ export default function AdminBackupPage() {
 
   if (loading || !user) {
     return (
-      <Layout title="Backup & Recovery">
+      <AdminLayout title="Backup & Recovery">
         <div className="card p-8">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-100 rounded w-1/3" />
             <div className="h-24 bg-gray-100 rounded" />
           </div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout title="Backup & Recovery">
+    <AdminLayout title="Backup & Recovery">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="card p-6 bg-gradient-to-br from-primary to-primary-dark text-white overflow-hidden relative">
           <div className="relative z-10">
@@ -109,7 +109,7 @@ export default function AdminBackupPage() {
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="card p-6 space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-700 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
               <span className="w-6 h-6"><DownloadIcon /></span>
             </div>
             <div>
@@ -154,6 +154,6 @@ export default function AdminBackupPage() {
           </p>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

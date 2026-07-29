@@ -91,10 +91,31 @@ const buildPaymentReceiptEmail = async ({ student, payment, receipt, receiptUrl 
   const brand = await getBranding();
   const portalUrl = buildPortalUrl();
   const amount = Number(receipt?.amount_paid || payment?.amount || 0).toFixed(2);
-  const content = `<p style="margin:0 0 16px;color:#374151;font-size:15px;line-height:1.7;">Hello ${escapeHtml(student.full_name || 'Student')}, your payment has been confirmed and your receipt is ready.</p>
-    ${detailsTable([['Receipt Number', receipt?.receipt_number || ''], ['Due', payment?.due_name || 'Payment'], ['Amount Paid', `GHS ${amount}`], ['Payment Method', String(payment?.payment_method || '').replace(/_/g, ' ').toUpperCase()], ['Date', new Date(payment?.created_at || Date.now()).toLocaleDateString('en-GH')]])}
-    <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;">A PDF copy may be attached. You can also log in to your dashboard to download the receipt securely.</p>`;
-  return { subject: `Payment Receipt ${receipt?.receipt_number || ''} - ${brand.appName}`, text: `Hello ${student.full_name || 'Student'}, your payment of GHS ${amount} has been confirmed. Receipt: ${receipt?.receipt_number || ''}. Verify: ${receiptUrl || ''}`, html: emailShell({ brand, title: 'Payment Confirmed', preheader: 'Your payment receipt is ready.', content, ctaText: receiptUrl ? 'Verify Receipt' : (portalUrl ? 'Open Dashboard' : ''), ctaUrl: receiptUrl || portalUrl }) };
+  const content = `
+    <p style="margin:0 0 16px;color:#374151;font-size:15px;line-height:1.7;text-align:center;">Hello ${escapeHtml(student.full_name || 'Student')}, your payment has been successfully confirmed and your digital receipt is ready.</p>
+    
+    <div style="text-align: center; margin: 24px 0; padding: 18px; background: #f9fafb; border: 1px dashed #e5e7eb; border-radius: 16px;">
+      <div style="display: inline-block; background: #DEF7EC; color: #03543F; font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 5px 12px; border-radius: 9999px; letter-spacing: 0.05em; margin-bottom: 6px;">Status: Paid</div>
+      <div style="font-size: 30px; font-weight: 800; color: #111827; letter-spacing: -0.02em;">GHS ${amount}</div>
+      <div style="font-size: 11px; color: #6B7280; font-weight: bold; text-transform: uppercase; margin-top: 2px;">Total Dues Paid</div>
+    </div>
+
+    ${detailsTable([
+      ['Receipt Number', receipt?.receipt_number || 'Pending'],
+      ['Due Name', payment?.due_name || 'Departmental Due'],
+      ['Student Name', student.full_name],
+      ['Index Number', student.student_id],
+      ['Payment Method', String(payment?.payment_method || 'Paystack').replace(/_/g, ' ').toUpperCase()],
+      ['Transaction Date', new Date(payment?.created_at || Date.now()).toLocaleDateString('en-GH')]
+    ])}
+    
+    <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.7;text-align:center;">A copy of your official PDF receipt is attached to this email. Keep it safe for academic clearance purposes.</p>
+  `;
+  return { 
+    subject: `Payment Receipt ${receipt?.receipt_number || ''} - ${brand.appName}`, 
+    text: `Hello ${student.full_name || 'Student'},\n\nYour payment of GHS ${amount} for ${payment?.due_name || 'dues'} has been confirmed. Receipt No: ${receipt?.receipt_number || ''}.`, 
+    html: emailShell({ brand, title: 'Payment Receipt Confirmed', preheader: 'Your dues payment receipt is ready.', content, ctaText: receiptUrl ? 'Verify Receipt Online' : (portalUrl ? 'Open Student Portal' : ''), ctaUrl: receiptUrl || portalUrl }) 
+  };
 };
 
 const buildClearanceEmail = async ({ student, clearanceStatus, attachmentNote = '' }) => {

@@ -17,6 +17,14 @@ const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`[API REQUEST] ${req.method} ${req.originalUrl} ${res.statusCode} - ${Date.now() - start}ms`);
+  });
+  next();
+});
+
 app.use(helmet());
 
 const allowedOrigins = [
@@ -25,6 +33,11 @@ const allowedOrigins = [
   'https://uewdept.org',
   'https://www.uewdept.org',
   'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:3002',
+  'http://127.0.0.1:3002',
   'http://localhost:5173'
 ].filter(Boolean);
 
@@ -44,22 +57,22 @@ app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: process.env.URLENCODED_BODY_LIMIT || '2mb' }));
 
 app.get('/', (req, res) => {
-  res.json({ success: true, message: 'Dues Management System API is running', status: 'online', health: '/health', api: '/api' });
+  res.json({ success: true, message: 'DuesPay API is running', status: 'online', health: '/health', api: '/api' });
 });
 
 app.get('/api', (req, res) => {
   res.json({
     success: true,
-    message: 'Dues Management System API',
+    message: 'DuesPay API',
     availableRoutes: {
-      auth: '/api/auth', students: '/api/students', dues: '/api/dues', payments: '/api/payments', receipts: '/api/receipts', dashboard: '/api/dashboard', reports: '/api/reports', admin: '/api/admin', settings: '/api/settings', features: '/api/features'
+      auth: '/api/auth', students: '/api/students', dues: '/api/dues', payments: '/api/payments', receipts: '/api/receipts', dashboard: '/api/dashboard', reports: '/api/reports', admin: '/api/admin', settings: '/api/settings', features: '/api/features', public: '/api/public'
     }
   });
 });
 
 app.get('/health', (req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.json({ success: true, status: 'ok', message: 'Dues Management System API is healthy' });
+  res.json({ success: true, status: 'ok', message: 'DuesPay API is healthy' });
 });
 
 // Proof uploads can remain public enough for admin previews, but receipt PDFs must go through authenticated API routes.
@@ -95,6 +108,7 @@ app.use('/api/reports', require('./src/routes/reports'));
 app.use('/api/admin', require('./src/routes/admin'));
 app.use('/api/settings', require('./src/routes/settings'));
 app.use('/api/features', require('./src/routes/featurePack'));
+app.use('/api/public', require('./src/routes/public'));
 
 app.use((err, req, res, next) => {
   console.error(err.stack || err.message);
@@ -118,7 +132,15 @@ pool.getConnection()
     } finally {
       connection.release();
     }
-    const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      try {
+        const { startScheduler } = require('./src/lib/scheduler');
+        startScheduler();
+      } catch (err) {
+        console.error('Failed to start scheduler:', err.message);
+      }
+    });
     server.keepAliveTimeout = parseNumber(process.env.SERVER_KEEP_ALIVE_TIMEOUT_MS, 65000);
     server.headersTimeout = parseNumber(process.env.SERVER_HEADERS_TIMEOUT_MS, 66000);
   })

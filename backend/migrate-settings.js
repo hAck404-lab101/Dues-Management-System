@@ -15,7 +15,7 @@ const createSettingsTable = async () => {
 
         // Insert neutral default settings if they don't exist
         const defaultSettings = [
-            ['app_name', 'Dues Management System', 'appearance', 'The name of the application'],
+            ['app_name', 'DuesPay', 'appearance', 'The name of the application'],
             ['app_logo', '', 'appearance', 'URL to the application logo'],
             ['app_logo_secondary', '', 'appearance', 'Secondary logo for dark backgrounds'],
             ['primary_color', '#0B3C5D', 'appearance', 'Primary theme color (CSS variable)'],
@@ -42,7 +42,7 @@ const createSettingsTable = async () => {
             ['email_user', '', 'email', 'SMTP Username'],
             ['email_pass', '', 'email', 'SMTP Password'],
             ['email_from', 'no-reply@example.com', 'email', 'Email From Address'],
-            ['email_from_name', 'Dues Management System', 'email', 'Sender Name for Emails']
+            ['email_from_name', 'DuesPay', 'email', 'Sender Name for Emails']
         ];
 
         for (const [key, value, category, description] of defaultSettings) {
@@ -53,10 +53,10 @@ const createSettingsTable = async () => {
         }
 
         // Clean old hard-coded UCC values in databases that were created from earlier versions.
-        await query("UPDATE settings SET `value` = 'Dues Management System' WHERE `key` = 'app_name' AND `value` LIKE '%UCC%'");
-        await query("UPDATE settings SET `value` = 'DUES' WHERE `key` = 'sms_sender_id' AND `value` LIKE '%UCC%'");
+        await query("UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'app_name' AND `value` LIKE '%UCC%'");
+        await query("UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'sms_sender_id' AND `value` LIKE '%UCC%'");
         await query("UPDATE settings SET `value` = 'no-reply@example.com' WHERE `key` = 'email_from' AND `value` LIKE '%ucc%'");
-        await query("UPDATE settings SET `value` = 'Dues Management System' WHERE `key` = 'email_from_name' AND `value` LIKE '%UCC%'");
+        await query("UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'email_from_name' AND `value` LIKE '%UCC%'");
         await query("UPDATE settings SET `value` = 'Bank Account: 1234567890, Branch: Main' WHERE `key` = 'manual_payment_bank' AND `value` LIKE '%UCC%'");
 
         console.log('Default settings successfully initialized/updated');

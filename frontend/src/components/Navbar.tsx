@@ -43,17 +43,20 @@ export default function Navbar() {
   }, [mobileMenuOpen]);
 
   const handleLogout = () => {
-    logout();
-    router.push('/');
-    router.refresh();
+    if (window.confirm('Are you sure you want to log out?')) {
+      logout();
+      router.push('/');
+      router.refresh();
+    }
   };
 
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/admin/login';
+  const isAuthPage = pathname === '/login' || pathname === '/admin/login';
+  const isAdminRoute = pathname.startsWith('/admin');
   const authenticated = isClient && !!user;
   const role = user?.role;
   const roleLabel = getRoleLabel(role);
 
-  if (isAuthPage) return null;
+  if (isAuthPage || isAdminRoute) return null;
 
   const showStudentsGroup = canViewStudents(role) || canImportStudents(role) || canViewClearance(role);
   const showFinanceGroup = canManageDues(role) || canViewPayments(role) || canViewReports(role);
@@ -83,7 +86,7 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center space-x-1">
-            {authenticated && (
+            {showNavLinks && (
               <>
                 {role === 'student' ? (
                   <>
@@ -128,8 +131,7 @@ export default function Navbar() {
             )}
             {!authenticated && (
               <div className="flex items-center gap-4 ml-4">
-                <Link href="/login" className="px-4 py-2 hover:text-secondary transition-colors font-medium">Login</Link>
-                <Link href="/register" className="btn-secondary px-6">Register</Link>
+                <Link href="/login" className="btn-secondary px-6">Login</Link>
               </div>
             )}
           </div>
@@ -159,7 +161,7 @@ export default function Navbar() {
 
       <div className={`lg:hidden transition-all duration-300 ease-in-out border-t border-white/5 shadow-2xl bg-primary/98 backdrop-blur-2xl fixed left-0 right-0 top-16 sm:top-20 z-[100] ${mobileMenuOpen ? 'max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] opacity-100 visible pointer-events-auto' : 'max-h-0 opacity-0 invisible pointer-events-none overflow-hidden'}`}>
         <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 overflow-y-auto overscroll-contain max-h-[calc(100dvh-4rem)] sm:max-h-[calc(100dvh-5rem)] space-y-1.5 pb-8">
-          {authenticated ? (
+          {showNavLinks ? (
             <>
               {role === 'student' ? (
                 <>
@@ -192,8 +194,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <MobileNavItem href="/login" label="Login" icon={<ProfileIcon />} />
-              <div className="pt-2"><Link href="/register" className="btn-secondary w-full justify-center">Register</Link></div>
+              <div className="pt-2"><Link href="/login" className="btn-secondary w-full justify-center">Login</Link></div>
             </>
           )}
         </div>
@@ -204,8 +205,8 @@ export default function Navbar() {
 
 function NavLink({ href, icon, label, active }: { href: string; icon: ReactNode; label: string; active: boolean }) {
   return (
-    <Link href={href} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium ${active ? 'bg-secondary text-primary shadow-lg scale-[1.02]' : 'hover:bg-white/10 text-white/80 hover:text-white'}`}>
-      <span className="w-5 h-5">{icon}</span><span>{label}</span>{active && <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1" />}
+    <Link href={href} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium ${active ? 'bg-[#DBEAFE] text-[#001150] shadow-lg scale-[1.02]' : 'hover:bg-white/10 text-white/80 hover:text-white'}`}>
+      <span className="w-5 h-5">{icon}</span><span>{label}</span>{active && <span className="w-1.5 h-1.5 rounded-full bg-[#0020B2] ml-1" />}
     </Link>
   );
 }
@@ -232,9 +233,9 @@ function DropdownItem({ href, label, icon, active }: { href: string; label: stri
 
 function MobileNavItem({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors min-h-[44px]">
-      <div className="w-7 h-7 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary shrink-0"><span className="w-4 h-4">{icon}</span></div>
-      <span className="font-semibold text-sm leading-tight">{label}</span>
+    <Link href={href} className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors min-h-[44px] ${active ? 'bg-[#DBEAFE] text-[#001150] font-bold shadow-md' : 'bg-white/5 text-white/80 hover:bg-white/10'}`}>
+      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${active ? 'bg-[#0020B2]/10 text-[#0020B2]' : 'bg-secondary/10 text-white/70'}`}><span className="w-4 h-4">{icon}</span></div>
+      <span className="text-sm leading-tight">{label}</span>
     </Link>
   );
 }

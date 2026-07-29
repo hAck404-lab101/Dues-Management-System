@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const featurePackController = require('../controllers/featurePackController');
-const { authenticate, isAdmin, isStudent, isFinancialSecretary } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
+const requirePermission = require('../middleware/requirePermission');
 
-router.get('/admin/summary', authenticate, isAdmin, featurePackController.getAdminSummary);
-router.get('/student/dues', authenticate, isStudent, featurePackController.getStudentDues);
-router.get('/manual-payments/pending', authenticate, isFinancialSecretary, featurePackController.getManualPaymentQueue);
-router.get('/payments/health', authenticate, isAdmin, featurePackController.getPaymentHealth);
+router.get('/admin/summary', authenticate, requirePermission('payments.view_all', 'dashboard.executive'), featurePackController.getAdminSummary);
+router.get('/manual-payments/pending', authenticate, requirePermission('payments.approve', 'payments.record_manual', 'payments.view_all'), featurePackController.getManualPaymentQueue);
+router.get('/payments/health', authenticate, requirePermission('payments.view_all'), featurePackController.getPaymentHealth);
 
 module.exports = router;
+

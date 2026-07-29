@@ -10,7 +10,12 @@ node_modules/
 /build
 /dist
 /.next
+**/.next
 /out
+
+# TypeScript build info
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
 
 /backend/all_settings.txt
 

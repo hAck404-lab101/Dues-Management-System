@@ -1,124 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import Layout from '@/components/Layout';
-import { useAuth } from '@/contexts/AuthContext';
-import api from '@/lib/api';
-import toast from 'react-hot-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { UsersIcon, LandmarkIcon, WalletIcon, CardIcon, ShieldIcon, ReceiptIcon, SettingsIcon, SmsIcon, ImportIcon, CertificateIcon } from '@/components/Icons';
-import { DashboardSkeleton } from '@/components/Skeletons';
-import {
-  getRoleLabel,
-  getRoleDashboardDescription,
-  canViewStudents,
-  canImportStudents,
-  canViewClearance,
-  canManageDues,
-  canViewPayments,
-  canViewReports,
-  canUseBulkSms,
-  canManageSettings
-} from '@/lib/roleAccess';
+import Loader from '@/components/Loader';
 
-interface AdminDashboardData {
-  summary: {
-    totalStudents: number;
-    expectedRevenue: number;
-    amountCollected: number;
-    outstandingBalance: number;
-    defaultersCount: number;
-    pendingPayments: number;
-  };
-  charts: {
-    monthlyCollections: any[];
-    levelWisePayments: any[];
-  };
-  recentPayments: any[];
-}
-
-interface DashboardCard {
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  className: string;
-  visible: boolean;
-}
-
-interface QuickAction {
-  href: string;
-  label: string;
-  text: string;
-  icon: React.ReactNode;
-  visible: boolean;
-}
-
-const money = (value: number) => `GHS ${Number(value || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
-
-export default function AdminDashboard() {
+export default function AdminDashboardRedirect() {
   const router = useRouter();
-  const { user, loading } = useAuth();
-  const [data, setData] = useState<AdminDashboardData | null>(null);
-  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    if (!loading && (!user || user.role === 'student')) {
-      router.push('/admin/login');
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    if (user && user.role !== 'student') {
-      fetchDashboard();
-    }
-  }, [user]);
-
-  const fetchDashboard = async () => {
-    try {
-      const response = await api.get('/dashboard/admin');
-      if (response.data.success) {
-        setData(response.data.data);
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to load dashboard');
-    } finally {
-      setLoadingData(false);
-    }
-  };
-
-  const role = user?.role;
-  const roleLabel = getRoleLabel(role);
-  const dashboardTitle = `${roleLabel} Dashboard`;
-  const dashboardDescription = getRoleDashboardDescription(role);
-
-  const quickActions = useMemo<QuickAction[]>(() => [
-    { href: '/admin/students', label: 'Student Records', text: 'View and update student information.', icon: <UsersIcon />, visible: canViewStudents(role) },
-    { href: '/admin/import', label: 'Bulk Import', text: 'Upload student lists in batches.', icon: <ImportIcon />, visible: canImportStudents(role) },
-    { href: '/admin/clearance', label: 'Clearance', text: 'Check clearance and outstanding records.', icon: <CertificateIcon />, visible: canViewClearance(role) },
-    { href: '/admin/dues', label: 'Manage Dues', text: 'Create and assign dues.', icon: <LandmarkIcon />, visible: canManageDues(role) },
-    { href: '/admin/payments', label: 'Payments', text: 'Review online and manual payments.', icon: <CardIcon />, visible: canViewPayments(role) },
-    { href: '/admin/reports', label: 'Reports', text: 'Review collections and balances.', icon: <ReceiptIcon />, visible: canViewReports(role) },
-    { href: '/admin/bulk-sms', label: 'Bulk SMS', text: 'Send account and payment updates.', icon: <SmsIcon />, visible: canUseBulkSms(role) },
-    { href: '/admin/settings', label: 'Settings', text: 'Configure portal and payment settings.', icon: <SettingsIcon />, visible: canManageSettings(role) }
-  ], [role]);
-
-  if (loading || loadingData) {
-    return (
-      <Layout title={dashboardTitle}>
-        <DashboardSkeleton />
-      </Layout>
-    );
-  }
-
-  if (!data) {
-    return (
-      <Layout>
-        <div className="text-center py-12">No data available</div>
-      </Layout>
-    );
-  }
+    router.replace('/dashboard/admin');
+  }, [router]);
 
   const cards: DashboardCard[] = [
     { title: 'Total Students', value: data.summary.totalStudents, icon: <UsersIcon />, className: 'bg-primary text-white', visible: canViewStudents(role) || role === 'admin' || role === 'president' },
