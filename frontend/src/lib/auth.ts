@@ -51,6 +51,21 @@ export const adminLogin = async (email: string, password: string) => {
   }
 };
 
+export const register = async (data: any) => {
+  try {
+    const response = await api.post('/auth/register', data);
+    if (response.data.success) {
+      if (response.data.token) {
+        Cookies.set('token', response.data.token, { expires: 7, path: '/' });
+      }
+      return response.data;
+    }
+    throw new Error(response.data.message || 'Registration failed');
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || error.message || 'Registration failed');
+  }
+};
+
 
 
 export const logout = () => {

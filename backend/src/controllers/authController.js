@@ -97,33 +97,44 @@ const userPayload = (user) => ({
 exports.login = async (req, res) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation error', errors: errors.array() });
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0]?.msg || 'Validation error',
+        errors: errors.array()
+      });
+    }
 
-    const { indexNumber, email, password } = req.body;
-    let userResult;
-    if (email) {
-      userResult = await pool.query(
-        `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active, u.must_change_password,
-                s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year, s.phone_number
-         FROM users u LEFT JOIN students s ON u.student_id = s.student_id WHERE u.email = ?`,
-        [email]
-      );
-    } else if (indexNumber) {
-      userResult = await pool.query(
-        `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active, u.must_change_password,
-                s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year, s.phone_number
-         FROM users u LEFT JOIN students s ON u.student_id = s.student_id WHERE u.student_id = ? OR s.student_id = ?`,
-        [indexNumber, indexNumber]
-      );
-    } else {
+    const rawIdentifier = req.body.identifier || req.body.email || req.body.indexNumber || '';
+    const cleanIdentifier = String(rawIdentifier).trim();
+    const password = req.body.password;
+
+    if (!cleanIdentifier) {
       return res.status(400).json({ success: false, message: 'Email or index number is required' });
     }
 
-    if (userResult.rows.length === 0) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    const userResult = await pool.query(
+      `SELECT u.id, u.email, u.password_hash, u.role, u.student_id, u.is_active, u.must_change_password,
+              s.id as student_record_id, s.full_name, s.level, s.programme, s.academic_year, s.phone_number
+       FROM users u 
+       LEFT JOIN students s ON u.student_id = s.student_id 
+       WHERE LOWER(u.email) = LOWER(?) OR LOWER(u.student_id) = LOWER(?) OR LOWER(s.student_id) = LOWER(?)`,
+      [cleanIdentifier, cleanIdentifier, cleanIdentifier]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
     const user = userResult.rows[0];
-    if (!user.is_active) return res.status(401).json({ success: false, message: 'Account is deactivated' });
+    if (!user.is_active) {
+      return res.status(401).json({ success: false, message: 'Account is deactivated' });
+    }
+
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (!isValidPassword) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
 
     const token = generateToken(user.id, user.role);
     const permissions = await getRolePermissions(user.role);

@@ -17,6 +17,10 @@ const DEFAULT_SETTINGS = [
     ['maintenance_mode', 'false', 'sys_maintenance', 'System maintenance mode: true or false'],
     ['app_name', DEFAULT_APP_NAME, 'sys_general', 'Application name'],
     ['app_description', DEFAULT_APP_DESCRIPTION, 'sys_general', 'Application link preview description'],
+    ['app_logo', '', 'sys_appearance', 'Primary logo URL or upload path'],
+    ['app_logo_secondary', '', 'sys_appearance', 'Secondary logo URL or upload path'],
+    ['app_favicon', '', 'sys_appearance', 'Favicon URL or upload path'],
+    ['app_footer_text', '', 'sys_appearance', 'Footer text shown on public pages'],
     ['sms_sender_id', process.env.DEFAULT_SMS_SENDER_ID || 'DMS', 'comm_sms', 'SMS sender ID'],
     ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, 'comm_email', 'Email sender display name'],
     ['admin_approval_required', 'false', 'portal', 'Require admin approval for new students'],
@@ -70,7 +74,6 @@ const cleanOldUccBranding = async () => {
 
 const ensureDefaultSettings = async () => {
     for (const [key, value, category] of DEFAULT_SETTINGS) {
-        // Include id (UUID) since the settings table requires it as PRIMARY KEY NOT NULL
         await query(
             'INSERT IGNORE INTO settings (id, `key`, `value`, `category`) VALUES (UUID(), ?, ?, ?)',
             [key, value, category]
@@ -126,14 +129,12 @@ exports.updateSettings = async (req, res) => {
                     value = encrypt(value);
                 }
 
-                // Try UPDATE first — works for all pre-seeded keys
                 const [updateResult] = await conn.query(
                     'UPDATE settings SET `value` = ? WHERE `key` = ?',
                     [value, key]
                 );
 
                 if (updateResult.affectedRows === 0) {
-                    // Key doesn't exist yet — INSERT with generated UUID for XAMPP compatibility
                     await conn.query(
                         'INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES (UUID(), ?, ?, "sys_general", "")',
                         [key, value]

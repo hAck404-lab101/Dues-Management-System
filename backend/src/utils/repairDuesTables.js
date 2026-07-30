@@ -214,6 +214,33 @@ const repairDuesTables = async (connection) => {
     )
   `);
 
+  const defaultRolePermissions = {
+    president: [
+      'payments.view_all', 'refunds.approve', 'reports.export', 'dashboard.executive',
+      'announcements.create', 'announcements.publish', 'audit_logs.view_all', 'audit_logs.view_own',
+      'students.view', 'dues.view', 'settings.read'
+    ],
+    treasurer: [
+      'dues.create', 'dues.edit', 'dues.assign', 'dues.manage_price',
+      'payments.approve', 'payments.reject', 'payments.view_all', 'payments.resend_receipt',
+      'reminders.send', 'reports.export', 'audit_logs.view_own', 'students.view', 'dues.view',
+      'settings.read', 'dashboard.executive'
+    ],
+    financial_secretary: [
+      'payments.record_manual', 'payments.view_all', 'payments.resend_receipt', 'payments.reconcile',
+      'refunds.initiate', 'reminders.send', 'reports.export', 'audit_logs.view_own', 'students.view',
+      'dues.view', 'settings.read', 'settings.write_financial', 'dashboard.executive'
+    ]
+  };
+
+  for (const [role, perms] of Object.entries(defaultRolePermissions)) {
+    for (const permKey of perms) {
+      await exec(`Seed permission ${permKey} for ${role}`, `
+        INSERT IGNORE INTO role_permissions (role, permission_key) VALUES (?, ?)
+      `, [role, permKey]);
+    }
+  }
+
   console.log('Dues and notification tables check completed.');
 };
 

@@ -1,14 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import api from '@/lib/api';
 
-interface BrandingContextType {
+interface BrandingData {
     appName: string;
     appLogo: string | null;
     appLogoSecondary: string | null;
     appFavicon: string | null;
     homepageVariant: 'portal' | 'classic';
+}
+
+interface BrandingContextType extends BrandingData {
     loading: boolean;
     refreshBranding: () => Promise<void>;
 }
@@ -30,6 +34,30 @@ const cleanBrandText = (value?: string | null, fallback = DEFAULT_APP_NAME) => {
         .trim();
 };
 
+const getApiBase = () =>
+    (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
+const formatUrl = (url: string | null): string | null => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const base = getApiBase();
+    return url.startsWith('/') ? `${base}${url}` : `${base}/${url}`;
+};
+
+const applyFaviconToDOM = (href: string | null) => {
+    if (typeof document === 'undefined' || !href) return;
+    const selectors = ["link[rel='icon']", "link[rel='shortcut icon']"];
+    selectors.forEach((sel, i) => {
+        let link = document.querySelector(sel) as HTMLLinkElement | null;
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = i === 0 ? 'icon' : 'shortcut icon';
+            document.head.appendChild(link);
+        }
+        link.href = href;
+    });
+};
+
 interface CachedBranding {
     appName: string;
     appLogo: string | null;
@@ -41,6 +69,7 @@ interface CachedBranding {
 
 function getCachedBranding(): CachedBranding | null {
     try {
+        if (typeof window === 'undefined') return null;
         const raw = localStorage.getItem(BRANDING_CACHE_KEY);
         if (!raw) return null;
         const data: CachedBranding = JSON.parse(raw);
@@ -56,7 +85,9 @@ function getCachedBranding(): CachedBranding | null {
 
 function saveBrandingCache(data: Omit<CachedBranding, 'ts'>) {
     try {
-        localStorage.setItem(BRANDING_CACHE_KEY, JSON.stringify({ ...data, ts: Date.now() }));
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(BRANDING_CACHE_KEY, JSON.stringify({ ...data, ts: Date.now() }));
+        }
     } catch { /* ignore */ }
 }
 
@@ -68,48 +99,39 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     const [appLogoSecondary, setAppLogoSecondary] = useState<string | null>(cached?.appLogoSecondary ?? null);
     const [appFavicon, setAppFavicon] = useState<string | null>(cached?.appFavicon ?? null);
     const [homepageVariant, setHomepageVariant] = useState<'portal' | 'classic'>(cached?.homepageVariant ?? 'portal');
-    const [loading, setLoading] = useState(!cached); // skip loading state if we have cached data
+    const [loading, setLoading] = useState(!cached);
     const fetchedRef = useRef(false);
 
-    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+    const pathname = usePathname();
 
-    const formatUrl = (url: string | null) => {
-        if (!url) return null;
-        if (url.startsWith('http')) return url;
-        return url.startsWith('/') ? `${API_BASE}${url}` : `${API_BASE}/${url}`;
-    };
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        document.title = appName;
+        applyFaviconToDOM(appFavicon);
+    }, [pathname, appName, appFavicon]);
 
-    const applyFavicon = (href: string | null) => {
-        if (typeof document === 'undefined' || !href) return;
-        let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement | null;
-        if (!link) {
-            link = document.createElement('link');
-            link.rel = 'icon';
-            document.head.appendChild(link);
-        }
-        link.href = href;
-    };
-
-    const fetchBranding = async () => {
+    const fetchBranding = useCallback(async () => {
         try {
             const res = await api.get('/settings/public');
             if (res.data.success) {
                 const { app_name, app_logo, app_logo_secondary, app_favicon, homepage_variant } = res.data.data;
                 const configuredName = cleanBrandText(app_name, DEFAULT_APP_NAME);
-                const primaryLogo = app_logo ? formatUrl(app_logo) : null;
-                const secondaryLogo = app_logo_secondary ? formatUrl(app_logo_secondary) : null;
-                const favicon = app_favicon ? formatUrl(app_favicon) : primaryLogo;
+                const primaryLogo = formatUrl(app_logo);
+                const secondaryLogo = formatUrl(app_logo_secondary);
+                const favicon = formatUrl(app_favicon) ?? primaryLogo;
                 const variant: 'portal' | 'classic' = homepage_variant === 'classic' ? 'classic' : 'portal';
 
                 setAppName(configuredName);
-                if (typeof document !== 'undefined') document.title = configuredName;
                 setHomepageVariant(variant);
                 setAppLogo(primaryLogo);
                 setAppLogoSecondary(secondaryLogo);
                 setAppFavicon(favicon);
-                applyFavicon(favicon);
 
-                // Save to cache
+                if (typeof document !== 'undefined') {
+                    document.title = configuredName;
+                    applyFaviconToDOM(favicon);
+                }
+
                 saveBrandingCache({
                     appName: configuredName,
                     appLogo: primaryLogo,
@@ -120,20 +142,18 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
             }
         } catch (error) {
             console.error('Failed to load branding:', error);
-            if (typeof document !== 'undefined') document.title = cleanBrandText(DEFAULT_APP_NAME);
+            if (typeof document !== 'undefined') document.title = appName;
         } finally {
             setLoading(false);
         }
-    };
+    }, [appName]);
 
     useEffect(() => {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
 
         if (cached) {
-            // Apply cached favicon immediately
-            applyFavicon(cached.appFavicon);
-            // Background refresh after a short delay to not compete with critical requests
+            applyFaviconToDOM(cached.appFavicon);
             setTimeout(fetchBranding, 2000);
         } else {
             fetchBranding();
@@ -141,7 +161,10 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     return (
-        <BrandingContext.Provider value={{ appName, appLogo, appLogoSecondary, appFavicon, homepageVariant, loading, refreshBranding: fetchBranding }}>
+        <BrandingContext.Provider value={{
+            appName, appLogo, appLogoSecondary, appFavicon,
+            homepageVariant, loading, refreshBranding: fetchBranding
+        }}>
             {children}
         </BrandingContext.Provider>
     );

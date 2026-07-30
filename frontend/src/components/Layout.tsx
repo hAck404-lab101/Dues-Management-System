@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import Navbar from './Navbar';
+import { useBranding } from '@/contexts/BrandingContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,6 +10,14 @@ interface LayoutProps {
 }
 
 export default function Layout({ children, title }: LayoutProps) {
+  const { appName } = useBranding();
+
+  // Keep document title in sync: "Page Title | App Name" or just "App Name"
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.title = title ? `${title} | ${appName}` : appName;
+  }, [title, appName]);
+
   return (
     <div className="min-h-screen bg-neutral">
       <Navbar />
@@ -18,4 +28,3 @@ export default function Layout({ children, title }: LayoutProps) {
     </div>
   );
 }
-

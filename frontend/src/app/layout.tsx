@@ -55,22 +55,9 @@ const fallbackMetadata = (): Metadata => {
   return {
     title: appTitle,
     description: appDescription,
-    icons: {
-      icon: '/favicon.png',
-      shortcut: '/favicon.png',
-      apple: '/favicon.png'
-    },
-    openGraph: {
-      title: appTitle,
-      description: appDescription,
-      type: 'website',
-      siteName: appTitle
-    },
-    twitter: {
-      card: 'summary',
-      title: appTitle,
-      description: appDescription
-    }
+    icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
+    openGraph: { title: appTitle, description: appDescription, type: 'website', siteName: appTitle },
+    twitter: { card: 'summary', title: appTitle, description: appDescription }
   }
 }
 
@@ -87,7 +74,6 @@ export async function generateMetadata(): Promise<Metadata> {
     const fetchUrl = `${apiBase}/api/settings/public`;
     console.log('[METADATA] Fetching public settings from:', fetchUrl);
     
-    // Set a controller to abort if it takes too long (e.g. 3 seconds)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -116,11 +102,7 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: appTitle,
       description: appDescription,
-      icons: {
-        icon: faviconUrl,
-        shortcut: faviconUrl,
-        apple: faviconUrl
-      },
+      icons: { icon: faviconUrl, shortcut: faviconUrl, apple: faviconUrl },
       openGraph: {
         title: appTitle,
         description: appDescription,
@@ -141,11 +123,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
-  children
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className={`${poppins.variable} ${poppinsDisplay.variable} font-sans`}>

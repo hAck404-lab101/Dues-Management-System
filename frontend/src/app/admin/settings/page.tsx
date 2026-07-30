@@ -115,7 +115,7 @@ export default function AdminSettingsPage() {
     const [activeTab, setActiveTab] = useState('sys_general');
 
     const allowedRoles = ['admin', 'treasurer', 'financial_secretary', 'president'];
-    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
     useEffect(() => {
         if (!loading && (!user || !allowedRoles.includes(user.role))) {
@@ -150,6 +150,8 @@ export default function AdminSettingsPage() {
             const res = await api.patch('/settings', { settings: updateData });
             if (res.data.success) {
                 toast.success('Settings updated successfully');
+                // Clear branding cache so refreshBranding loads fresh values
+                try { sessionStorage.removeItem('dms_branding_cache'); } catch {}
                 await refreshBranding();
             }
         } catch (error: any) {
@@ -180,6 +182,8 @@ export default function AdminSettingsPage() {
             if (res.data.success) {
                 handleChange(key, res.data.data.url);
                 toast.success('Image uploaded successfully');
+                // Clear branding cache so logo/favicon updates take effect immediately
+                try { sessionStorage.removeItem('dms_branding_cache'); } catch {}
                 await refreshBranding();
             }
         } catch (err: any) {

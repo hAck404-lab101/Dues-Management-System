@@ -83,7 +83,7 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            <span className="text-base sm:text-xl font-extrabold tracking-tight hidden sm:block truncate max-w-[180px] lg:max-w-none">{appName}</span>
+            <span className="text-sm sm:text-lg md:text-xl font-extrabold tracking-tight truncate max-w-[130px] sm:max-w-[220px] lg:max-w-none">{appName}</span>
           </Link>
 
           <div className="hidden lg:flex items-center space-x-1">

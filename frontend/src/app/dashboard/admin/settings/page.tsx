@@ -766,13 +766,22 @@ function SettingsWorkspaceContent() {
                                             {settings.app_logo?.value ? (
                                                 <img src={settings.app_logo.value.startsWith('/') ? `${API_BASE}${settings.app_logo.value}` : settings.app_logo.value} className="max-h-full object-contain" alt="Logo" />
                                             ) : (
-                                                <span className="text-xs font-semibold text-gray-400">No logo uploaded</span>
+                                                <span className="text-xs font-semibold text-gray-400">No logo set</span>
                                             )}
                                         </div>
-                                        <label className="btn-outline py-2 text-xs font-bold cursor-pointer text-center block">
-                                            Upload Primary Logo
-                                            <input type="file" className="hidden" accept="image/*" onChange={e => handleImageUpload(e, 'app_logo')} />
-                                        </label>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                className="input-field py-1.5 px-3 text-xs"
+                                                placeholder="Logo URL (https://...)"
+                                                value={settings.app_logo?.value || ''}
+                                                onChange={e => handleSettingChange('app_logo', e.target.value)}
+                                            />
+                                            <label className="btn-outline py-2 text-xs font-bold cursor-pointer text-center block w-full">
+                                                Upload File
+                                                <input type="file" className="hidden" accept="image/*" onChange={e => handleImageUpload(e, 'app_logo')} />
+                                            </label>
+                                        </div>
                                     </div>
 
                                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-3">
@@ -781,28 +790,46 @@ function SettingsWorkspaceContent() {
                                             {settings.app_logo_secondary?.value ? (
                                                 <img src={settings.app_logo_secondary.value.startsWith('/') ? `${API_BASE}${settings.app_logo_secondary.value}` : settings.app_logo_secondary.value} className="max-h-full object-contain" alt="Secondary Logo" />
                                             ) : (
-                                                <span className="text-xs font-semibold text-gray-400">No logo uploaded</span>
+                                                <span className="text-xs font-semibold text-gray-400">No secondary logo set</span>
                                             )}
                                         </div>
-                                        <label className="btn-outline py-2 text-xs font-bold cursor-pointer text-center block">
-                                            Upload Secondary Logo
-                                            <input type="file" className="hidden" accept="image/*" onChange={e => handleImageUpload(e, 'app_logo_secondary')} />
-                                        </label>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                className="input-field py-1.5 px-3 text-xs"
+                                                placeholder="Secondary Logo URL (https://...)"
+                                                value={settings.app_logo_secondary?.value || ''}
+                                                onChange={e => handleSettingChange('app_logo_secondary', e.target.value)}
+                                            />
+                                            <label className="btn-outline py-2 text-xs font-bold cursor-pointer text-center block w-full">
+                                                Upload File
+                                                <input type="file" className="hidden" accept="image/*" onChange={e => handleImageUpload(e, 'app_logo_secondary')} />
+                                            </label>
+                                        </div>
                                     </div>
 
                                     <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-3">
-                                        <span className="text-xs font-bold text-gray-700">Favicon Shortcut Asset</span>
+                                        <span className="text-xs font-bold text-gray-700">Favicon Asset</span>
                                         <div className="h-16 flex items-center justify-center bg-white border rounded-xl overflow-hidden p-2">
                                             {settings.app_favicon?.value ? (
                                                 <img src={settings.app_favicon.value.startsWith('/') ? `${API_BASE}${settings.app_favicon.value}` : settings.app_favicon.value} className="max-h-full w-8 h-8 object-contain" alt="Favicon" />
                                             ) : (
-                                                <span className="text-xs font-semibold text-gray-400">No favicon uploaded</span>
+                                                <span className="text-xs font-semibold text-gray-400">No favicon set</span>
                                             )}
                                         </div>
-                                        <label className="btn-outline py-2 text-xs font-bold cursor-pointer text-center block">
-                                            Upload Favicon
-                                            <input type="file" className="hidden" accept="image/*" onChange={e => handleImageUpload(e, 'app_favicon')} />
-                                        </label>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                className="input-field py-1.5 px-3 text-xs"
+                                                placeholder="Favicon URL (https://...)"
+                                                value={settings.app_favicon?.value || ''}
+                                                onChange={e => handleSettingChange('app_favicon', e.target.value)}
+                                            />
+                                            <label className="btn-outline py-2 text-xs font-bold cursor-pointer text-center block w-full">
+                                                Upload File
+                                                <input type="file" className="hidden" accept="image/*" onChange={e => handleImageUpload(e, 'app_favicon')} />
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -7,11 +7,9 @@ const { body } = require('express-validator');
 const loginValidation = [
   body('password').notEmpty().withMessage('Password is required'),
   body().custom((value) => {
-    if (!value.email && !value.indexNumber) {
-      throw new Error('Either email or index number is required');
-    }
-    if (value.email && !value.email.includes('@')) {
-      throw new Error('Invalid email format');
+    const id = (value.identifier || value.email || value.indexNumber || '').trim();
+    if (!id) {
+      throw new Error('Email or Index Number is required');
     }
     return true;
   })

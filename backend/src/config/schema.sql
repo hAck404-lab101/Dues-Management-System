@@ -228,9 +228,12 @@ UPDATE settings SET category = 'comm_sms' WHERE `key` IN ('sms_provider', 'sms_a
 UPDATE settings SET category = 'comm_email' WHERE `key` IN ('email_host', 'email_port', 'email_user', 'email_pass', 'email_from', 'email_from_name');
 UPDATE settings SET `value` = 'gonlinesites' WHERE `key` = 'sms_provider' AND (`value` IS NULL OR `value` = '' OR `value` = 'arkesel');
 UPDATE settings SET `value` = 'https://sms.gonlinesites.com/app/smsapi/index.php' WHERE `key` = 'sms_api_url' AND (`value` IS NULL OR `value` = '');
+<<<<<<< Updated upstream
 UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'app_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
 UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'sms_sender_id' AND (`value` LIKE '%UCC%' OR `value` LIKE '%HTU%');
 UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'email_from_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
+=======
+>>>>>>> Stashed changes
 
 -- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so migrate.js skips duplicate errors)
 CREATE INDEX idx_users_email ON users(email);
