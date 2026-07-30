@@ -72,7 +72,7 @@ const sendGOnlineSitesSMS = async ({ accessToken, senderId, phone, message, endp
     const params = {
         action: 'send-sms',
         to: phone,
-        from: senderId || 'UEW Dues',
+        from: senderId || 'Dues System',
         sms: message
     };
     params['api_' + 'key'] = accessToken;
@@ -90,7 +90,7 @@ const sendArkeselSMS = async ({ accessToken, senderId, phone, message }) => {
     const params = {
         action: 'send-sms',
         to: phone,
-        from: senderId || 'UEW Dues',
+        from: senderId || 'Dues System',
         sms: message
     };
     params['api_' + 'key'] = accessToken;
@@ -108,7 +108,7 @@ exports.sendSMS = async (phoneNumber, message, options = {}) => {
 
     let finalPhone = '';
     let provider = 'gonlinesites';
-    let senderId = 'UEW Dues';
+    let senderId = 'Dues System';
 
     try {
         if (!phoneNumber || !message) return false;
@@ -116,7 +116,7 @@ exports.sendSMS = async (phoneNumber, message, options = {}) => {
         const settings = await getSettingsByCategory('comm_sms');
         provider = (settings.sms_provider || process.env.SMS_PROVIDER || 'gonlinesites').toLowerCase();
         const accessToken = settings.sms_api_key || process.env.SMS_API_KEY;
-        senderId = settings.sms_sender_id || process.env.SMS_SENDER_ID || 'UEW Dues';
+        senderId = settings.sms_sender_id || process.env.SMS_SENDER_ID || 'Dues System';
         const endpoint = settings.sms_api_url || process.env.SMS_API_URL;
 
         finalPhone = formatGhanaPhone(phoneNumber);

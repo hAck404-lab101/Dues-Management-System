@@ -30,6 +30,8 @@ const cleanBrandText = (value?: string | null, fallback = '') => {
     .replace(/\bUCC\b/gi, 'DuesPay')
     .replace(/Ho Technical University/gi, 'DuesPay')
     .replace(/\bHTU\b/gi, 'DuesPay')
+    .replace(/University of Education, Winneba/gi, 'DuesPay')
+    .replace(/\bUEW\b/gi, 'DuesPay')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
