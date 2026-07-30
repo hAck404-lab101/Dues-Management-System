@@ -71,7 +71,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(!cached); // skip loading state if we have cached data
     const fetchedRef = useRef(false);
 
-    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api').replace(/\/api\/?$/, '');
+    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
 
     const formatUrl = (url: string | null) => {
         if (!url) return null;

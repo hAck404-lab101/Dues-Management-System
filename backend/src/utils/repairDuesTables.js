@@ -169,6 +169,51 @@ const repairDuesTables = async (connection) => {
   `);
   await exec('Ensure student_otps index exists', 'ALTER TABLE student_otps ADD INDEX idx_student_otps_student_id (student_id)');
 
+  await exec('Ensure system_logs table exists', `
+    CREATE TABLE IF NOT EXISTS system_logs (
+      id CHAR(36) PRIMARY KEY,
+      category VARCHAR(50) NOT NULL DEFAULT 'error',
+      level VARCHAR(20) NOT NULL DEFAULT 'info',
+      event VARCHAR(100) NOT NULL,
+      message TEXT,
+      context JSON,
+      related_payment_id CHAR(36) NULL,
+      related_user_id CHAR(36) NULL,
+      related_student_id CHAR(36) NULL,
+      ip VARCHAR(45) NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await exec('Ensure announcements table exists', `
+    CREATE TABLE IF NOT EXISTS announcements (
+      id CHAR(36) PRIMARY KEY,
+      title VARCHAR(200) NOT NULL,
+      body TEXT NOT NULL,
+      created_by CHAR(36) NULL,
+      audience VARCHAR(50) NOT NULL DEFAULT 'all_staff',
+      is_published BOOLEAN DEFAULT FALSE,
+      published_at TIMESTAMP NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await exec('Ensure permissions table exists', `
+    CREATE TABLE IF NOT EXISTS permissions (
+      id CHAR(36) PRIMARY KEY,
+      \`key\` VARCHAR(100) UNIQUE NOT NULL,
+      description TEXT
+    )
+  `);
+
+  await exec('Ensure role_permissions table exists', `
+    CREATE TABLE IF NOT EXISTS role_permissions (
+      role VARCHAR(50) NOT NULL,
+      permission_key VARCHAR(100) NOT NULL,
+      PRIMARY KEY (role, permission_key)
+    )
+  `);
+
   console.log('Dues and notification tables check completed.');
 };
 

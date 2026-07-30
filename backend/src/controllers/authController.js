@@ -62,12 +62,17 @@ const findStudentUserByIdentity = async (identityValue = '') => {
 };
 
 const getRolePermissions = async (role) => {
-  if (role === 'admin') {
-    const { rows } = await pool.query('SELECT DISTINCT `key` as permission_key FROM permissions');
+  try {
+    if (role === 'admin') {
+      const { rows } = await pool.query('SELECT DISTINCT `key` as permission_key FROM permissions');
+      return rows.length > 0 ? rows.map(r => r.permission_key) : ['*'];
+    }
+    const { rows } = await pool.query('SELECT permission_key FROM role_permissions WHERE role = ?', [role]);
     return rows.map(r => r.permission_key);
+  } catch (err) {
+    console.error('Error fetching role permissions:', err.message);
+    return role === 'admin' ? ['*'] : [];
   }
-  const { rows } = await pool.query('SELECT permission_key FROM role_permissions WHERE role = ?', [role]);
-  return rows.map(r => r.permission_key);
 };
 
 const userPayload = (user) => ({

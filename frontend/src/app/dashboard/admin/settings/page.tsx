@@ -165,7 +165,7 @@ function SettingsWorkspaceContent() {
     const [tailEnabled, setTailEnabled] = useState(false);
     const tailPollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api').replace('/api', '');
+    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
     const fetchAllData = async () => {
         setLoadingData(true);

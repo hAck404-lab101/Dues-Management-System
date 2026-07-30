@@ -82,9 +82,9 @@ const getDefaultValue = (key: string) => {
     switch (key) {
         case 'admin_approval_required': return 'false';
         case 'available_courses': return '';
-        case 'available_programmes': return 'Dip. Graphic Design, Bsc. Graphic Design, Dip. Advertisement, Bsc. Advertisement, Dip. Multimedia, Bsc. Multimedia, Dip. Animation, Bsc. Animation';
+        case 'available_programmes': return '';
         case 'student_registration_open': return 'true';
-        case 'available_academic_years': return '2023/2024, 2024/2025, 2025/2026';
+        case 'available_academic_years': return '';
         case 'available_levels': return '100, 200, 300, 400';
         case 'registration_status': return 'open';
         default: return '';
@@ -115,7 +115,7 @@ export default function AdminSettingsPage() {
     const [activeTab, setActiveTab] = useState('sys_general');
 
     const allowedRoles = ['admin', 'treasurer', 'financial_secretary', 'president'];
-    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api').replace('/api', '');
+    const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
     useEffect(() => {
         if (!loading && (!user || !allowedRoles.includes(user.role))) {

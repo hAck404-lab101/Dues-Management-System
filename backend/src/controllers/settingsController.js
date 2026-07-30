@@ -1,5 +1,6 @@
 const { query } = require('../config/database');
 const { encrypt, decrypt } = require('../utils/encryption');
+const { generateUUID } = require('../utils/uuid');
 
 const SENSITIVE_KEYS = [
     'paystack_secret_key',
@@ -20,9 +21,9 @@ const DEFAULT_SETTINGS = [
     ['email_from_name', process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME, 'comm_email', 'Email sender display name'],
     ['admin_approval_required', 'false', 'portal', 'Require admin approval for new students'],
     ['available_courses', '', 'portal', 'Comma-separated list of courses'],
-    ['available_programmes', 'Dip. Graphic Design, Bsc. Graphic Design, Dip. Advertisement, Bsc. Advertisement, Dip. Multimedia, Bsc. Multimedia, Dip. Animation, Bsc. Animation', 'portal', 'Comma-separated list of available programmes'],
+    ['available_programmes', '', 'portal', 'Comma-separated list of available programmes'],
     ['student_registration_open', 'true', 'portal', 'Allow students to register themselves'],
-    ['available_academic_years', '2023/2024, 2024/2025, 2025/2026', 'portal', 'Comma-separated list of available academic years'],
+    ['available_academic_years', '', 'portal', 'Comma-separated list of available academic years'],
     ['available_levels', '100, 200, 300, 400', 'portal', 'Comma-separated list of levels'],
     ['registration_status', 'open', 'portal', 'Registration status (open/closed)']
 ];
@@ -69,8 +70,9 @@ const cleanOldUccBranding = async () => {
 
 const ensureDefaultSettings = async () => {
     for (const [key, value, category] of DEFAULT_SETTINGS) {
+        // Include id (UUID) since the settings table requires it as PRIMARY KEY NOT NULL
         await query(
-            'INSERT IGNORE INTO settings (`key`, `value`, `category`) VALUES (?, ?, ?)',
+            'INSERT IGNORE INTO settings (id, `key`, `value`, `category`) VALUES (UUID(), ?, ?, ?)',
             [key, value, category]
         );
     }
@@ -114,18 +116,35 @@ exports.updateSettings = async (req, res) => {
 
     try {
         await ensureDefaultSettings();
-        const keys = Object.keys(settings);
+        const { pool } = require('../config/database');
+        const conn = await pool.getConnection();
 
-        for (const key of keys) {
-            let value = settings[key];
-            if (SENSITIVE_KEYS.includes(key)) {
-                value = encrypt(value);
+        try {
+            for (const key of Object.keys(settings)) {
+                let value = settings[key];
+                if (SENSITIVE_KEYS.includes(key)) {
+                    value = encrypt(value);
+                }
+
+                // Try UPDATE first — works for all pre-seeded keys
+                const [updateResult] = await conn.query(
+                    'UPDATE settings SET `value` = ? WHERE `key` = ?',
+                    [value, key]
+                );
+
+                if (updateResult.affectedRows === 0) {
+                    // Key doesn't exist yet — INSERT with generated UUID for XAMPP compatibility
+                    await conn.query(
+                        'INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES (UUID(), ?, ?, "sys_general", "")',
+                        [key, value]
+                    );
+                }
             }
-            await query('UPDATE settings SET value = ? WHERE `key` = ?', [value, key]);
+        } finally {
+            conn.release();
         }
 
         await cleanOldUccBranding();
-
         res.json({ success: true, message: 'Settings updated successfully' });
     } catch (error) {
         console.error('Update settings error:', error);
