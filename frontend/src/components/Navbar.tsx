@@ -53,6 +53,7 @@ export default function Navbar() {
   const isAuthPage = pathname === '/login' || pathname === '/admin/login';
   const isAdminRoute = pathname.startsWith('/admin');
   const authenticated = isClient && !!user;
+  const showNavLinks = authenticated;
   const role = user?.role;
   const roleLabel = getRoleLabel(role);
 
@@ -231,7 +232,7 @@ function DropdownItem({ href, label, icon, active }: { href: string; label: stri
   );
 }
 
-function MobileNavItem({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
+function MobileNavItem({ href, label, icon, active = false }: { href: string; label: string; icon: ReactNode; active?: boolean }) {
   return (
     <Link href={href} className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors min-h-[44px] ${active ? 'bg-[#DBEAFE] text-[#001150] font-bold shadow-md' : 'bg-white/5 text-white/80 hover:bg-white/10'}`}>
       <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${active ? 'bg-[#0020B2]/10 text-[#0020B2]' : 'bg-secondary/10 text-white/70'}`}><span className="w-4 h-4">{icon}</span></div>
