@@ -69,19 +69,9 @@ const authorize = (...roles) => {
   };
 };
 
-const isAdmin = authorize('admin', 'treasurer', 'financial_secretary', 'president');
-const isStudent = authorize('student');
-const isTreasurer = authorize('admin', 'treasurer', 'president');
-const isFinancialSecretary = authorize('admin', 'financial_secretary', 'treasurer', 'president');
-const isPresident = authorize('admin', 'president');
-
 module.exports = {
   authenticate,
-  authorize,
-  isAdmin,
-  isStudent,
-  isTreasurer,
-  isFinancialSecretary,
-  isPresident
+  authorize
 };
+
 

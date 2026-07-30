@@ -24,7 +24,7 @@ const migrateSettingsV2 = async () => {
             // SYSTEM - APPEARANCE
             ['app_favicon', '/favicon.png', 'sys_appearance', 'Application favicon URL'],
             ['app_theme', 'light', 'sys_appearance', 'Default system theme (light, dark, system)'],
-            ['app_footer_text', '© 2024 University Dues Management System. All Rights Reserved.', 'sys_appearance', 'Text displayed in the footer'],
+            ['app_footer_text', '© 2024 University DuesPay. All Rights Reserved.', 'sys_appearance', 'Text displayed in the footer'],
 
             // SYSTEM - MAINTENANCE
             ['maintenance_mode', 'off', 'sys_maintenance', 'Enable/disable maintenance mode'],

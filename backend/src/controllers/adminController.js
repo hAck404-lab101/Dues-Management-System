@@ -62,9 +62,9 @@ exports.bulkImportStudents = async (req, res) => {
             [userId, email, passwordHash, indexNumber]
           );
           await connection.query(
-            `INSERT INTO students (id, user_id, student_id, full_name, email, level, programme, academic_year, phone_number, is_active)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, true)`,
-            [studentId, userId, indexNumber, fullName, email, level, programme, academicYear, phoneNumber || null]
+            `INSERT INTO students (id, student_id, id_card_number, full_name, email, roster_email, level, programme, academic_year, phone_number, roster_phone, is_active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true)`,
+            [studentId, indexNumber, indexNumber, fullName, email, email, level, programme, academicYear, phoneNumber || null, phoneNumber || null]
           );
 
           await connection.commit();
@@ -393,4 +393,48 @@ exports.promoteStudents = async (req, res) => {
 
 exports.archiveData = async (req, res) => {
   res.json({ success: true, message: 'Data archiving triggered. This may take a few minutes.' });
+};
+
+exports.getSystemLogs = async (req, res) => {
+  try {
+    const { page = 1, limit = 50, category, level, search } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    let sql = 'SELECT * FROM system_logs WHERE 1=1';
+    const params = [];
+    
+    if (category) {
+      sql += ' AND category = ?';
+      params.push(category);
+    }
+    if (level) {
+      sql += ' AND level = ?';
+      params.push(level);
+    }
+    if (search) {
+      sql += ' AND (event LIKE ? OR message LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const countResult = await pool.query(sql.replace('*', 'COUNT(*) as total'), params);
+    
+    sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), offset);
+    
+    const result = await pool.query(sql, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        total: Number(countResult.rows[0].total || 0),
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(Number(countResult.rows[0].total || 0) / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('System log fetch error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };

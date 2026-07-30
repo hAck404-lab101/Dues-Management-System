@@ -197,6 +197,14 @@ exports.getAdminDashboard = async (req, res) => {
        LIMIT 10`
     );
 
+    const paymentMethodsResult = await pool.query(
+      `SELECT p.payment_method, COUNT(*) as count, SUM(p.amount) as total
+       FROM payments p
+       INNER JOIN dues d ON p.due_id = d.id
+       WHERE p.status IN ('approved', 'completed') AND d.is_active = true
+       GROUP BY p.payment_method`
+    );
+
     res.json({
       success: true,
       data: {
@@ -217,6 +225,11 @@ exports.getAdminDashboard = async (req, res) => {
             level: row.level,
             students: parseInt(row.students),
             totalPaid: parseFloat(row.total_paid)
+          })),
+          paymentMethodStats: paymentMethodsResult.rows.map(row => ({
+            method: row.payment_method,
+            count: parseInt(row.count),
+            total: parseFloat(row.total)
           }))
         },
         recentPayments: recentPaymentsResult.rows

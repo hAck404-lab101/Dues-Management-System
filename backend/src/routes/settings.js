@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const settingsController = require('../controllers/settingsController');
 const backupController = require('../controllers/backupController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
+const requirePermission = require('../middleware/requirePermission');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -41,14 +42,14 @@ const backupUpload = multer({
 router.get('/public', settingsController.getPublicSettings);
 
 router.use(authenticate);
-router.use(authorize('admin', 'treasurer', 'financial_secretary', 'president'));
 
-router.get('/', settingsController.getSettings);
-router.patch('/', settingsController.updateSettings);
-router.post('/upload-logo', upload.single('logo'), settingsController.uploadLogo);
-router.get('/backup/download', backupController.downloadBackup);
-router.post('/backup/restore', backupUpload.single('backup'), backupController.restoreBackup);
-router.post('/reset-site', authorize('admin', 'treasurer', 'president'), settingsController.resetSite);
-router.get('/:category', settingsController.getSettingsByCategory);
+router.get('/', requirePermission('settings.read'), settingsController.getSettings);
+router.patch('/', requirePermission('settings.write', 'settings.write_financial', 'settings.write_integrations', 'settings.write_branding'), settingsController.updateSettings);
+router.post('/upload-logo', requirePermission('settings.write_branding', 'settings.write'), upload.single('logo'), settingsController.uploadLogo);
+router.get('/backup/download', requirePermission('settings.write'), backupController.downloadBackup);
+router.post('/backup/restore', requirePermission('settings.write'), backupUpload.single('backup'), backupController.restoreBackup);
+router.post('/reset-site', requirePermission('settings.write'), settingsController.resetSite);
+router.get('/:category', requirePermission('settings.read'), settingsController.getSettingsByCategory);
 
 module.exports = router;
+

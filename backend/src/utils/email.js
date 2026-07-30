@@ -69,6 +69,10 @@ const sendEmail = async (to, subject, textOrHtml, htmlOrType, maybeTypeOrAttachm
     html = htmlOrType || '';
     type = maybeTypeOrAttachments || 'general';
     attachments = maybeAttachments;
+  } else if (typeof maybeTypeOrAttachments === 'string') {
+    text = textOrHtml || '';
+    html = htmlOrType || '';
+    type = maybeTypeOrAttachments;
   } else {
     html = textOrHtml || '';
     text = String(textOrHtml || '').replace(/<[^>]+>/g, ' ');

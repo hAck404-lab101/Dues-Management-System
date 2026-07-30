@@ -61,6 +61,15 @@ const findStudentUserByIdentity = async (identityValue = '') => {
   return null;
 };
 
+const getRolePermissions = async (role) => {
+  if (role === 'admin') {
+    const { rows } = await pool.query('SELECT DISTINCT `key` as permission_key FROM permissions');
+    return rows.map(r => r.permission_key);
+  }
+  const { rows } = await pool.query('SELECT permission_key FROM role_permissions WHERE role = ?', [role]);
+  return rows.map(r => r.permission_key);
+};
+
 const userPayload = (user) => ({
   id: user.id,
   email: user.email,
@@ -112,7 +121,8 @@ exports.login = async (req, res) => {
     if (!isValidPassword) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
     const token = generateToken(user.id, user.role);
-    res.json({ success: true, message: 'Login successful', token, user: userPayload(user) });
+    const permissions = await getRolePermissions(user.role);
+    res.json({ success: true, message: 'Login successful', token, user: { ...userPayload(user), permissions } });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
@@ -120,70 +130,15 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: 'Validation error', errors: errors.array() });
-
-    const { indexNumber, fullName, phoneNumber, email, password, programme, academicYear } = req.body;
-    const { rows: settingsRows } = await pool.query('SELECT `key`, `value` FROM settings WHERE `key` IN ("available_programmes", "available_academic_years", "registration_status", "signup_email_enabled")');
-    const settingsMap = {};
-    settingsRows.forEach(s => settingsMap[s.key] = s.value);
-
-    if (settingsMap.registration_status === 'closed') return res.status(403).json({ success: false, message: 'Student registration is currently closed.' });
-
-    const validProgrammes = settingsMap.available_programmes?.split(',').map(p => p.trim().toLowerCase()).filter(Boolean) || [];
-    const validYears = settingsMap.available_academic_years?.split(',').map(y => y.trim().toLowerCase()).filter(Boolean) || [];
-    if (validProgrammes.length > 0 && !validProgrammes.includes((programme || '').trim().toLowerCase())) return res.status(400).json({ success: false, message: 'Invalid programme selected. Please choose from the list.' });
-    if (validYears.length > 0 && !validYears.includes((academicYear || '').trim().toLowerCase())) return res.status(400).json({ success: false, message: 'Invalid academic year selected. Please choose from the list.' });
-
-    const existingUser = await pool.query('SELECT id FROM users WHERE email = ? OR student_id = ?', [email, indexNumber]);
-    if (existingUser.rows.length > 0) return res.status(400).json({ success: false, message: 'Email or Index Number already exists' });
-
-    const passwordHash = await bcrypt.hash(password, 10);
-    const connection = await pool.getConnection();
-    await connection.beginTransaction();
-    let responseUser;
-
-    try {
-      const userId = generateUUID();
-      const studentRecordId = generateUUID();
-      await connection.query(
-        `INSERT INTO users (id, email, password_hash, role, student_id, is_active, must_change_password) VALUES (?, ?, ?, ?, ?, ?, false)`,
-        [userId, email, passwordHash, 'student', indexNumber, true]
-      );
-      await connection.query(
-        `INSERT INTO students (id, user_id, student_id, full_name, email, level, programme, academic_year, phone_number, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [studentRecordId, userId, indexNumber, fullName, email, '100', programme, academicYear, phoneNumber, true]
-      );
-      const [studentRows] = await connection.query('SELECT id, full_name, student_id, email FROM students WHERE id = ?', [studentRecordId]);
-      await connection.commit();
-      responseUser = {
-        id: userId,
-        email,
-        role: 'student',
-        studentId: indexNumber,
-        isActive: true,
-        mustChangePassword: false,
-        student: { id: studentRows[0].id, fullName: studentRows[0].full_name, studentId: studentRows[0].student_id, email: studentRows[0].email }
-      };
-
-      if (settingsMap.signup_email_enabled !== 'false') {
-        sendSignupEmail({ full_name: fullName, fullName, student_id: indexNumber, indexNumber, email, programme, academic_year: academicYear, academicYear }).catch(err => console.error('Signup email failed:', err.message));
-      }
-
-      const token = generateToken(userId, 'student');
-      res.status(201).json({ success: true, message: 'Registration successful', token, user: responseUser });
-    } catch (error) {
-      await connection.rollback();
-      throw error;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ success: false, message: 'Server error during registration' });
-  }
+  // Student self-registration is permanently disabled.
+  // Students must be imported by an admin using the bulk import feature.
+  return res.status(403).json({
+    success: false,
+    message: 'Student self-registration is not allowed. Please contact your administrator.'
+  });
 };
+
+
 
 exports.forgotPassword = async (req, res) => {
   try {
@@ -276,7 +231,9 @@ exports.getMe = async (req, res) => {
       [req.user.id]
     );
     if (userResult.rows.length === 0) return res.status(404).json({ success: false, message: 'User not found' });
-    res.json({ success: true, user: userPayload(userResult.rows[0]) });
+    const user = userResult.rows[0];
+    const permissions = await getRolePermissions(user.role);
+    res.json({ success: true, user: { ...userPayload(user), permissions } });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

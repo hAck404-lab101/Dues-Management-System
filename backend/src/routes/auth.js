@@ -17,14 +17,6 @@ const loginValidation = [
   })
 ];
 
-const registerValidation = [
-  body('indexNumber').notEmpty().withMessage('Index number is required'),
-  body('fullName').notEmpty().withMessage('Full name is required'),
-  body('phoneNumber').notEmpty().withMessage('Phone number is required'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-];
-
 const forgotPasswordValidation = [
   body('indexNumber').notEmpty().withMessage('Index number is required'),
   body('phoneNumber').notEmpty().withMessage('Registered phone number is required')
@@ -41,7 +33,7 @@ const changePasswordValidation = [
 ];
 
 router.post('/login', loginValidation, authController.login);
-router.post('/register', registerValidation, authController.register);
+// Student self-registration is DISABLED — students must be imported by an admin with import permissions.
 router.post('/forgot-password', forgotPasswordValidation, authController.forgotPassword);
 router.post('/verify-otp', verifyOTPValidation, authController.verifyOTP);
 router.post('/reset-password', authController.resetPassword);

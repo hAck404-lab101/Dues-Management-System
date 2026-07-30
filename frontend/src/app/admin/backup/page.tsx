@@ -1,161 +1,159 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Layout from '@/components/Layout';
+import AdminLayout from '@/components/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { ShieldIcon, DownloadIcon, ExclamationIcon } from '@/components/Icons';
+import { DownloadIcon, ShieldIcon, WrenchIcon } from '@/components/Icons';
 
 export default function AdminBackupPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [confirmText, setConfirmText] = useState('');
-  const [resetting, setResetting] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const allowedRoles = ['admin', 'treasurer', 'president'];
 
   useEffect(() => {
-    if (!loading && (!user || !['admin', 'president'].includes(user.role))) {
+    if (!loading && (!user || !allowedRoles.includes(user.role))) {
       router.push('/admin/login');
     }
   }, [user, loading, router]);
 
-  const handleExportData = async (type: 'paid-students' | 'defaulters' | 'revenue') => {
-    setExporting(true);
+  const downloadBackup = async () => {
+    setBusy(true);
     try {
-      const res = await api.get('/reports/export/csv', {
-        params: { reportType: type },
-        responseType: 'blob'
-      });
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup-${type}-${Date.now()}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      toast.success(`${type.replace('-', ' ')} export downloaded`);
-    } catch {
-      toast.error('Failed to export data');
+      const res = await api.get('/settings/backup/download', { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `dues-management-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Backup downloaded successfully');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to download backup');
     } finally {
-      setExporting(false);
+      setBusy(false);
     }
   };
 
-  const handleResetSite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (confirmText.trim() !== 'RESET') {
-      return toast.error('Please type RESET to confirm');
-    }
-
-    if (!window.confirm('WARNING: This will permanently delete ALL students, payments, dues, receipts, and audit logs. Are you completely sure?')) {
+  const restoreBackup = async () => {
+    if (!selectedFile) {
+      toast.error('Select a backup JSON file first');
       return;
     }
 
-    setResetting(true);
+    const firstConfirm = window.confirm('This will replace the current database data with the selected backup. Continue?');
+    if (!firstConfirm) return;
+
+    const typed = window.prompt("Type 'RESTORE BACKUP' to confirm restore:");
+    if (typed !== 'RESTORE BACKUP') {
+      toast.error('Restore cancelled');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('backup', selectedFile);
+    formData.append('confirmation', 'RESTORE BACKUP');
+
+    setBusy(true);
     try {
-      const res = await api.post('/settings/reset-site');
-      if (res.data?.success) {
-        toast.success(res.data.message || 'Site data reset successfully');
-        setConfirmText('');
-        router.push('/admin/dashboard');
-      }
+      const res = await api.post('/settings/backup/restore', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success(res.data?.message || 'Backup restored successfully');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to reset site data');
+      toast.error(err.response?.data?.message || 'Failed to restore backup');
     } finally {
-      setResetting(false);
+      setBusy(false);
     }
   };
 
+  if (loading || !user) {
+    return (
+      <AdminLayout title="Backup & Recovery">
+        <div className="card p-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-100 rounded w-1/3" />
+            <div className="h-24 bg-gray-100 rounded" />
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
-    <Layout title="Backup & Recovery">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Data Export / Backup */}
-        <div className="card">
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <span className="w-5 h-5"><ShieldIcon /></span>
+    <AdminLayout title="Backup & Recovery">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="card p-6 bg-gradient-to-br from-primary to-primary-dark text-white overflow-hidden relative">
+          <div className="relative z-10">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4">
+              <span className="w-7 h-7"><ShieldIcon /></span>
+            </div>
+            <h1 className="text-2xl font-extrabold">Backup & Recovery</h1>
+            <p className="text-white/75 text-sm mt-2 max-w-2xl">
+              Download a full database backup before major changes, and restore from a saved backup if anything goes wrong.
+            </p>
+          </div>
+          <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full bg-white/10" />
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="card p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center">
+              <span className="w-6 h-6"><DownloadIcon /></span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-primary">Data Backup Center</h2>
-              <p className="text-xs text-gray-500">Download CSV backups of system records</p>
+              <h2 className="text-lg font-bold text-primary">Download Backup</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Exports students, dues, payments, receipts, settings, logs, and other database records as a JSON file.
+              </p>
             </div>
+            <button onClick={downloadBackup} disabled={busy} className="btn-primary w-full disabled:opacity-60">
+              {busy ? 'Processing...' : 'Download Full Backup'}
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <button
-              onClick={() => handleExportData('revenue')}
-              disabled={exporting}
-              className="p-4 rounded-xl border border-gray-200 hover:border-primary hover:shadow-md transition-all text-left bg-gray-50 hover:bg-white"
-            >
-              <span className="w-6 h-6 text-primary block mb-2"><DownloadIcon /></span>
-              <p className="font-bold text-sm text-primary">Revenue Backup</p>
-              <p className="text-xs text-gray-500 mt-1">Export all dues revenue breakdown</p>
-            </button>
-
-            <button
-              onClick={() => handleExportData('paid-students')}
-              disabled={exporting}
-              className="p-4 rounded-xl border border-gray-200 hover:border-primary hover:shadow-md transition-all text-left bg-gray-50 hover:bg-white"
-            >
-              <span className="w-6 h-6 text-primary block mb-2"><DownloadIcon /></span>
-              <p className="font-bold text-sm text-primary">Paid Records</p>
-              <p className="text-xs text-gray-500 mt-1">Export list of fully paid students</p>
-            </button>
-
-            <button
-              onClick={() => handleExportData('defaulters')}
-              disabled={exporting}
-              className="p-4 rounded-xl border border-gray-200 hover:border-primary hover:shadow-md transition-all text-left bg-gray-50 hover:bg-white"
-            >
-              <span className="w-6 h-6 text-primary block mb-2"><DownloadIcon /></span>
-              <p className="font-bold text-sm text-primary">Defaulters List</p>
-              <p className="text-xs text-gray-500 mt-1">Export list of students with balance</p>
+          <div className="card p-6 space-y-4 border-red-100 bg-red-50/30">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-700 flex items-center justify-center">
+              <span className="w-6 h-6"><WrenchIcon /></span>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-red-900">Restore Backup</h2>
+              <p className="text-sm text-red-700 mt-1">
+                Restoring replaces current live database data. Always download a fresh backup first.
+              </p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-white file:text-red-700 file:font-bold"
+            />
+            {selectedFile && <p className="text-xs text-gray-500">Selected: {selectedFile.name}</p>}
+            <button onClick={restoreBackup} disabled={busy || !selectedFile} className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-bold w-full disabled:opacity-60">
+              {busy ? 'Processing...' : 'Restore Selected Backup'}
             </button>
           </div>
         </div>
 
-        {/* Danger Zone: Reset System Data */}
-        <div className="card border-2 border-red-200 bg-red-50/40">
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-red-200">
-            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
-              <span className="w-5 h-5"><ExclamationIcon /></span>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-red-700">Danger Zone: Data Reset</h2>
-              <p className="text-xs text-red-600">Clear all student records, payments, dues, and receipts</p>
-            </div>
-          </div>
-
-          <p className="text-xs text-gray-600 mb-4 leading-relaxed">
-            This action will clear all student profiles, due assignments, payments, receipts, and logs.
-            Admin accounts will remain intact. This operation is <strong>IRREVERSIBLE</strong>.
+        <div className="card p-5 border-yellow-100 bg-yellow-50">
+          <h3 className="font-bold text-yellow-900">Important</h3>
+          <p className="text-sm text-yellow-800 mt-1">
+            This backs up the database records. Your source code is already backed up in GitHub. Uploaded proof images/logos may still depend on Railway file storage, so keep important originals separately.
           </p>
-
-          <form onSubmit={handleResetSite} className="space-y-3">
-            <div>
-              <label className="label text-red-700">Type <span className="font-mono font-bold">RESET</span> to confirm *</label>
-              <input
-                type="text"
-                className="input-field border-red-300 focus:ring-red-500"
-                placeholder="RESET"
-                value={confirmText}
-                onChange={e => setConfirmText(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={resetting || confirmText.trim() !== 'RESET'}
-              className="btn-primary bg-red-600 hover:bg-red-700 border-red-600 shadow-red-200 w-full py-2.5 font-bold disabled:opacity-50"
-            >
-              {resetting ? 'Resetting System Data...' : 'Reset All System Data'}
-            </button>
-          </form>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

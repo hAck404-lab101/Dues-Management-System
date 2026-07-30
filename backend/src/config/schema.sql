@@ -216,8 +216,8 @@ INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES
 (UUID(), 'email_user', '', 'comm_email', 'SMTP username'),
 (UUID(), 'email_pass', '', 'comm_email', 'Encrypted SMTP password'),
 (UUID(), 'email_from', '', 'comm_email', 'Email sender address'),
-(UUID(), 'email_from_name', 'Dues Management System', 'comm_email', 'Email sender display name'),
-(UUID(), 'app_name', 'Dues Management System', 'sys_general', 'Application name'),
+(UUID(), 'email_from_name', 'DuesPay', 'comm_email', 'Email sender display name'),
+(UUID(), 'app_name', 'DuesPay', 'sys_general', 'Application name'),
 (UUID(), 'app_description', 'A secure student portal for dues, payments, receipts, and clearance records.', 'sys_general', 'Application link preview description'),
 (UUID(), 'app_logo', '', 'sys_appearance', 'Primary app logo'),
 (UUID(), 'app_logo_secondary', '', 'sys_appearance', 'Secondary app logo'),
@@ -228,9 +228,9 @@ UPDATE settings SET category = 'comm_sms' WHERE `key` IN ('sms_provider', 'sms_a
 UPDATE settings SET category = 'comm_email' WHERE `key` IN ('email_host', 'email_port', 'email_user', 'email_pass', 'email_from', 'email_from_name');
 UPDATE settings SET `value` = 'gonlinesites' WHERE `key` = 'sms_provider' AND (`value` IS NULL OR `value` = '' OR `value` = 'arkesel');
 UPDATE settings SET `value` = 'https://sms.gonlinesites.com/app/smsapi/index.php' WHERE `key` = 'sms_api_url' AND (`value` IS NULL OR `value` = '');
-UPDATE settings SET `value` = 'Dues Management System' WHERE `key` = 'app_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
-UPDATE settings SET `value` = 'DMS' WHERE `key` = 'sms_sender_id' AND (`value` LIKE '%UCC%' OR `value` LIKE '%HTU%');
-UPDATE settings SET `value` = 'Dues Management System' WHERE `key` = 'email_from_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
+UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'app_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
+UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'sms_sender_id' AND (`value` LIKE '%UCC%' OR `value` LIKE '%HTU%');
+UPDATE settings SET `value` = 'DuesPay' WHERE `key` = 'email_from_name' AND (`value` LIKE '%UCC%' OR `value` LIKE '%University of Cape Coast%' OR `value` LIKE '%HTU%' OR `value` LIKE '%Ho Technical University%');
 
 -- Indexes for performance (MySQL doesn't support IF NOT EXISTS for indexes, so migrate.js skips duplicate errors)
 CREATE INDEX idx_users_email ON users(email);
