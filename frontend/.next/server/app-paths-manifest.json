@@ -1,8 +1,0 @@
-{
-  "/admin/communications/page": "app/admin/communications/page.js",
-  "/admin/students/page": "app/admin/students/page.js",
-  "/dashboard/admin/settings/page": "app/dashboard/admin/settings/page.js",
-  "/admin/users/page": "app/admin/users/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/dashboard/admin/page": "app/dashboard/admin/page.js"
-}
