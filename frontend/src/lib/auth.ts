@@ -8,7 +8,6 @@ export interface User {
   studentId?: string;
   isActive?: boolean;
   mustChangePassword?: boolean;
-  permissions?: string[];
   student?: {
     id: string;
     fullName: string;
@@ -19,7 +18,6 @@ export interface User {
   };
 }
 
-
 export const login = async (emailOrIndexNumber: string, password: string) => {
   const isEmail = emailOrIndexNumber.includes('@');
   const payload = isEmail
@@ -29,7 +27,7 @@ export const login = async (emailOrIndexNumber: string, password: string) => {
   try {
     const response = await api.post('/auth/login', payload);
     if (response.data.success) {
-      Cookies.set('token', response.data.token, { expires: 7, path: '/' });
+      Cookies.set('token', response.data.token, { expires: 7 });
       return response.data;
     }
     throw new Error(response.data.message || 'Login failed');
@@ -42,7 +40,7 @@ export const adminLogin = async (email: string, password: string) => {
   try {
     const response = await api.post('/auth/login', { email, password });
     if (response.data.success) {
-      Cookies.set('token', response.data.token, { expires: 7, path: '/' });
+      Cookies.set('token', response.data.token, { expires: 7 });
       return response.data;
     }
     throw new Error(response.data.message || 'Login failed');
@@ -51,13 +49,19 @@ export const adminLogin = async (email: string, password: string) => {
   }
 };
 
-export const register = async (data: any) => {
+export const register = async (data: {
+  indexNumber: string;
+  fullName: string;
+  phoneNumber: string;
+  email: string;
+  password: string;
+  programme: string;
+  academicYear: string;
+}) => {
   try {
     const response = await api.post('/auth/register', data);
     if (response.data.success) {
-      if (response.data.token) {
-        Cookies.set('token', response.data.token, { expires: 7, path: '/' });
-      }
+      Cookies.set('token', response.data.token, { expires: 7 });
       return response.data;
     }
     throw new Error(response.data.message || 'Registration failed');
@@ -66,15 +70,8 @@ export const register = async (data: any) => {
   }
 };
 
-
-
 export const logout = () => {
-  Cookies.remove('token', { path: '/' });
-  // Clear all caches
-  try {
-    sessionStorage.removeItem('auth_user_cache');
-    localStorage.removeItem('branding_cache');
-  } catch { /* ignore */ }
+  Cookies.remove('token');
   window.location.href = '/';
 };
 

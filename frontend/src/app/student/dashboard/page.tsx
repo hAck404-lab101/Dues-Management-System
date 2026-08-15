@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { useBranding } from '@/contexts/BrandingContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -26,7 +25,6 @@ interface DashboardData {
 export default function StudentDashboard() {
   const router = useRouter();
   const { user, loading, setUser } = useAuth();
-  const { appName, appLogo } = useBranding();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -139,11 +137,6 @@ export default function StudentDashboard() {
           <h1 className="text-3xl md:text-4xl font-extrabold mt-2">Welcome, {firstName}</h1>
           <p className="text-white/80 mt-2 max-w-2xl">Track your dues, make payments, and download official receipts from your student portal.</p>
         </div>
-        {appLogo && (
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 z-10 hidden sm:block">
-            <img src={appLogo} alt={appName} className="h-14 w-auto object-contain opacity-90 drop-shadow-lg" />
-          </div>
-        )}
         <div className="absolute -right-12 -top-12 w-40 h-40 rounded-full bg-white/10" />
         <div className="absolute right-12 -bottom-16 w-48 h-48 rounded-full bg-secondary/20" />
       </div>

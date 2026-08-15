@@ -20,11 +20,7 @@ export default function LoginPage() {
       const res = await login(formData.indexNumber, formData.password);
       setUser(res.user);
       toast.success('Login successful!');
-      if (['admin', 'treasurer', 'financial_secretary', 'president'].includes(res.user?.role)) {
-        window.location.href = '/admin/dashboard';
-      } else {
-        window.location.href = '/student/dashboard';
-      }
+      window.location.href = '/student/dashboard';
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {

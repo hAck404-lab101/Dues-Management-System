@@ -2,12 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '@/components/AdminLayout';
+import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import BulkImportModal from '@/components/BulkImportModal';
-import { TableSkeleton } from '@/components/Skeletons';
 
 const LEVELS = ['100', '200', '300', '400'];
 
@@ -42,14 +40,10 @@ export default function AdminStudentsPage() {
   const [total, setTotal] = useState(0);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
   const [resetStudent, setResetStudent] = useState<Student | null>(null);
-  const [viewStudent, setViewStudent] = useState<Student | null>(null);
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
@@ -233,7 +227,7 @@ export default function AdminStudentsPage() {
 
   return (
     <>
-      <AdminLayout title="Manage Students">
+      <Layout title="Manage Students">
         <div className="flex flex-col sm:flex-row gap-4 mb-6 items-start sm:items-center justify-between">
           <div className="flex gap-3 flex-wrap items-center">
             <input
@@ -259,9 +253,6 @@ export default function AdminStudentsPage() {
           </div>
           <div className="flex gap-2 items-center">
             <span className="text-sm text-gray-500">{total} student{total !== 1 ? 's' : ''}</span>
-            <button onClick={() => setShowBulkImportModal(true)} className="btn-outline">
-              Bulk Upload
-            </button>
             <button onClick={() => { setForm(emptyForm); setShowAddModal(true); }} className="btn-primary">
               + Add Student
             </button>
@@ -270,135 +261,82 @@ export default function AdminStudentsPage() {
 
         <div className="card overflow-x-auto">
           {loadingData ? (
-            <TableSkeleton rows={7} columns={7} />
+            <div className="space-y-3 p-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
+              ))}
+            </div>
           ) : students.length === 0 ? (
             <p className="text-gray-500 text-center py-10">No students found.</p>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-4 px-4 w-10">
+                <tr className="border-b bg-gray-50 text-left">
+                  <th className="py-3 px-3 w-10">
                     <input
                       type="checkbox"
-                      className="rounded border-gray-300 text-[#0020B2] focus:ring-[#0020B2] h-4 w-4"
+                      className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
                       checked={students.length > 0 && selectedIds.length === students.length}
                       onChange={toggleSelectAll}
                     />
                   </th>
-                  <th className="py-4 px-4 font-semibold">Index No.</th>
-                  <th className="py-4 px-4 font-semibold">Name</th>
-                  <th className="py-4 px-4 font-semibold">Email</th>
-                  <th className="py-4 px-4 font-semibold">Level</th>
-                  <th className="py-4 px-4 font-semibold">Programme</th>
-                  <th className="py-4 px-4 font-semibold">Status</th>
-                  <th className="py-4 px-4 font-semibold text-right">Actions</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Index No.</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Name</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Email</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Level</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Programme</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Status</th>
+                  <th className="py-3 px-3 font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100/60">
+              <tbody>
                 {students.map(s => (
-                  <tr key={s.id} className={`hover:bg-gray-50/70 transition-colors ${selectedIds.includes(s.id) ? 'bg-primary/5' : ''}`}>
-                    <td className="py-4 px-4">
+                  <tr key={s.id} className={`border-b hover:bg-gray-50 transition-colors ${selectedIds.includes(s.id) ? 'bg-primary/5' : ''}`}>
+                    <td className="py-3 px-3">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-[#0020B2] focus:ring-[#0020B2] h-4 w-4"
+                        className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
                         checked={selectedIds.includes(s.id)}
                         onChange={() => toggleSelect(s.id)}
                       />
                     </td>
-                    <td className="py-4 px-4 font-mono text-xs text-gray-600">{s.student_id}</td>
-                    <td className="py-4 px-4">
-                      <div className="font-semibold text-gray-900 text-sm">{s.full_name}</div>
-                      <div className="text-xs text-gray-400 mt-0.5">{s.phone_number || 'No phone number'}</div>
+                    <td className="py-3 px-3 font-mono">{s.student_id}</td>
+                    <td className="py-3 px-3 font-medium">
+                      <div>{s.full_name}</div>
+                      <div className="text-xs text-gray-400">{s.phone_number || 'No phone number'}</div>
                     </td>
-                    <td className="py-4 px-4 text-gray-600 text-sm">{s.email}</td>
-                    <td className="py-4 px-4 text-sm">Lvl {s.level}</td>
-                    <td className="py-4 px-4 text-sm max-w-[160px] truncate text-gray-600">{s.programme}</td>
-                    <td className="py-4 px-4">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700">
-                        <span className={`w-2 h-2 rounded-full ${s.is_active ? 'bg-blue-500 shadow-sm shadow-blue-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}`} />
-                        <span>{s.is_active ? 'Active' : 'Inactive'}</span>
+                    <td className="py-3 px-3 text-gray-600">{s.email}</td>
+                    <td className="py-3 px-3">Lvl {s.level}</td>
+                    <td className="py-3 px-3 max-w-[160px] truncate">{s.programme}</td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${s.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+                        {s.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-right relative">
-                      <button
-                        onClick={() => setActiveDropdownId(activeDropdownId === s.id ? null : s.id)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors focus:outline-none inline-flex items-center justify-center"
-                      >
-                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                          <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                        </svg>
-                      </button>
-                      {activeDropdownId === s.id && (
-                        <>
-                          <div className="fixed inset-0 z-30" onClick={() => setActiveDropdownId(null)} />
-                          <div className="absolute right-4 mt-1 w-44 bg-white border border-gray-100 rounded-xl shadow-xl z-40 py-1 text-left animate-in fade-in slide-in-from-top-2 duration-100">
-                            <button
-                              onClick={() => {
-                                setViewStudent(s);
-                                setShowViewModal(true);
-                                setActiveDropdownId(null);
-                              }}
-                              className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2 border-b border-gray-50"
-                            >
-                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              View Details
-                            </button>
-                            <button
-                              onClick={() => {
-                                openEdit(s);
-                                setActiveDropdownId(null);
-                              }}
-                              className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2"
-                            >
-                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Edit Student
-                            </button>
-                            <button
-                              onClick={() => {
-                                openReset(s);
-                                setActiveDropdownId(null);
-                              }}
-                              disabled={!s.phone_number}
-                              title={s.phone_number ? 'Send new login details by SMS' : 'Add a phone number first'}
-                              className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2 disabled:opacity-40"
-                            >
-                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                              </svg>
-                              Reset Credentials
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleToggleActive(s);
-                                setActiveDropdownId(null);
-                              }}
-                              className="w-full px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 flex items-center gap-2"
-                            >
-                              <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {s.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button
-                              onClick={() => {
-                                handleDelete(s.id, s.full_name);
-                                setActiveDropdownId(null);
-                              }}
-                              className="w-full px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 border-t border-gray-50"
-                            >
-                              <svg className="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                              Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
+                    <td className="py-3 px-3">
+                      <div className="flex gap-2 flex-wrap">
+                        <button onClick={() => openEdit(s)} className="text-xs btn-outline px-2 py-1">Edit</button>
+                        <button
+                          onClick={() => openReset(s)}
+                          className="text-xs px-2 py-1 rounded border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium disabled:opacity-40"
+                          disabled={!s.phone_number}
+                          title={s.phone_number ? 'Send new login details by SMS' : 'Add a phone number first'}
+                        >
+                          Reset Login
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(s)}
+                          className={`text-xs px-2 py-1 rounded border font-medium transition-colors ${s.is_active ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'}`}
+                        >
+                          {s.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(s.id, s.full_name)}
+                          className="text-xs px-2 py-1 rounded border border-red-200 text-red-400 hover:bg-red-50 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -414,7 +352,7 @@ export default function AdminStudentsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
+      </Layout>
 
       {showAddModal && (
         <Modal title="Add New Student" onClose={() => setShowAddModal(false)}>
@@ -540,61 +478,6 @@ export default function AdminStudentsPage() {
           </form>
         </Modal>
       )}
-
-      {showViewModal && viewStudent && (
-        <Modal title="Student Details" onClose={() => { setShowViewModal(false); setViewStudent(null); }}>
-          <div className="space-y-4 py-2 text-gray-800 text-sm">
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Full Name:</span>
-              <span className="font-semibold text-gray-900">{viewStudent.full_name}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Index Number:</span>
-              <span className="font-mono text-gray-900">{viewStudent.student_id}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Email Address:</span>
-              <span className="text-gray-900 font-semibold">{viewStudent.email || '—'}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Phone Number:</span>
-              <span className="text-gray-900 font-semibold">{viewStudent.phone_number || '—'}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Programme:</span>
-              <span className="text-gray-900 font-semibold">{viewStudent.programme}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Level:</span>
-              <span className="text-gray-900 font-semibold">Level {viewStudent.level}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Academic Year:</span>
-              <span className="text-gray-900 font-semibold">{viewStudent.academic_year}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Status:</span>
-              <span className="inline-flex items-center gap-1.5 font-semibold text-gray-900">
-                <span className={`w-2 h-2 rounded-full ${viewStudent.is_active ? 'bg-blue-500 shadow-sm shadow-blue-500/50' : 'bg-rose-500 shadow-sm shadow-rose-500/50'}`} />
-                <span>{viewStudent.is_active ? 'Active' : 'Inactive'}</span>
-              </span>
-            </div>
-            <div className="flex justify-between border-b border-gray-100 pb-2">
-              <span className="font-bold text-gray-400">Date Added:</span>
-              <span className="text-gray-900 font-semibold">{new Date(viewStudent.created_at).toLocaleString()}</span>
-            </div>
-            <div className="pt-2">
-              <button type="button" onClick={() => { setShowViewModal(false); setViewStudent(null); }} className="btn-outline w-full py-2.5">Close Details</button>
-            </div>
-          </div>
-        </Modal>
-      )}
-      {/* Bulk Import Modal */}
-      <BulkImportModal
-        isOpen={showBulkImportModal}
-        onClose={() => setShowBulkImportModal(false)}
-        onSuccess={fetchStudents}
-      />
     </>
   );
 }

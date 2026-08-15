@@ -2,17 +2,21 @@
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:5000/api';
+  'https://dues-management-system-production.up.railway.app/api';
 
 const nextConfig = {
   reactStrictMode: true,
 
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
+
   images: {
-    remotePatterns: [
-      { protocol: 'http', hostname: 'localhost' },
-      { protocol: 'https', hostname: 'dues-management-system-production.up.railway.app' },
-      { protocol: 'https', hostname: 'uewdept.org' },
-      { protocol: 'https', hostname: 'www.uewdept.org' }
+    domains: [
+      'localhost',
+      'dues-management-system-production.up.railway.app',
+      'uewdept.org',
+      'www.uewdept.org'
     ],
   },
 

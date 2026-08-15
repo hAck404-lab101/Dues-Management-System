@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -28,7 +28,7 @@ api.interceptors.response.use(
       const isLoginPath = window.location.pathname === '/login' || window.location.pathname === '/admin/login';
 
       if (!isLoginPath) {
-        Cookies.remove('token', { path: '/' });
+        Cookies.remove('token');
         // Redirect to admin login if we were in admin section, else student login
         if (window.location.pathname.startsWith('/admin')) {
           window.location.href = '/admin/login';

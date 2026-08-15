@@ -2,19 +2,18 @@
 
 import { useEffect, useState, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '@/components/AdminLayout';
+import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ShieldIcon } from '@/components/Icons';
-import { TableSkeleton } from '@/components/Skeletons';
 
 const ACTION_COLORS: Record<string, string> = {
-    CREATE_STUDENT: 'bg-blue-100 text-blue-800',
+    CREATE_STUDENT: 'bg-green-100 text-green-800',
     UPDATE_STUDENT: 'bg-blue-100 text-blue-800',
-    ACTIVATE_STUDENT: 'bg-blue-100 text-blue-800',
+    ACTIVATE_STUDENT: 'bg-green-100 text-green-800',
     DEACTIVATE_STUDENT: 'bg-red-100 text-red-800',
-    APPROVE_PAYMENT: 'bg-blue-100 text-blue-800',
+    APPROVE_PAYMENT: 'bg-green-100 text-green-800',
     REJECT_PAYMENT: 'bg-red-100 text-red-800',
     RESEND_SMS: 'bg-purple-100 text-purple-800',
     BULK_IMPORT_STUDENTS: 'bg-indigo-100 text-indigo-800',
@@ -61,7 +60,7 @@ export default function AuditLogPage() {
     const ACTIONS = ['CREATE_STUDENT', 'UPDATE_STUDENT', 'ACTIVATE_STUDENT', 'DEACTIVATE_STUDENT', 'APPROVE_PAYMENT', 'REJECT_PAYMENT', 'RESEND_SMS', 'BULK_IMPORT_STUDENTS', 'BULK_SMS', 'RESET_STUDENT_CREDENTIALS'];
 
     return (
-        <AdminLayout title="Audit Log">
+        <Layout title="Audit Log">
             <div className="space-y-5">
                 <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                     <div>
@@ -83,7 +82,7 @@ export default function AuditLogPage() {
 
                 <div className="card overflow-x-auto">
                     {loadingData ? (
-                        <TableSkeleton rows={8} columns={5} />
+                        <div className="space-y-3 p-4">{[...Array(8)].map((_, i) => <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />)}</div>
                     ) : logs.length === 0 ? (
                         <p className="text-gray-500 text-center py-12">No audit logs found.</p>
                     ) : (
@@ -157,6 +156,6 @@ export default function AuditLogPage() {
                     )}
                 </div>
             </div>
-        </AdminLayout>
+        </Layout>
     );
 }

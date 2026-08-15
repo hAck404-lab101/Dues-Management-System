@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '@/components/AdminLayout';
+import Layout from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { AcademicCapIcon, CheckCircleIcon, XCircleIcon, DownloadIcon, EnvelopeIcon } from '@/components/Icons';
-import { SkeletonBlock, TableSkeleton } from '@/components/Skeletons';
+import { SkeletonBlock } from '@/components/Skeletons';
 
 interface ClearanceData {
     student: any;
@@ -138,7 +138,7 @@ export default function ClearancePage() {
     };
 
     return (
-        <AdminLayout title="Clearance Certificate">
+        <Layout title="Clearance Certificate">
             <div className="max-w-3xl mx-auto space-y-6">
                 <div className="card p-6 space-y-4">
                     <h2 className="text-xl font-bold text-primary flex items-center gap-2">
@@ -230,9 +230,9 @@ export default function ClearancePage() {
 
                 {clearance && !loadingClearance && (
                     <>
-                        <div className={`card p-6 text-center border-2 ${clearance.isFullyCleared ? 'border-blue-500 bg-blue-50' : 'border-red-400 bg-red-50'}`}>
-                            <div className="w-16 h-16 mx-auto mb-3">{clearance.isFullyCleared ? <CheckCircleIcon className="text-blue-500 w-full h-full" /> : <XCircleIcon className="text-red-500 w-full h-full" />}</div>
-                            <h3 className={`text-2xl font-extrabold ${clearance.isFullyCleared ? 'text-blue-700' : 'text-red-700'}`}>{clearance.isFullyCleared ? 'CLEARED' : 'NOT CLEARED'}</h3>
+                        <div className={`card p-6 text-center border-2 ${clearance.isFullyCleared ? 'border-green-500 bg-green-50' : 'border-red-400 bg-red-50'}`}>
+                            <div className="w-16 h-16 mx-auto mb-3">{clearance.isFullyCleared ? <CheckCircleIcon className="text-green-500 w-full h-full" /> : <XCircleIcon className="text-red-500 w-full h-full" />}</div>
+                            <h3 className={`text-2xl font-extrabold ${clearance.isFullyCleared ? 'text-green-700' : 'text-red-700'}`}>{clearance.isFullyCleared ? 'CLEARED' : 'NOT CLEARED'}</h3>
                             <p className="text-sm mt-1 text-gray-600">{clearance.isFullyCleared ? 'This student has settled all departmental dues.' : `Outstanding balance: GH₵${clearance.totalBalance.toFixed(2)}`}</p>
                         </div>
 
@@ -260,7 +260,7 @@ export default function ClearancePage() {
                                 <h3 className="font-bold text-primary">Dues Breakdown</h3>
                                 <div className="flex gap-3 text-sm">
                                     <span className="text-gray-500">Total Owed: <strong>GH₵{clearance.totalOwed.toFixed(2)}</strong></span>
-                                    <span className="text-blue-600">Paid: <strong>GH₵{clearance.totalPaid.toFixed(2)}</strong></span>
+                                    <span className="text-green-600">Paid: <strong>GH₵{clearance.totalPaid.toFixed(2)}</strong></span>
                                 </div>
                             </div>
                             {clearance.dues.length === 0 ? <p className="text-center text-gray-500 py-8">No dues assigned to this student.</p> : (
@@ -268,7 +268,7 @@ export default function ClearancePage() {
                                     <thead><tr className="bg-gray-50 text-left"><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Due</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Amount</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Paid</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Balance</th><th className="py-2 px-4 text-xs font-semibold text-gray-600 uppercase">Status</th></tr></thead>
                                     <tbody>
                                         {clearance.dues.map((d: any, i: number) => (
-                                            <tr key={i} className="border-t"><td className="py-3 px-4 font-medium">{d.due_name}</td><td className="py-3 px-4">GH₵{d.assigned_amount.toFixed(2)}</td><td className="py-3 px-4 text-blue-600">GH₵{d.total_paid.toFixed(2)}</td><td className="py-3 px-4 text-red-600">GH₵{d.balance.toFixed(2)}</td><td className="py-3 px-4"><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${d.cleared ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-700'}`}>{d.cleared ? <><span className="w-3.5 h-3.5"><CheckCircleIcon /></span><span>Cleared</span></> : <><span className="w-3.5 h-3.5"><XCircleIcon /></span><span>Outstanding</span></>}</span></td></tr>
+                                            <tr key={i} className="border-t"><td className="py-3 px-4 font-medium">{d.due_name}</td><td className="py-3 px-4">GH₵{d.assigned_amount.toFixed(2)}</td><td className="py-3 px-4 text-green-600">GH₵{d.total_paid.toFixed(2)}</td><td className="py-3 px-4 text-red-600">GH₵{d.balance.toFixed(2)}</td><td className="py-3 px-4"><span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${d.cleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>{d.cleared ? <><span className="w-3.5 h-3.5"><CheckCircleIcon /></span><span>Cleared</span></> : <><span className="w-3.5 h-3.5"><XCircleIcon /></span><span>Outstanding</span></>}</span></td></tr>
                                         ))}
                                     </tbody>
                                 </table>
@@ -288,6 +288,6 @@ export default function ClearancePage() {
                     </>
                 )}
             </div>
-        </AdminLayout>
+        </Layout>
     );
 }

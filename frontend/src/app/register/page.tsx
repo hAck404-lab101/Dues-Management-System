@@ -28,7 +28,6 @@ interface InputProps {
   required?: boolean;
 }
 
-
 export default function RegisterPage() {
   const { setUser } = useAuth();
   const { appName, appLogo } = useBranding();
@@ -38,7 +37,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState<'open' | 'closed'>('open');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchPublicSettings = async () => {
@@ -46,26 +44,19 @@ export default function RegisterPage() {
         const res = await api.get('/settings/public');
         if (res.data.success) {
           const settings = res.data.data;
-
-          const progs = settings.available_programmes
-            ? settings.available_programmes.split(',').map((p: string) => p.trim()).filter(Boolean)
-            : [];
-          setAvailableProgrammes(progs);
-          if (progs.length > 0) setFormData(prev => ({ ...prev, programme: prev.programme || progs[0] }));
-
-          const years = settings.available_academic_years
-            ? settings.available_academic_years.split(',').map((y: string) => y.trim()).filter(Boolean)
-            : [];
-          setAvailableYears(years);
-          if (years.length > 0) setFormData(prev => ({ ...prev, academicYear: prev.academicYear || years[years.length - 1] }));
-
+          if (settings.available_programmes) {
+            const progs = settings.available_programmes.split(',').map((p: string) => p.trim()).filter(Boolean);
+            setAvailableProgrammes(progs);
+            if (progs.length > 0) setFormData(prev => ({ ...prev, programme: progs[0] }));
+          }
+          if (settings.available_academic_years) {
+            const years = settings.available_academic_years.split(',').map((y: string) => y.trim()).filter(Boolean);
+            setAvailableYears(years);
+            if (years.length > 0) setFormData(prev => ({ ...prev, academicYear: years[years.length - 1] }));
+          }
           if (settings.registration_status) setRegistrationStatus(settings.registration_status);
         }
-      } catch (error) {
-        console.error('Settings fetch error:', error);
-      } finally {
-        setSettingsLoaded(true);
-      }
+      } catch (error) { console.error('Settings fetch error:', error); }
     };
     fetchPublicSettings();
   }, []);
@@ -139,26 +130,8 @@ export default function RegisterPage() {
                 <Input label="Email Address *" type="email" value={formData.email} onChange={(value) => updateFormField('email', value)} placeholder="your.email@example.com" required />
                 <Input label="Password *" type="password" value={formData.password} onChange={(value) => updateFormField('password', value)} placeholder="Minimum 6 characters" required />
                 <Input label="Confirm Password *" type="password" value={formData.confirmPassword} onChange={(value) => updateFormField('confirmPassword', value)} placeholder="Re-enter your password" required />
-                <div>
-                  <label className="label">Programme *</label>
-                  <select required className="input-field" value={formData.programme} onChange={e => updateFormField('programme', e.target.value)}>
-                    <option value="">{availableProgrammes.length === 0 && settingsLoaded ? 'Not configured — contact admin' : 'Select Programme'}</option>
-                    {availableProgrammes.map(prog => <option key={prog} value={prog}>{prog}</option>)}
-                  </select>
-                  {availableProgrammes.length === 0 && settingsLoaded && (
-                    <p className="text-xs text-amber-600 mt-1 font-medium">Programmes not yet configured. Please contact your administrator.</p>
-                  )}
-                </div>
-                <div>
-                  <label className="label">Academic Year *</label>
-                  <select required className="input-field" value={formData.academicYear} onChange={e => updateFormField('academicYear', e.target.value)}>
-                    <option value="">{availableYears.length === 0 && settingsLoaded ? 'Not configured — contact admin' : 'Select Academic Year'}</option>
-                    {availableYears.map(year => <option key={year} value={year}>{year}</option>)}
-                  </select>
-                  {availableYears.length === 0 && settingsLoaded && (
-                    <p className="text-xs text-amber-600 mt-1 font-medium">Academic years not yet configured. Please contact your administrator.</p>
-                  )}
-                </div>
+                <div><label className="label">Programme *</label><select required className="input-field" value={formData.programme} onChange={e => updateFormField('programme', e.target.value)}><option value="">Select Programme</option>{availableProgrammes.map(prog => <option key={prog} value={prog}>{prog}</option>)}</select></div>
+                <div><label className="label">Academic Year *</label><select required className="input-field" value={formData.academicYear} onChange={e => updateFormField('academicYear', e.target.value)}><option value="">Select Academic Year</option>{availableYears.map(year => <option key={year} value={year}>{year}</option>)}</select></div>
               </div>
 
               <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">

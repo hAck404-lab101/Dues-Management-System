@@ -1,37 +1,23 @@
 import type { Metadata } from 'next'
-import { Poppins } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { BrandingProvider } from '@/contexts/BrandingContext'
 
-const poppins = Poppins({ 
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap'
-})
+const inter = Inter({ subsets: ['latin'] })
 
-const poppinsDisplay = Poppins({
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap'
-})
-
-const DEFAULT_TITLE = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'DuesPay'
+const DEFAULT_TITLE = process.env.NEXT_PUBLIC_DEFAULT_APP_NAME || 'Dues Management System'
 const DEFAULT_DESCRIPTION = process.env.NEXT_PUBLIC_DEFAULT_APP_DESCRIPTION || 'A secure student portal for dues, payments, receipts, and clearance records.'
 
 const cleanBrandText = (value?: string | null, fallback = '') => {
   const text = (value || fallback || '').trim()
   if (!text) return fallback
   return text
-    .replace(/University of Cape Coast/gi, 'DuesPay')
-    .replace(/\bUCC\b/gi, 'DuesPay')
-    .replace(/Ho Technical University/gi, 'DuesPay')
-    .replace(/\bHTU\b/gi, 'DuesPay')
-    .replace(/University of Education, Winneba/gi, 'DuesPay')
-    .replace(/\bUEW\b/gi, 'DuesPay')
+    .replace(/University of Cape Coast/gi, 'Dues Management System')
+    .replace(/\bUCC\b/gi, 'DMS')
+    .replace(/Ho Technical University/gi, 'Dues Management System')
+    .replace(/\bHTU\b/gi, 'DMS')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
@@ -49,50 +35,45 @@ const makeAbsoluteUrl = (value?: string | null) => {
 }
 
 const fallbackMetadata = (): Metadata => {
-  const appTitle = cleanBrandText(DEFAULT_TITLE, 'DuesPay')
+  const appTitle = cleanBrandText(DEFAULT_TITLE, 'Dues Management System')
   const appDescription = cleanBrandText(DEFAULT_DESCRIPTION, 'A secure student portal for dues, payments, receipts, and clearance records.')
 
   return {
     title: appTitle,
     description: appDescription,
-    icons: { icon: '/favicon.png', shortcut: '/favicon.png', apple: '/favicon.png' },
-    openGraph: { title: appTitle, description: appDescription, type: 'website', siteName: appTitle },
-    twitter: { card: 'summary', title: appTitle, description: appDescription }
+    icons: {
+      icon: '/favicon.png',
+      shortcut: '/favicon.png',
+      apple: '/favicon.png'
+    },
+    openGraph: {
+      title: appTitle,
+      description: appDescription,
+      type: 'website',
+      siteName: appTitle
+    },
+    twitter: {
+      card: 'summary',
+      title: appTitle,
+      description: appDescription
+    }
   }
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  console.log('[METADATA] Starting generateMetadata...');
   try {
     const apiBase = getApiBase()
-    console.log('[METADATA] apiBase derived as:', apiBase);
-    if (!apiBase) {
-      console.log('[METADATA] No apiBase, returning fallback');
-      return fallbackMetadata()
-    }
+    if (!apiBase) return fallbackMetadata()
 
-    const fetchUrl = `${apiBase}/api/settings/public`;
-    console.log('[METADATA] Fetching public settings from:', fetchUrl);
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-    const response = await fetch(fetchUrl, {
+    const response = await fetch(`${apiBase}/api/settings/public`, {
       cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
+      next: { revalidate: 0 },
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+    })
 
-    console.log('[METADATA] Fetch response status:', response.status);
-    if (!response.ok) {
-      console.log('[METADATA] Response not OK, returning fallback');
-      return fallbackMetadata()
-    }
+    if (!response.ok) return fallbackMetadata()
 
     const result = await response.json()
-    console.log('[METADATA] Parse JSON success, success value:', result?.success);
     const settings = result?.data || {}
     const appTitle = cleanBrandText(settings.app_name, DEFAULT_TITLE)
     const appDescription = cleanBrandText(settings.app_description, DEFAULT_DESCRIPTION)
@@ -102,7 +83,11 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: appTitle,
       description: appDescription,
-      icons: { icon: faviconUrl, shortcut: faviconUrl, apple: faviconUrl },
+      icons: {
+        icon: faviconUrl,
+        shortcut: faviconUrl,
+        apple: faviconUrl
+      },
       openGraph: {
         title: appTitle,
         description: appDescription,
@@ -117,16 +102,19 @@ export async function generateMetadata(): Promise<Metadata> {
         images: imageUrl ? [imageUrl] : undefined
       }
     }
-  } catch (err: any) {
-    console.error('[METADATA] Error in generateMetadata:', err.message || err);
+  } catch {
     return fallbackMetadata()
   }
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} ${poppinsDisplay.variable} font-sans`}>
+      <body className={inter.className}>
         <BrandingProvider>
           <AuthProvider>
             {children}
