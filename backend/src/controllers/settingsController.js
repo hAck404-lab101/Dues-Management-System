@@ -1,6 +1,5 @@
 const { query } = require('../config/database');
 const { encrypt, decrypt } = require('../utils/encryption');
-const { generateUUID } = require('../utils/uuid');
 
 const SENSITIVE_KEYS = [
     'paystack_secret_key',
@@ -31,6 +30,24 @@ const DEFAULT_SETTINGS = [
     ['available_levels', '100, 200, 300, 400', 'portal', 'Comma-separated list of levels'],
     ['registration_status', 'open', 'portal', 'Registration status (open/closed)']
 ];
+
+const LEGACY_CATEGORY_MAP = {
+    appearance: 'sys_appearance',
+    registration: 'portal',
+    paystack: 'pay_paystack',
+    payment: 'pay_manual',
+    sms: 'comm_sms',
+    email: 'comm_email'
+};
+
+const normalizeSettingCategory = (setting) => {
+    if (setting.key === 'payment_service_fee') return 'pay_charges';
+    if (setting.key === 'service_charge_enabled' || setting.key === 'service_charge_type' || setting.key === 'service_charge_scope') return 'pay_charges';
+    if (setting.key === 'homepage_variant' || setting.key === 'maintenance_mode') return 'sys_maintenance';
+    if (LEGACY_CATEGORY_MAP[setting.category]) return LEGACY_CATEGORY_MAP[setting.category];
+    if (setting.category === 'general') return 'sys_general';
+    return setting.category;
+};
 
 const cleanPublicBrandText = (value, fallback = '') => {
     const text = String(value || fallback || '').trim();
@@ -73,37 +90,43 @@ const cleanOldUccBranding = async () => {
 };
 
 const ensureDefaultSettings = async () => {
-    for (const [key, value, category] of DEFAULT_SETTINGS) {
+    for (const [key, value, category, description] of DEFAULT_SETTINGS) {
+        // The production database may use the original settings schema where `key` is
+        // the primary key and there is no `id` column. Keep this insert compatible with both.
         await query(
-            'INSERT IGNORE INTO settings (id, `key`, `value`, `category`) VALUES (UUID(), ?, ?, ?)',
-            [key, value, category]
+            'INSERT IGNORE INTO settings (`key`, `value`, `category`, `description`) VALUES (?, ?, ?, ?)',
+            [key, value, category, description]
         );
     }
 
     await cleanOldUccBranding();
 };
 
+const buildSettingsMap = (rows) => {
+    const settingsMap = {};
+
+    rows.forEach(s => {
+        let value = s.value;
+        if (SENSITIVE_KEYS.includes(s.key)) {
+            value = decrypt(value);
+        }
+
+        settingsMap[s.key] = {
+            value: value ?? '',
+            category: normalizeSettingCategory(s),
+            description: s.description || '',
+            updated_at: s.updated_at
+        };
+    });
+
+    return settingsMap;
+};
+
 exports.getSettings = async (req, res) => {
     try {
         await ensureDefaultSettings();
         const { rows } = await query('SELECT * FROM settings');
-
-        const settingsMap = {};
-        rows.forEach(s => {
-            let value = s.value;
-            if (SENSITIVE_KEYS.includes(s.key)) {
-                value = decrypt(value);
-            }
-
-            settingsMap[s.key] = {
-                value,
-                category: s.category,
-                description: '',
-                updated_at: s.updated_at
-            };
-        });
-
-        res.json({ success: true, data: settingsMap });
+        res.json({ success: true, data: buildSettingsMap(rows) });
     } catch (error) {
         console.error('Get settings error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch settings' });
@@ -136,8 +159,8 @@ exports.updateSettings = async (req, res) => {
 
                 if (updateResult.affectedRows === 0) {
                     await conn.query(
-                        'INSERT IGNORE INTO settings (id, `key`, `value`, category, description) VALUES (UUID(), ?, ?, "sys_general", "")',
-                        [key, value]
+                        'INSERT IGNORE INTO settings (`key`, `value`, `category`, `description`) VALUES (?, ?, ?, ?)',
+                        [key, value, 'sys_general', '']
                     );
                 }
             }
@@ -157,24 +180,9 @@ exports.getSettingsByCategory = async (req, res) => {
     try {
         await ensureDefaultSettings();
         const { category } = req.params;
-        const { rows } = await query('SELECT * FROM settings WHERE category = ?', [category]);
-
-        const settingsMap = {};
-        rows.forEach(s => {
-            let value = s.value;
-            if (SENSITIVE_KEYS.includes(s.key)) {
-                value = decrypt(value);
-            }
-
-            settingsMap[s.key] = {
-                value,
-                category: s.category,
-                description: '',
-                updated_at: s.updated_at
-            };
-        });
-
-        res.json({ success: true, data: settingsMap });
+        const { rows } = await query('SELECT * FROM settings');
+        const normalizedRows = rows.filter(s => normalizeSettingCategory(s) === category);
+        res.json({ success: true, data: buildSettingsMap(normalizedRows) });
     } catch (error) {
         console.error('Get settings by category error:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch settings' });
@@ -188,33 +196,21 @@ exports.getPublicSettings = async (req, res) => {
         res.set('Expires', '0');
 
         await ensureDefaultSettings();
-        const publicCategories = [
-            'sys_general',
-            'sys_appearance',
-            'portal',
-            'pay_manual',
-            'pay_charges'
-        ];
-
-        const { rows } = await query(
-            'SELECT `key`, `value` FROM settings WHERE category IN (?) AND `key` NOT IN (?)',
-            [publicCategories, SENSITIVE_KEYS]
-        );
-
+        const { rows } = await query('SELECT `key`, `value`, `category` FROM settings');
+        const publicCategories = new Set(['sys_general', 'sys_appearance', 'portal', 'pay_manual', 'pay_charges']);
         const settingsMap = {};
+
         rows.forEach(s => {
-            settingsMap[s.key] = s.value;
+            if (!SENSITIVE_KEYS.includes(s.key) && publicCategories.has(normalizeSettingCategory(s))) {
+                settingsMap[s.key] = s.value;
+            }
         });
 
         settingsMap.app_name = cleanPublicBrandText(settingsMap.app_name, DEFAULT_APP_NAME);
         settingsMap.app_description = cleanPublicBrandText(settingsMap.app_description, DEFAULT_APP_DESCRIPTION);
-        settingsMap.sms_sender_id = cleanPublicBrandText(settingsMap.sms_sender_id, process.env.DEFAULT_SMS_SENDER_ID || 'DUES');
-        settingsMap.email_from_name = cleanPublicBrandText(settingsMap.email_from_name, process.env.DEFAULT_EMAIL_FROM_NAME || DEFAULT_APP_NAME);
 
         const pkRes = await query('SELECT value FROM settings WHERE `key` = "paystack_public_key"');
-        if (pkRes.rows.length > 0) {
-            settingsMap.paystack_public_key = pkRes.rows[0].value;
-        }
+        if (pkRes.rows.length > 0) settingsMap.paystack_public_key = pkRes.rows[0].value;
 
         const homepageRes = await query('SELECT value FROM settings WHERE `key` = "homepage_variant"');
         settingsMap.homepage_variant = homepageRes.rows[0]?.value || 'portal';
@@ -268,7 +264,6 @@ exports.resetSite = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Password is required to reset the site' });
     }
 
-    const { query } = require('../config/database');
     const userRes = await query('SELECT password FROM users WHERE id = ? LIMIT 1', [req.user.id]);
     if (userRes.rows.length === 0) {
         return res.status(404).json({ success: false, message: 'User not found' });
