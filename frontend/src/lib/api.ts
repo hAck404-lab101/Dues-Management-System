@@ -1,7 +1,8 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api';
+const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api').replace(/\/$/, '');
+const API_URL = /\/api$/i.test(rawApiUrl) ? rawApiUrl : `${rawApiUrl}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,7 +25,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Don't redirect on 401 if we're on login pages
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
       const isLoginPath = window.location.pathname === '/login' || window.location.pathname === '/admin/login';
 
       if (!isLoginPath) {
@@ -48,4 +49,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
