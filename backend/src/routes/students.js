@@ -11,7 +11,16 @@ router.get('/', authenticate, requirePermission('students.view'), studentsContro
 router.get('/:id', authenticate, requirePermission('students.view'), studentsController.getStudentById);
 router.post('/', authenticate, requirePermission('students.edit'), auditLog('CREATE_STUDENT', 'student'), studentsController.createStudent);
 router.put('/:id', authenticate, requirePermission('students.edit'), auditLog('UPDATE_STUDENT', 'student'), studentsController.updateStudent);
-router.patch('/:id/reset-credentials', authenticate, requirePermission('students.edit'), auditLog('RESET_STUDENT_CREDENTIALS', 'student'), studentCredentialsController.resetStudentCredentials);
+
+// The restored admin Students page exposes Reset Login to all staff-side roles
+// that can enter the page. Keep the backend authorization aligned with that UI.
+router.patch(
+  '/:id/reset-credentials',
+  authenticate,
+  authorize('admin', 'president', 'treasurer', 'financial_secretary'),
+  auditLog('RESET_STUDENT_CREDENTIALS', 'student'),
+  studentCredentialsController.resetStudentCredentials
+);
 
 // Legacy frontend compatibility: the restored admin UI treats all staff-side roles
 // as admin users and exposes Activate/Deactivate to them. Keep these two status
