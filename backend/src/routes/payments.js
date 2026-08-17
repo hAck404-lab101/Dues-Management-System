@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const paymentsController = require('../controllers/paymentsController');
+const paystackController = require('../controllers/paystackController');
 const { authenticate } = require('../middleware/auth');
 const requirePermission = require('../middleware/requirePermission');
 const { auditLog } = require('../middleware/auditLog');
@@ -38,11 +39,11 @@ const upload = multer({
 });
 
 // Paystack online-payment flow.
-// initialize requires a signed-in student; verify and webhook must remain public
-// because Paystack redirects/webhooks can arrive without an application session.
+// initialize requires a signed-in student; verify and webhook remain public because
+// Paystack redirects/webhooks can arrive independently of the user's app session.
 router.post('/initialize', authenticate, paymentsController.initializePayment);
-router.post('/verify', paymentsController.verifyPayment);
-router.post('/webhook', paymentsController.handleWebhook);
+router.post('/verify', paystackController.verifyPayment);
+router.post('/webhook', paystackController.handleWebhook);
 
 // Manual/staff payment routes.
 router.post('/manual', authenticate, requirePermission('payments.record_manual'), upload.single('proof'), paymentsController.createManualPayment);
