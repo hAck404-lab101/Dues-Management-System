@@ -16,6 +16,23 @@ const getAssignableDue = async (id) => {
   return { due };
 };
 
+const getDueAssignmentCapabilities = async () => {
+  const columnResult = await pool.query('SHOW COLUMNS FROM due_assignments');
+  const columns = new Set(columnResult.rows.map((row) => row.Field || row.field));
+  let hasPriceHistoryTable = false;
+
+  if (columns.has('price_history_id')) {
+    const tableResult = await pool.query("SHOW TABLES LIKE 'due_price_history'");
+    hasPriceHistoryTable = tableResult.rows.length > 0;
+  }
+
+  return {
+    hasLockedAmount: columns.has('locked_amount'),
+    hasPriceHistoryId: columns.has('price_history_id'),
+    hasPriceHistoryTable
+  };
+};
+
 exports.getAllDues = async (req, res) => {
   try {
     const { academicYear, isActive } = req.query;
@@ -359,34 +376,47 @@ exports.assignDue = async (req, res) => {
       return res.json({ success: true, dry_run: true, count: students.length, sample });
     }
 
-    const historyRes = await pool.query(
-      'SELECT id FROM due_price_history WHERE due_id = ? ORDER BY effective_from DESC LIMIT 1',
-      [id]
-    );
-    const historyId = historyRes.rows[0]?.id || null;
+    const capabilities = await getDueAssignmentCapabilities();
+    let historyId = null;
+
+    if (capabilities.hasPriceHistoryId && capabilities.hasPriceHistoryTable) {
+      const historyRes = await pool.query(
+        'SELECT id FROM due_price_history WHERE due_id = ? ORDER BY effective_from DESC LIMIT 1',
+        [id]
+      );
+      historyId = historyRes.rows[0]?.id || null;
+    }
 
     const conn = await pool.getConnection();
     await conn.beginTransaction();
     try {
       for (const student of students) {
+        const columns = ['id', 'due_id'];
+        const values = [generateUUID(), id];
+        const updateFields = [];
+
+        if (capabilities.hasLockedAmount) {
+          columns.push('locked_amount');
+          values.push(requestedAmount);
+          updateFields.push('locked_amount = VALUES(locked_amount)');
+        }
+
+        if (capabilities.hasPriceHistoryId) {
+          columns.push('price_history_id');
+          values.push(historyId);
+          updateFields.push('price_history_id = VALUES(price_history_id)');
+        }
+
+        columns.push('student_id', 'level', 'programme', 'amount', 'status');
+        values.push(student.id, student.level, student.programme, requestedAmount, 'unpaid');
+        updateFields.push('amount = VALUES(amount)');
+
+        const placeholders = columns.map(() => '?').join(', ');
         await conn.query(
-          `INSERT INTO due_assignments
-             (id, due_id, locked_amount, price_history_id, student_id, level, programme, amount, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid')
-           ON DUPLICATE KEY UPDATE
-             locked_amount = VALUES(locked_amount),
-             price_history_id = VALUES(price_history_id),
-             amount = VALUES(amount)`,
-          [
-            generateUUID(),
-            id,
-            requestedAmount,
-            historyId,
-            student.id,
-            student.level,
-            student.programme,
-            requestedAmount
-          ]
+          `INSERT INTO due_assignments (${columns.join(', ')})
+           VALUES (${placeholders})
+           ON DUPLICATE KEY UPDATE ${updateFields.join(', ')}`,
+          values
         );
       }
       await conn.commit();
