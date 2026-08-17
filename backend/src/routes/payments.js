@@ -12,9 +12,7 @@ const fs = require('fs');
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = process.env.UPLOAD_DIR || './uploads';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -30,28 +28,25 @@ const upload = multer({
     const allowedTypes = /jpeg|jpg|png|pdf/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
+    if (mimetype && extname) return cb(null, true);
     cb(new Error('Only image and PDF files are allowed'));
   }
 });
 
 // Paystack online-payment flow.
-// initialize requires a signed-in student; verify and webhook remain public because
-// Paystack redirects/webhooks can arrive independently of the user's app session.
 router.post('/initialize', authenticate, paymentsController.initializePayment);
 router.post('/verify', paystackController.verifyPayment);
 router.post('/webhook', paystackController.handleWebhook);
 
-// Manual/staff payment routes.
-router.post('/manual', authenticate, requirePermission('payments.record_manual'), upload.single('proof'), paymentsController.createManualPayment);
-router.get('/', authenticate, requirePermission('payments.view_all'), paymentsController.getPayments);
-router.get('/:id', authenticate, requirePermission('payments.view_all'), paymentsController.getPaymentById);
+// Student self-service payment actions. Controllers enforce ownership for student users.
+router.post('/manual', authenticate, upload.single('proof'), paymentsController.createManualPayment);
+router.get('/', authenticate, paymentsController.getPayments);
+router.get('/:id', authenticate, paymentsController.getPaymentById);
+router.post('/:id/resend-sms', authenticate, paymentsController.resendSMSReceipt);
+router.post('/:id/resend-email', authenticate, paymentsController.resendEmailReceipt);
+
+// Staff-only approval actions remain permission protected.
 router.patch('/:id/approve', authenticate, requirePermission('payments.approve'), auditLog('APPROVE_PAYMENT', 'payment'), paymentsController.approvePayment);
 router.patch('/:id/reject', authenticate, requirePermission('payments.reject'), auditLog('REJECT_PAYMENT', 'payment'), paymentsController.rejectPayment);
-router.post('/:id/resend-sms', authenticate, requirePermission('payments.resend_receipt'), auditLog('RESEND_SMS', 'payment'), paymentsController.resendSMSReceipt);
-router.post('/:id/resend-email', authenticate, requirePermission('payments.resend_receipt'), auditLog('RESEND_EMAIL', 'payment'), paymentsController.resendEmailReceipt);
 
 module.exports = router;
