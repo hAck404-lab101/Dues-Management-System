@@ -44,16 +44,16 @@ exports.uploadLogo = async (req, res) => {
         [assetKey, mimeType, req.file.buffer]
       );
 
-      const stableUrl = `/api/settings/brand-asset/${assetKey}`;
+      const versionedUrl = `/api/settings/brand-asset/${assetKey}?v=${Date.now()}`;
       const [updateResult] = await connection.query(
         'UPDATE settings SET `value` = ? WHERE `key` = ?',
-        [stableUrl, settingKey]
+        [versionedUrl, settingKey]
       );
 
       if (updateResult.affectedRows === 0) {
         await connection.query(
           'INSERT INTO settings (`key`, `value`, `category`, `description`) VALUES (?, ?, ?, ?)',
-          [settingKey, stableUrl, 'sys_appearance', `${assetKey} branding asset`]
+          [settingKey, versionedUrl, 'sys_appearance', `${assetKey} branding asset`]
         );
       }
 
@@ -62,7 +62,7 @@ exports.uploadLogo = async (req, res) => {
       return res.json({
         success: true,
         message: 'Image uploaded successfully',
-        data: { url: stableUrl, type: assetKey }
+        data: { url: versionedUrl, type: assetKey }
       });
     } catch (error) {
       await connection.rollback();
@@ -92,7 +92,7 @@ exports.getBrandAsset = async (req, res) => {
 
     const asset = result.rows[0];
     res.set('Content-Type', asset.mime_type || 'image/png');
-    res.set('Cache-Control', 'public, max-age=300, must-revalidate');
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
     res.set('Last-Modified', new Date(asset.updated_at || Date.now()).toUTCString());
     return res.send(asset.data);
   } catch (error) {
