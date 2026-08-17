@@ -20,9 +20,16 @@ function requirePermission(...permissionKeys) {
         return next();
       }
 
-      // Executive staff roles (president, treasurer, financial_secretary) get access to executive dashboard and payments overview
+      // Executive staff roles get access to shared executive views.
       const executiveStaffRoles = ['admin', 'president', 'treasurer', 'financial_secretary'];
-      if (executiveStaffRoles.includes(role) && (keys.includes('dashboard.executive') || keys.includes('payments.view_all') || keys.includes('reports.export'))) {
+      const executiveViewPermissions = ['dashboard.executive', 'payments.view_all', 'reports.export'];
+      if (executiveStaffRoles.includes(role) && keys.some((key) => executiveViewPermissions.includes(key))) {
+        return next();
+      }
+
+      // The president can allocate dues throughout the application even when an older
+      // deployment/database has not yet seeded the newer dues.assign permission row.
+      if (role === 'president' && keys.includes('dues.assign')) {
         return next();
       }
 
