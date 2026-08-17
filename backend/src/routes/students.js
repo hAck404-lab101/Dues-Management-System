@@ -3,9 +3,14 @@ const router = express.Router();
 const studentsController = require('../controllers/studentsController');
 const studentCredentialsController = require('../controllers/studentCredentialsController');
 const studentStatusController = require('../controllers/studentStatusController');
+const studentSelfController = require('../controllers/studentSelfController');
 const { authenticate, authorize } = require('../middleware/auth');
 const requirePermission = require('../middleware/requirePermission');
 const { auditLog } = require('../middleware/auditLog');
+
+// Student self-service routes must be registered before /:id.
+router.get('/me', authenticate, studentSelfController.getMyProfile);
+router.patch('/me', authenticate, studentSelfController.updateMyProfile);
 
 router.get('/', authenticate, requirePermission('students.view'), studentsController.getAllStudents);
 router.get('/:id', authenticate, requirePermission('students.view'), studentsController.getStudentById);
@@ -22,9 +27,6 @@ router.patch(
   studentCredentialsController.resetStudentCredentials
 );
 
-// Legacy frontend compatibility: the restored admin UI treats all staff-side roles
-// as admin users and exposes Activate/Deactivate to them. Keep these two status
-// actions aligned with that UI while leaving the rest of students.edit RBAC intact.
 router.patch(
   '/:id/activate',
   authenticate,
