@@ -27,9 +27,10 @@ function requirePermission(...permissionKeys) {
         return next();
       }
 
-      // The president can allocate dues throughout the application even when an older
-      // deployment/database has not yet seeded the newer dues.assign permission row.
-      if (role === 'president' && keys.includes('dues.assign')) {
+      // The president manages the complete dues lifecycle. Keep this scoped to dues
+      // so unrelated sensitive controls still use their explicit permission rows.
+      const presidentDuesPermissions = ['dues.create', 'dues.edit', 'dues.assign', 'dues.view'];
+      if (role === 'president' && keys.some((key) => presidentDuesPermissions.includes(key))) {
         return next();
       }
 
