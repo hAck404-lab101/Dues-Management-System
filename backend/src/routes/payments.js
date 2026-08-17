@@ -37,8 +37,14 @@ const upload = multer({
   }
 });
 
-// Verification is now public-facing, webhook is also public.
-// The manual route is for staff members recording payments for students.
+// Paystack online-payment flow.
+// initialize requires a signed-in student; verify and webhook must remain public
+// because Paystack redirects/webhooks can arrive without an application session.
+router.post('/initialize', authenticate, paymentsController.initializePayment);
+router.post('/verify', paymentsController.verifyPayment);
+router.post('/webhook', paymentsController.handleWebhook);
+
+// Manual/staff payment routes.
 router.post('/manual', authenticate, requirePermission('payments.record_manual'), upload.single('proof'), paymentsController.createManualPayment);
 router.get('/', authenticate, requirePermission('payments.view_all'), paymentsController.getPayments);
 router.get('/:id', authenticate, requirePermission('payments.view_all'), paymentsController.getPaymentById);
@@ -48,4 +54,3 @@ router.post('/:id/resend-sms', authenticate, requirePermission('payments.resend_
 router.post('/:id/resend-email', authenticate, requirePermission('payments.resend_receipt'), auditLog('RESEND_EMAIL', 'payment'), paymentsController.resendEmailReceipt);
 
 module.exports = router;
-
