@@ -6,7 +6,10 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import { useBranding } from '@/contexts/BrandingContext';
 import { CheckCircleIcon, XCircleIcon, WalletIcon } from '@/components/Icons';
-import { SkeletonBlock } from '@/components/Skeletons';
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const MAX_VERIFY_ATTEMPTS = 10;
+const VERIFY_INTERVAL_MS = 3000;
 
 function PaymentCallbackContent() {
   const router = useRouter();
@@ -15,9 +18,12 @@ function PaymentCallbackContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [message, setMessage] = useState('Please wait while we confirm your payment.');
   const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(1);
 
   useEffect(() => {
     const reference = searchParams.get('reference') || searchParams.get('trxref');
+    let cancelled = false;
+    let redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
     const verify = async () => {
       if (!reference) {
@@ -26,24 +32,63 @@ function PaymentCallbackContent() {
         return;
       }
 
-      try {
-        const res = await api.post('/payments/verify', { reference });
-        if (res.data?.success) {
-          setStatus('success');
-          setMessage('Your payment has been confirmed successfully. Your receipt will be available on your dashboard.');
-          if (res.data?.receipt?.receipt_number) setReceiptNumber(res.data.receipt.receipt_number);
-          setTimeout(() => router.push('/student/dashboard'), 3000);
-        } else {
-          setStatus('failed');
-          setMessage(res.data?.message || 'We could not confirm your payment. Please check your payment history or contact the admin.');
+      for (let currentAttempt = 1; currentAttempt <= MAX_VERIFY_ATTEMPTS && !cancelled; currentAttempt++) {
+        setAttempt(currentAttempt);
+        setStatus('loading');
+
+        try {
+          const res = await api.post('/payments/verify', { reference });
+
+          if (res.data?.success && res.data?.confirmed) {
+            if (cancelled) return;
+            setStatus('success');
+            setMessage(res.data?.message || 'Your payment has been confirmed successfully.');
+            if (res.data?.receipt?.receipt_number) setReceiptNumber(res.data.receipt.receipt_number);
+            redirectTimer = setTimeout(() => router.push('/student/dashboard'), 3500);
+            return;
+          }
+
+          if (res.data?.pending) {
+            setMessage(res.data?.message || 'Your payment is still being confirmed by Paystack. Please keep this page open.');
+          } else {
+            if (cancelled) return;
+            setStatus('failed');
+            setMessage(res.data?.message || 'Paystack did not confirm this payment. Please check your payment history or contact the admin.');
+            return;
+          }
+        } catch (error: any) {
+          const data = error.response?.data;
+          const retryable = Boolean(data?.pending) || error.response?.status === 502 || error.response?.status === 503 || !error.response;
+
+          if (!retryable) {
+            if (cancelled) return;
+            setStatus('failed');
+            setMessage(data?.message || 'We could not confirm your payment. Please check your payment history or contact the admin.');
+            return;
+          }
+
+          setMessage(data?.message || 'Paystack is still confirming your transaction. We are checking again automatically.');
         }
-      } catch (error: any) {
+
+        if (currentAttempt < MAX_VERIFY_ATTEMPTS && !cancelled) {
+          await sleep(VERIFY_INTERVAL_MS);
+        }
+      }
+
+      if (!cancelled) {
         setStatus('failed');
-        setMessage(error.response?.data?.message || 'We could not confirm your payment. Please check your payment history or contact the admin.');
+        setMessage(
+          'Your payment is taking longer than expected to confirm. Do not pay again. If funds were deducted, the Paystack webhook can still confirm it automatically; check your dashboard shortly or contact the admin with your payment reference.'
+        );
       }
     };
 
     verify();
+
+    return () => {
+      cancelled = true;
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
   }, [router, searchParams]);
 
   return (
@@ -63,7 +108,9 @@ function PaymentCallbackContent() {
               <div className="w-16 h-16 mx-auto rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
               <div className="space-y-2">
                 <h2 className="text-lg font-extrabold text-primary">Processing your payment</h2>
-                <p className="text-sm text-gray-500">Please stay on this page while we confirm your transaction.</p>
+                <p className="text-sm text-gray-500">{message}</p>
+                <p className="text-xs text-gray-400">Verification attempt {attempt} of {MAX_VERIFY_ATTEMPTS}</p>
+                <p className="text-xs font-semibold text-amber-700">Do not close this page or pay again while confirmation is in progress.</p>
               </div>
             </>
           )}
@@ -84,7 +131,7 @@ function PaymentCallbackContent() {
             <>
               <div className="w-20 h-20 mx-auto text-red-600"><XCircleIcon /></div>
               <div>
-                <h2 className="text-xl font-extrabold text-red-700">Payment Not Confirmed</h2>
+                <h2 className="text-xl font-extrabold text-red-700">Payment Not Yet Confirmed</h2>
                 <p className="text-sm text-gray-600 mt-2 leading-relaxed">{message}</p>
               </div>
             </>
