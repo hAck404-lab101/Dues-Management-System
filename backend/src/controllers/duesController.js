@@ -307,42 +307,56 @@ exports.repriceUnpaid = async (req, res) => {
 exports.assignDue = async (req, res) => {
   try {
     const { id } = req.params;
-    const { filters, dry_run = false } = req.body;
-    const level = filters?.level;
-    const programme = filters?.program || filters?.programme;
-    const academicYear = filters?.year || filters?.academic_year;
+    const body = req.body || {};
+    const filters = body.filters || {};
+    const dryRun = body.dry_run === true;
+    const studentId = body.studentId || body.student_id;
+    const level = filters.level || body.level;
+    const programme = filters.program || filters.programme || body.program || body.programme;
+    const academicYear = filters.year || filters.academic_year || body.academicYear || body.academic_year;
 
     const { due, error } = await getAssignableDue(id);
     if (error) return res.status(error.status).json({ success: false, message: error.message });
 
+    const requestedAmount = body.amount === undefined || body.amount === ''
+      ? Number(due.amount)
+      : Number(body.amount);
+    if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Assignment amount must be greater than zero' });
+    }
+
     let query = 'SELECT id, full_name, email, level, programme, academic_year FROM students WHERE is_active = true';
     const params = [];
-    if (level) { query += ` AND level = ?`; params.push(level); }
-    if (programme) { query += ` AND programme = ?`; params.push(programme); }
-    if (academicYear) { query += ` AND academic_year = ?`; params.push(academicYear); }
+
+    if (studentId) {
+      query += ' AND id = ?';
+      params.push(studentId);
+    } else {
+      if (level) { query += ' AND level = ?'; params.push(level); }
+      if (programme) { query += ' AND programme = ?'; params.push(programme); }
+      if (academicYear) { query += ' AND academic_year = ?'; params.push(academicYear); }
+    }
 
     const studentsResult = await pool.query(query, params);
     const students = studentsResult.rows;
 
     if (students.length === 0) {
-      return res.status(400).json({ success: false, message: 'No students found matching criteria' });
+      return res.status(400).json({
+        success: false,
+        message: studentId ? 'Selected student was not found or is inactive' : 'No students found matching criteria'
+      });
     }
 
-    const sample = students.slice(0, 10).map(s => ({
-      id: s.id,
-      full_name: s.full_name,
-      email: s.email,
-      level: s.level,
-      programme: s.programme
+    const sample = students.slice(0, 10).map((student) => ({
+      id: student.id,
+      full_name: student.full_name,
+      email: student.email,
+      level: student.level,
+      programme: student.programme
     }));
 
-    if (dry_run) {
-      return res.json({
-        success: true,
-        dry_run: true,
-        count: students.length,
-        sample
-      });
+    if (dryRun) {
+      return res.json({ success: true, dry_run: true, count: students.length, sample });
     }
 
     const historyRes = await pool.query(
@@ -354,46 +368,66 @@ exports.assignDue = async (req, res) => {
     const conn = await pool.getConnection();
     await conn.beginTransaction();
     try {
-      for (const s of students) {
-        const assignId = generateUUID();
+      for (const student of students) {
         await conn.query(
-          `INSERT INTO due_assignments (id, due_id, locked_amount, price_history_id, student_id, level, programme, amount, status)
+          `INSERT INTO due_assignments
+             (id, due_id, locked_amount, price_history_id, student_id, level, programme, amount, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'unpaid')
-           ON DUPLICATE KEY UPDATE 
-             locked_amount = VALUES(locked_amount), 
+           ON DUPLICATE KEY UPDATE
+             locked_amount = VALUES(locked_amount),
              price_history_id = VALUES(price_history_id),
              amount = VALUES(amount)`,
-          [assignId, id, due.amount, historyId, s.id, s.level, s.programme, due.amount]
+          [
+            generateUUID(),
+            id,
+            requestedAmount,
+            historyId,
+            student.id,
+            student.level,
+            student.programme,
+            requestedAmount
+          ]
         );
       }
       await conn.commit();
-      
+    } catch (assignmentError) {
+      await conn.rollback();
+      throw assignmentError;
+    } finally {
+      conn.release();
+    }
+
+    try {
       const sysLog = require('../lib/systemLogger');
       if (sysLog) {
         await sysLog.info(
           'job',
-          'dues.assigned_bulk',
-          `Assigned due ${due.name} to ${students.length} students`,
-          { dueId: id, count: students.length },
+          studentId ? 'dues.assigned_student' : 'dues.assigned_bulk',
+          studentId
+            ? `Assigned due ${due.name} to ${students[0].full_name}`
+            : `Assigned due ${due.name} to ${students.length} students`,
+          { dueId: id, studentId: studentId || null, count: students.length, amount: requestedAmount },
           { userId: req.user.id }
         );
       }
-      
-      res.json({
-        success: true,
-        dry_run: false,
-        count: students.length,
-        sample
-      });
-    } catch (err) {
-      await conn.rollback();
-      throw err;
-    } finally {
-      conn.release();
+    } catch (logError) {
+      console.error('Due assignment audit log warning:', logError);
     }
+
+    students.forEach((student) => queueDueEmail(student, { ...due, amount: requestedAmount }));
+
+    return res.json({
+      success: true,
+      message: studentId
+        ? `Due assigned to ${students[0].full_name}`
+        : `Due assigned to ${students.length} students`,
+      dry_run: false,
+      count: students.length,
+      sample
+    });
   } catch (error) {
     console.error('Assign due error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
